@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/mock_data_service.dart';
-import '../theme/app_theme.dart';
-import '../widgets/payslip_pdf_dialog.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../widgets/payslip_computation_tree_sheet.dart';
+import '../widgets/payrun_wizard_sheet.dart';
 
 class PayrunScreen extends StatefulWidget {
   const PayrunScreen({super.key});
@@ -10,206 +10,1104 @@ class PayrunScreen extends StatefulWidget {
   State<PayrunScreen> createState() => _PayrunScreenState();
 }
 
-class _PayrunScreenState extends State<PayrunScreen> {
-  int _currentStep = 0;
+class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderStateMixin {
+  String _selectedFilter = 'All';
+  late AnimationController _pulseController;
 
-  void _showAnomalyDetailsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: const [
-              Icon(Icons.shield_outlined, color: AppTheme.emeraldSuccess),
-              SizedBox(width: 8),
-              Text('Pre-Flight Inspector'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text('Audit Checks Verified:', style: TextStyle(fontWeight: FontWeight.bold)),
-              SizedBox(height: 8),
-              Text('✔ 100% Active Contracts matched with period date span'),
-              Text('✔ Zero overlapping running contract conflicts found'),
-              Text('✔ Salary structures AST Python expressions safe'),
-              Text('✔ Attendance hours mapped to working schedule'),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.emeraldSuccess, foregroundColor: Colors.white),
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Pass All Checks'),
-            ),
-          ],
-        );
+  // Anomaly status state
+  bool _bankDetailsFixed = false;
+  bool _duplicateResolved = false;
+  bool _draftsAutoValidated = false;
+
+  // Pipeline execution state
+  String _pipelineStatus = 'Validated';
+  bool _isComputing = false;
+  bool _isPaid = false;
+  bool _payslipsSent = false;
+
+  late List<Map<String, dynamic>> _payslips;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _loadPayslips();
+  }
+
+  void _loadPayslips() {
+    _payslips = [
+      {
+        'id': 'aarav',
+        'name': 'Aarav Mehta',
+        'empCode': 'EMP-4092',
+        'role': 'Sr. Cloud Architect • Tech',
+        'avatar':
+            'https://lh3.googleusercontent.com/aida-public/AB6AXuDyIPpBAqqS7C3_wfY1-X16ZVJjL1i6NwS2fKmhmzc7C_i1u0_prwV_nYqgOLEq07XlAivZi_9TJ3nHdoT-jtdR8mYSe6vNMWBFo2_e6XBILL_Z3o9_HnYgt2N7j4hbDvblnV08Tof0lLGSy_3IeY4EjelWIFLqOGeqg66EbSNw_8nceYeaTOQ0KNU_UyStcrI3gTs4XGxw56XEnLS4BXY6dcwL_jYn0fBb9Epq-1EPdwGXBO4HxLDu',
+        'status': 'Done',
+        'workedDays': '22',
+        'basic': '₹50,000',
+        'gross': '₹80,000',
+        'netPayout': '₹75,000',
+        'footerNote': 'Computed via Salary Rule (v2.4)',
+        'footerIcon': Icons.check_circle,
+        'footerIconColor': const Color(0xFF006443),
+        'hasWarning': false,
+        'refNo': 'PS-2026-02-0042',
       },
-    );
+      {
+        'id': 'sara',
+        'name': 'Sara Khan',
+        'empCode': 'EMP-4091',
+        'role': 'People Experience Partner',
+        'avatar':
+            'https://lh3.googleusercontent.com/aida-public/AB6AXuBK4kN_bBC0IGWVB4B8conUEHBYzfF3JruQyYijIoaFzIrqWmVBJm4akR4ymPpXtKUiQVOYE1T4LAN-P6WABaKs0P7QRjZLUlha5lvM6_HMeZI9TH2EBtmzUfYNwIsnafmnz1R-sLXs3UwPCDhy7LCYoMibv-wnetMaKXgyKu101B9am7bzeAWkuB7fGGASTROXg15Wczg_ekEPw1pVwQ3R2KpxSQbLX54WesGiMJ0NV4vqy9RNgeqY',
+        'status': 'Done',
+        'warningTag': 'A/C Missing',
+        'workedDays': '21',
+        'payoutStatus': 'Bank Hold',
+        'netPayout': '₹88,000',
+        'footerNote': 'Bank file export blocked',
+        'footerIcon': Icons.credit_card_off,
+        'footerIconColor': const Color(0xFFBA1A1A),
+        'actionBtn': 'Fix A/C',
+        'hasWarning': true,
+        'refNo': 'PS-2026-02-0041',
+      },
+      {
+        'id': 'john',
+        'name': 'John Dsouza',
+        'empCode': 'EMP-4098',
+        'role': 'Financial Risk Analyst',
+        'avatar':
+            'https://lh3.googleusercontent.com/aida-public/AB6AXuD_4Y5Bd48Qv9yduAbsl3WH7EPWuwQ4GBW3t9UC327F9FTiBEavv_ZJsj0_Fpp1oA8jQPupaLmCUqXgs2bRvYP6HWuUOhx2jx97_RH_weLEuetK_7BeeTZRKJYHdZgSYceP256K50Sfa-Wjm9AvkVgt9EmPRtWSpTmzoZwQpu157jgb4gdLXRCjTr8fM8A7dEHdlIoWWsc3yqf5_tWpllW7OPa2wsFwtDb2n6NItk44DHcTIAvqI8ih',
+        'status': 'Draft',
+        'warningTag': 'Duplicate',
+        'workedDays': '22',
+        'conflictText': 'Payslip #SLIP-881',
+        'netPayout': '₹66,000',
+        'footerNote': 'Needs merge or drop',
+        'footerIcon': Icons.merge_type,
+        'footerIconColor': const Color(0xFFBA1A1A),
+        'actionBtn': 'Resolve',
+        'hasWarning': true,
+        'refNo': 'PS-2026-02-0040',
+      },
+      {
+        'id': 'rohan',
+        'name': 'Rohan Patel',
+        'empCode': 'EMP-4076',
+        'role': 'Lead Product Designer',
+        'initials': 'RP',
+        'status': 'Done',
+        'workedDays': '22',
+        'basic': '₹45,000',
+        'gross': '₹72,000',
+        'netPayout': '₹68,500',
+        'footerNote': 'Verified Bank details on file',
+        'footerIcon': Icons.check_circle,
+        'footerIconColor': const Color(0xFF006443),
+        'hasWarning': false,
+        'refNo': 'PS-2026-02-0039',
+      },
+    ];
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Payrun & Payslip Wizard', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 16),
-              // 2-Step Payrun Stepper Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          _buildStepIndicator(0, '1. Scope & Period'),
-                          const Expanded(child: Divider(indent: 8, endIndent: 8)),
-                          _buildStepIndicator(1, '2. Pre-Flight Check'),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      if (_currentStep == 0) _buildStep1Content() else _buildStep2Content(),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text('Generated Payslips Ledger', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: MockDataService.payslips.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final slip = MockDataService.payslips[index];
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
-                  return Card(
-                    child: ListTile(
-                      leading: const CircleAvatar(
-                        backgroundColor: AppTheme.odooAubergine,
-                        child: Icon(Icons.receipt_long, color: Colors.white),
-                      ),
-                      title: Text('${slip.employeeName} (${slip.refCode})', style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('Period: ${slip.periodStart} to ${slip.periodEnd}\nNet Wage: ₹${slip.netAmount.toStringAsFixed(2)}'),
-                      trailing: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooTeal, foregroundColor: Colors.white),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => PayslipPdfDialog(payslip: slip),
-                          );
-                        },
-                        icon: const Icon(Icons.print, size: 16),
-                        label: const Text('PDF'),
-                      ),
-                    ),
-                  );
-                },
+  int get _anomalyCount {
+    int count = 0;
+    if (!_bankDetailsFixed) count++;
+    if (!_duplicateResolved) count++;
+    if (!_draftsAutoValidated) count++;
+    return count;
+  }
+
+  void _triggerToast(String title, String subtitle) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        backgroundColor: const Color(0xFF131B2E),
+        content: Row(
+          children: [
+            const Icon(Icons.info_outline, color: Color(0xFF92EFF5), size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
+                  Text(subtitle, style: GoogleFonts.plusJakartaSans(color: const Color(0xFFDAE2FD), fontSize: 11)),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildStepIndicator(int stepIndex, String title) {
-    final isActive = _currentStep == stepIndex;
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 12,
-          backgroundColor: isActive ? AppTheme.odooAubergine : Colors.grey.withValues(alpha: 0.3),
-          child: Text('${stepIndex + 1}', style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(width: 6),
-        Text(title, style: TextStyle(fontWeight: isActive ? FontWeight.bold : FontWeight.normal, fontSize: 13)),
-      ],
-    );
-  }
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _payslips.where((slip) {
+      if (_selectedFilter == 'Done') return slip['status'] == 'Done' && (slip['warningTag'] == null);
+      if (_selectedFilter == 'Draft') return slip['status'] == 'Draft';
+      if (_selectedFilter == 'Warnings') return slip['hasWarning'] == true;
+      return true;
+    }).toList();
 
-  Widget _buildStep1Content() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Select Pay Period: August 2026', style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          initialValue: 'All Departments',
-          decoration: const InputDecoration(labelText: 'Department Scope', border: OutlineInputBorder()),
-          items: const [
-            DropdownMenuItem(value: 'All Departments', child: Text('All Departments (142 Employees)')),
-            DropdownMenuItem(value: 'Finance & Tech Ops', child: Text('Finance & Tech Ops (24 Employees)')),
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAF8FF),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Command Bar
+                  _buildHeader(),
+
+                  const SizedBox(height: 8),
+
+                  // Summary Metrics Horizontal Ribbon
+                  _buildSummaryRibbon(),
+
+                  const SizedBox(height: 14),
+
+                  // Pipeline Toolbar
+                  _buildPipelineToolbar(),
+
+                  const SizedBox(height: 14),
+
+                  // Pre-Flight Anomaly Alert Card
+                  if (_anomalyCount > 0) _buildAnomalyAlertCard(),
+
+                  const SizedBox(height: 14),
+
+                  // Filter Tabs
+                  _buildFilterTabs(),
+
+                  const SizedBox(height: 10),
+
+                  // Payslips List
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: filtered.length,
+                      separatorBuilder: (c, i) => const SizedBox(height: 10),
+                      itemBuilder: (ctx, index) => _buildPayslipCard(filtered[index]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Sticky Quick Action Footer
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildStickyFooter(),
+            ),
           ],
-          onChanged: (_) {},
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          height: 46,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooAubergine, foregroundColor: Colors.white),
-            onPressed: () => setState(() => _currentStep = 1),
-            child: const Text('Next: Pre-Flight Anomaly Check →'),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildStep2Content() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: _showAnomalyDetailsDialog,
-          child: Container(
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              InkWell(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Returning to Workspace Dashboard')),
+                  );
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF2F3FF),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF131B2E)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Payrun / Feb 2026',
+                        style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF006443).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF006443), shape: BoxShape.circle)),
+                            const SizedBox(width: 4),
+                            Text(
+                              _pipelineStatus,
+                              style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006443)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text('BATCH #PR-2026-02', style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF4E444A))),
+                      const SizedBox(width: 4),
+                      Text('•', style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF4E444A))),
+                      const SizedBox(width: 4),
+                      Text('Odoo 18 Engine', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF00696E))),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          PopupMenuButton<String>(
+            icon: Container(
+              width: 38,
+              height: 38,
+              decoration: const BoxDecoration(color: Color(0xFFF2F3FF), shape: BoxShape.circle),
+              child: const Icon(Icons.more_vert, size: 20, color: Color(0xFF131B2E)),
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            onSelected: (val) {
+              if (val == 'wizard') {
+                PayrunWizardSheet.show(context, onBatchCreated: () {
+                  _triggerToast('Payrun Batch Created ⚡', 'Scope locked and 22 employees queued for Feb 2026.');
+                });
+              } else if (val == 'reset') {
+                setState(() {
+                  _bankDetailsFixed = false;
+                  _duplicateResolved = false;
+                  _draftsAutoValidated = false;
+                  _loadPayslips();
+                });
+                _triggerToast('Batch Reset', 'All anomaly alerts restored to initial state.');
+              }
+            },
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'wizard',
+                child: Row(
+                  children: [
+                    const Icon(Icons.auto_fix_high, size: 18, color: Color(0xFF57344F)),
+                    const SizedBox(width: 8),
+                    Text('Payrun Creation Wizard', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'reset',
+                child: Row(
+                  children: [
+                    const Icon(Icons.restart_alt, size: 18, color: Color(0xFFBA1A1A)),
+                    const SizedBox(width: 8),
+                    Text('Reset Anomaly Checks', style: GoogleFonts.plusJakartaSans(fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRibbon() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _buildMetricCapsule('Pay Structure', 'Regular Salary', 'Monthly Cycle', const Color(0xFF00696E)),
+          const SizedBox(width: 8),
+          _buildMetricCapsule('Pay Period', '01 Feb – 28 Feb', '2026 (28 Days)', const Color(0xFF4E444A)),
+          const SizedBox(width: 8),
+          _buildMetricCapsule('Headcount', '42 Staff', '100% Attended', const Color(0xFF006443)),
+          const SizedBox(width: 8),
+          Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppTheme.emeraldSuccess.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-            child: Row(
-              children: const [
-                Icon(Icons.check_circle_outline, color: AppTheme.emeraldSuccess),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text('0 Critical Anomalies. Tap to view Pre-Flight Inspector Report.', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            constraints: const BoxConstraints(minWidth: 145),
+            decoration: BoxDecoration(
+              color: const Color(0xFF714B67),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(color: const Color(0xFF714B67).withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Total Net Payout', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFFF0BFE0))),
+                const SizedBox(height: 4),
+                Text('₹ 18.42 L', style: GoogleFonts.jetBrainsMono(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.lock, size: 12, color: Color(0xFFF0BFE0)),
+                    const SizedBox(width: 4),
+                    Text('Ready for File', style: GoogleFonts.plusJakartaSans(fontSize: 10.5, color: const Color(0xFFF0BFE0))),
+                  ],
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCapsule(String title, String val, String sub, Color subColor) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      constraints: const BoxConstraints(minWidth: 130),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A))),
+          const SizedBox(height: 4),
+          Text(val, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+          const SizedBox(height: 4),
+          Text(sub, style: GoogleFonts.jetBrainsMono(fontSize: 10.5, color: subColor)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPipelineToolbar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'PIPELINE OPERATIONS',
+                style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF4E444A), letterSpacing: 0.5),
+              ),
+              Row(
+                children: [
+                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF00696E), shape: BoxShape.circle)),
+                  const SizedBox(width: 4),
+                  Text('Odoo Sync Live', style: GoogleFonts.jetBrainsMono(fontSize: 10.5, color: const Color(0xFF00696E), fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // COMPUTE Button
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF714B67),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: _isComputing
+                      ? null
+                      : () {
+                          setState(() => _isComputing = true);
+                          Future.delayed(const Duration(milliseconds: 900), () {
+                            if (mounted) {
+                              setState(() {
+                                _isComputing = false;
+                                _pipelineStatus = 'Computed';
+                              });
+                              _triggerToast('AST Payroll Rules Computed ⚡', 'All 42 salary structures re-calculated with latest tax slabs.');
+                            }
+                          });
+                        },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bolt, size: 16),
+                      const SizedBox(width: 6),
+                      Text('COMPUTE', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 12)),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+                        child: Text('Rules', style: GoogleFonts.jetBrainsMono(fontSize: 9.5)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // VALIDATE Button
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDAE2FD),
+                    foregroundColor: const Color(0xFF131B2E),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: () {
+                    setState(() => _pipelineStatus = 'Validated');
+                    _triggerToast('Batch Validated ✓', 'Attendance entries and contracts matched without overlap.');
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.verified_user, size: 16, color: Color(0xFF57344F)),
+                      const SizedBox(width: 6),
+                      Text('VALIDATE', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 12)),
+                      const SizedBox(width: 6),
+                      Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF006443), shape: BoxShape.circle)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // MARK PAID Button
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isPaid ? const Color(0xFF006443) : const Color(0xFF004A31).withValues(alpha: 0.1),
+                    foregroundColor: _isPaid ? Colors.white : const Color(0xFF004A31),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: () {
+                    setState(() => _isPaid = !_isPaid);
+                    _triggerToast(_isPaid ? 'Batch Marked Paid 💳' : 'Batch Payment Reverted', 'Disbursement status updated in Odoo general ledger.');
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.payments, size: 16),
+                      const SizedBox(width: 6),
+                      Text('MARK PAID', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // SEND PAYSLIPS Button
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF92EFF5),
+                    foregroundColor: const Color(0xFF006E73),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: () {
+                    setState(() => _payslipsSent = true);
+                    _triggerToast('Payslips Dispatched ✉️', 'Encrypted Form XVI PDFs emailed to 42 verified staff accounts.');
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.outgoing_mail, size: 16),
+                      const SizedBox(width: 6),
+                      Text('SEND PAYSLIPS', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 12)),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(color: const Color(0xFF00696E).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+                        child: Text(_payslipsSent ? 'Sent' : 'Auto', style: GoogleFonts.jetBrainsMono(fontSize: 9.5, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnomalyAlertCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE2E7FF),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          ],
         ),
-        const SizedBox(height: 16),
-        Row(
+        child: Column(
           children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => setState(() => _currentStep = 0),
-                child: const Text('← Back'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(color: const Color(0xFFFFDAD6), borderRadius: BorderRadius.circular(8)),
+                      child: const Icon(Icons.warning, size: 18, color: Color(0xFF93000A)),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Pre-Flight Anomaly Check', style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+                        Text('$_anomalyCount Blocking Issues Require Attention', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFBA1A1A))),
+                      ],
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(color: const Color(0xFFBA1A1A), borderRadius: BorderRadius.circular(12)),
+                  child: Text('Priority', style: GoogleFonts.jetBrainsMono(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Alert 1: Missing Bank Details
+            if (!_bankDetailsFixed)
+              _buildAnomalyItem(
+                Icons.account_balance,
+                '2 Missing Bank Details',
+                'Sara Khan, Neha Patel',
+                'Fix Details',
+                () {
+                  setState(() {
+                    _bankDetailsFixed = true;
+                    final sara = _payslips.firstWhere((p) => p['id'] == 'sara');
+                    sara['warningTag'] = null;
+                    sara['hasWarning'] = false;
+                    sara['payoutStatus'] = null;
+                    sara['basic'] = '₹55,000';
+                    sara['gross'] = '₹92,000';
+                    sara['footerNote'] = 'Verified Bank details on file';
+                    sara['footerIcon'] = Icons.check_circle;
+                    sara['footerIconColor'] = const Color(0xFF006443);
+                    sara['actionBtn'] = null;
+                  });
+                  _triggerToast('Bank Details Updated ✓', 'Sara Khan & Neha Patel IFSC validated. Bank hold removed.');
+                },
+              ),
+
+            if (!_bankDetailsFixed) const SizedBox(height: 8),
+
+            // Alert 2: Duplicate Record
+            if (!_duplicateResolved)
+              _buildAnomalyItem(
+                Icons.copy_all,
+                '1 Duplicate Record Detected',
+                'John Dsouza (EMP-4098)',
+                'Resolve',
+                () {
+                  setState(() {
+                    _duplicateResolved = true;
+                    final john = _payslips.firstWhere((p) => p['id'] == 'john');
+                    john['warningTag'] = null;
+                    john['hasWarning'] = false;
+                    john['status'] = 'Done';
+                    john['conflictText'] = null;
+                    john['basic'] = '₹40,000';
+                    john['gross'] = '₹70,000';
+                    john['footerNote'] = 'Merged into batch ledger';
+                    john['footerIcon'] = Icons.check_circle;
+                    john['footerIconColor'] = const Color(0xFF006443);
+                    john['actionBtn'] = null;
+                  });
+                  _triggerToast('Duplicate Resolved ✓', 'Duplicate draft #SLIP-881 dropped. Record finalized as Done.');
+                },
+              ),
+
+            if (!_duplicateResolved) const SizedBox(height: 8),
+
+            // Alert 3: Drafts Pending Verification
+            if (!_draftsAutoValidated)
+              _buildAnomalyItem(
+                Icons.fact_check,
+                '4 Drafts Pending Verification',
+                'Unsettled OT & reimbursements',
+                'Auto-Validate',
+                () {
+                  setState(() => _draftsAutoValidated = true);
+                  _triggerToast('Auto-Validation Complete ⚡', 'All 4 draft entries verified against biometric logs.');
+                },
+                isAutoValidate: true,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnomalyItem(IconData icon, String title, String sub, String btnLabel, VoidCallback onTap, {bool isAutoValidate = false}) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: isAutoValidate ? const Color(0xFF4E444A) : const Color(0xFFBA1A1A)),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+                  Text(sub, style: GoogleFonts.plusJakartaSans(fontSize: 10.5, color: const Color(0xFF4E444A))),
+                ],
+              ),
+            ],
+          ),
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isAutoValidate ? const Color(0xFF00696E) : const Color(0xFF57344F).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    btnLabel,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: isAutoValidate ? Colors.white : const Color(0xFF57344F),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  Icon(
+                    isAutoValidate ? Icons.auto_fix_high : Icons.arrow_forward,
+                    size: 12,
+                    color: isAutoValidate ? Colors.white : const Color(0xFF57344F),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.emeraldSuccess, foregroundColor: Colors.white),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('🎉 Payrun Computed! 142 Payslips generated & verified.')),
-                  );
-                },
-                child: const Text('Confirm Payrun'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterTabs() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildTabPill('All', '42', isSelected: _selectedFilter == 'All'),
+            const SizedBox(width: 8),
+            _buildTabPill('Done', '35', isSelected: _selectedFilter == 'Done', countColor: const Color(0xFF006443)),
+            const SizedBox(width: 8),
+            _buildTabPill('Draft', '4', isSelected: _selectedFilter == 'Draft'),
+            const SizedBox(width: 8),
+            _buildTabPill('Warnings', '$_anomalyCount', isSelected: _selectedFilter == 'Warnings', isWarning: true),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabPill(String label, String count, {bool isSelected = false, Color? countColor, bool isWarning = false}) {
+    return InkWell(
+      onTap: () => setState(() => _selectedFilter = label),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF57344F) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 1)),
+          ],
+        ),
+        child: Row(
+          children: [
+            if (isWarning) ...[
+              const Icon(Icons.warning, size: 13, color: Color(0xFFBA1A1A)),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected
+                    ? Colors.white
+                    : isWarning
+                        ? const Color(0xFFBA1A1A)
+                        : const Color(0xFF4E444A),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              count,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.85)
+                    : countColor ?? (isWarning ? const Color(0xFFBA1A1A) : const Color(0xFF4E444A)),
               ),
             ),
           ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildPayslipCard(Map<String, dynamic> slip) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  if (slip['avatar'] != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(22),
+                      child: Image.network(
+                        slip['avatar'],
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(color: Color(0xFFFFD7F1), shape: BoxShape.circle),
+                          child: Center(child: Text((slip['name'] as String)[0], style: const TextStyle(fontWeight: FontWeight.bold))),
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(color: Color(0xFFDAE2FD), shape: BoxShape.circle),
+                      child: Center(
+                        child: Text(
+                          slip['initials'] ?? 'RP',
+                          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(slip['name'], style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+                          const SizedBox(width: 5),
+                          Text(slip['empCode'], style: GoogleFonts.jetBrainsMono(fontSize: 10, color: const Color(0xFF4E444A))),
+                        ],
+                      ),
+                      Text(slip['role'], style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A))),
+                    ],
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  if (slip['warningTag'] != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: const Color(0xFFFFDAD6), borderRadius: BorderRadius.circular(10)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning, size: 11, color: Color(0xFFBA1A1A)),
+                          const SizedBox(width: 3),
+                          Text(slip['warningTag'], style: GoogleFonts.jetBrainsMono(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFF93000A))),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: slip['status'] == 'Done' ? const Color(0xFF006443).withValues(alpha: 0.1) : const Color(0xFFDAE2FD),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      slip['status'],
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: slip['status'] == 'Done' ? const Color(0xFF006443) : const Color(0xFF131B2E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // 4-Column Metric Grid
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(color: const Color(0xFFF2F3FF).withValues(alpha: 0.6), borderRadius: BorderRadius.circular(10)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Worked Days', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: const Color(0xFF4E444A))),
+                    Text('${slip['workedDays']} Days', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                if (slip['basic'] != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Basic', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: const Color(0xFF4E444A))),
+                      Text(slip['basic'], style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                if (slip['gross'] != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Gross', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: const Color(0xFF4E444A))),
+                      Text(slip['gross'], style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                if (slip['payoutStatus'] != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Payout Status', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: const Color(0xFF4E444A))),
+                      Text(slip['payoutStatus'], style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFFBA1A1A))),
+                    ],
+                  ),
+                if (slip['conflictText'] != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Conflict', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: const Color(0xFF4E444A))),
+                      Text(slip['conflictText'], style: GoogleFonts.jetBrainsMono(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFFBA1A1A))),
+                    ],
+                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('Net Payout', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFF00696E))),
+                    Text(slip['netPayout'], style: GoogleFonts.jetBrainsMono(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF00696E))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Footer Action & Info
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(slip['footerIcon'], size: 14, color: slip['footerIconColor']),
+                  const SizedBox(width: 4),
+                  Text(
+                    slip['footerNote'],
+                    style: GoogleFonts.jetBrainsMono(fontSize: 10, color: slip['footerIconColor']),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  if (slip['actionBtn'] != null) ...[
+                    InkWell(
+                      onTap: () {
+                        if (slip['actionBtn'] == 'Fix A/C') {
+                          setState(() {
+                            _bankDetailsFixed = true;
+                            slip['warningTag'] = null;
+                            slip['hasWarning'] = false;
+                            slip['payoutStatus'] = null;
+                            slip['basic'] = '₹55,000';
+                            slip['gross'] = '₹92,000';
+                            slip['footerNote'] = 'Verified Bank details on file';
+                            slip['footerIcon'] = Icons.check_circle;
+                            slip['footerIconColor'] = const Color(0xFF006443);
+                            slip['actionBtn'] = null;
+                          });
+                          _triggerToast('Bank A/C Resolved ✓', 'Sara Khan account linked and hold removed.');
+                        } else if (slip['actionBtn'] == 'Resolve') {
+                          setState(() {
+                            _duplicateResolved = true;
+                            slip['warningTag'] = null;
+                            slip['hasWarning'] = false;
+                            slip['status'] = 'Done';
+                            slip['conflictText'] = null;
+                            slip['basic'] = '₹40,000';
+                            slip['gross'] = '₹70,000';
+                            slip['footerNote'] = 'Merged into batch ledger';
+                            slip['footerIcon'] = Icons.check_circle;
+                            slip['footerIconColor'] = const Color(0xFF006443);
+                            slip['actionBtn'] = null;
+                          });
+                          _triggerToast('Duplicate Resolved ✓', 'John Dsouza payslip normalized.');
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: slip['actionBtn'] == 'Fix A/C' ? const Color(0xFFFFDAD6) : const Color(0xFF714B67),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          slip['actionBtn'],
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: slip['actionBtn'] == 'Fix A/C' ? const Color(0xFF93000A) : Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  InkWell(
+                    onTap: () => PayslipComputationTreeSheet.show(context, slip),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDAE2FD),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.picture_as_pdf, size: 14, color: Color(0xFF57344F)),
+                          const SizedBox(width: 4),
+                          Text('PDF', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStickyFooter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.95),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, -3)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(width: 7, height: 7, decoration: const BoxDecoration(color: Color(0xFF00696E), shape: BoxShape.circle)),
+                  const SizedBox(width: 6),
+                  Text('Total Net Outflow:', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A))),
+                ],
+              ),
+              Text(
+                '₹ 18,42,500.00',
+                style: GoogleFonts.jetBrainsMono(fontSize: 14.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF714B67),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              minimumSize: const Size(double.infinity, 48),
+            ),
+            onPressed: () {
+              if (_anomalyCount > 0) {
+                _triggerToast('Pre-Flight Anomaly Warning ⚠️', 'Please resolve the $_anomalyCount blocking issue(s) before disbursing.');
+              } else {
+                _triggerToast('NACH / NEFT File Exported ⚡', '₹ 18,42,500.00 batch dispatched to banking portal with zero errors.');
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Disburse via Bank File (NACH/NEFT)', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 6),
+                const Icon(Icons.arrow_forward, size: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

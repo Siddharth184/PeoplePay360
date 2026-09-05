@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/models.dart';
-import '../services/mock_data_service.dart';
+import '../services/ai_copilot_service.dart';
 import '../theme/app_theme.dart';
 
 class AiCopilotScreen extends StatefulWidget {
@@ -23,8 +23,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   ];
 
   final _textController = TextEditingController();
+  bool _isLoading = false;
 
-  void _sendQuery(String text) {
+  void _sendQuery(String text) async {
     if (text.trim().isEmpty) return;
 
     setState(() {
@@ -36,43 +37,56 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         'escalation': null,
       });
       _textController.clear();
+      _isLoading = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 600), () {
-      final lower = text.toLowerCase();
+    final res = await AiCopilotService.ask(prompt: text);
 
-      if (lower.contains('leave balance') || lower.contains('pto')) {
-        setState(() {
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        if (res.isSuccess && res.data != null) {
+          final data = res.data!;
+          final answer = data['answer']?.toString() ?? 'No response received.';
+          final confidence = (data['confidence'] as num?)?.toDouble() ?? 1.0;
+          final citationsList = (data['citations'] as List?)
+                  ?.map((c) => c is Map ? (c['title']?.toString() ?? '') : c.toString())
+                  .where((s) => s.isNotEmpty)
+                  .toList() ??
+              [];
+
+          EscalationTicketModel? ticket;
+          if (data['escalation_id'] != null || data['mode'] == 'ESCALATED') {
+            ticket = EscalationTicketModel(
+              id: data['escalation_id']?.toString() ?? 'esc_auto',
+              ticketNo: data['ticket_no']?.toString() ?? 'ESC-2026-0099',
+              questionText: text,
+              category: data['category']?.toString() ?? 'HR_POLICY',
+              status: 'OPEN',
+              priority: 'NORMAL',
+              slaDueAt: data['sla_due_at']?.toString() ?? 'In 8 hours',
+              retrievalConfidence: confidence,
+            );
+          }
+
           _messages.add({
             'isUser': false,
-            'text': '**Tier 0 (SQL Direct)**: Here is your current leave balance:\n- **Paid Time Off (PTO)**: 14.0 days remaining (20.0 allocated, 6.0 taken)\n- **Sick Leave**: 5.0 days remaining',
-            'citations': ['SQL Ledger: leave_allocations (emp-001)'],
-            'confidence': 1.0,
+            'text': answer,
+            'citations': citationsList,
+            'confidence': confidence,
+            'escalation': ticket,
+          });
+        } else {
+          _messages.add({
+            'isUser': false,
+            'text': 'Unable to connect to AI engine. ${res.errorMessage ?? ""}',
+            'citations': [],
+            'confidence': 0.0,
             'escalation': null,
           });
-        });
-      } else if (lower.contains('deduction') || lower.contains('payslip')) {
-        setState(() {
-          _messages.add({
-            'isUser': false,
-            'text': '**Payslip PAY/2026/08 Deductions Breakdown**:\n- **Provident Fund (PF)**: ₹3,000.00 (6.0% of Basic Salary)\n- **Professional Tax (PT)**: ₹2,000.00 (Fixed Statutory)\n\nTotal Deductions: ₹5,000.00',
-            'citations': ['Payslip Engine: payslip_lines (PAY/2026/08)'],
-            'confidence': 1.0,
-            'escalation': null,
-          });
-        });
-      } else {
-        setState(() {
-          _messages.add({
-            'isUser': false,
-            'text': 'I do not have a high-confidence verified answer in our HR handbooks for that question (Confidence: 0.38 < 0.45 threshold).\n\n**To protect you from hallucinations, I have opened an auditable HR Escalation Ticket.**',
-            'citations': ['HR Handbook (bge-small vector cosine 0.38)'],
-            'confidence': 0.38,
-            'escalation': MockDataService.escalationTickets.first,
-          });
-        });
-      }
-    });
+        }
+      });
+    }
   }
 
   void _openEscalationInboxModal(EscalationTicketModel ticket) {
@@ -318,6 +332,24 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 },
               ),
             ),
+            if (_isLoading)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.odooAubergine),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'AI Copilot is evaluating HR policies...',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
+              ),
             // Text Input Field
             Container(
               padding: const EdgeInsets.all(12),

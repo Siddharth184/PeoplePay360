@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
+import 'attendance_punch_sheet.dart';
 
 class DynamicIslandPill extends StatefulWidget {
   final VoidCallback? onPunchTapped;
@@ -47,6 +48,8 @@ class _DynamicIslandPillState extends State<DynamicIslandPill> {
     });
     if (widget.onPunchTapped != null) {
       widget.onPunchTapped!();
+    } else {
+      AttendancePunchSheet.show(context);
     }
   }
 

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><title>Sign In</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Outfit:wght@500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;min-height:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-container-high":"#e2e7ff","on-secondary-fixed":"#002022","error-container":"#ffdad6","on-surface":"#131b2e","on-secondary":"#ffffff","on-primary-fixed":"#2f1029","on-surface-variant":"#4e444a","on-error":"#ffffff","on-secondary-container":"#006e73","surface-variant":"#dae2fd","outline":"#80747a","surface-container-low":"#f2f3ff","secondary-fixed-dim":"#78d5db","secondary-container":"#92eff5","tertiary":"#004a31","primary-container":"#714b67","tertiary-fixed-dim":"#4edea3","on-primary-fixed-variant":"#5f3b56","on-tertiary-fixed-variant":"#005236","on-primary":"#ffffff","on-background":"#131b2e","surface-container-lowest":"#ffffff","error":"#ba1a1a","primary-fixed-dim":"#e9b8d9","outline-variant":"#d1c3ca","inverse-on-surface":"#eef0ff","tertiary-fixed":"#6ffbbe","inverse-surface":"#283044","on-error-container":"#93000a","primary":"#57344f","surface-tint":"#79526f","tertiary-container":"#006443","surface-container-highest":"#dae2fd","background":"#faf8ff","primary-fixed":"#ffd7f1","on-tertiary-container":"#56e5a9","on-tertiary":"#ffffff","surface-bright":"#faf8ff","on-primary-container":"#f0bfe0","on-secondary-fixed-variant":"#004f53","inverse-primary":"#e9b8d9","surface-container":"#eaedff","on-tertiary-fixed":"#002113","secondary-fixed":"#95f1f8","surface":"#faf8ff","secondary":"#00696e","surface-dim":"#d2d9f4"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-screen":"1rem","spacing-lg":"1.25rem","gutter-mobile":"1rem","spacing-3xs":"0.125rem","spacing-2xs":"0.25rem","spacing-2xl":"2rem","gutter-tablet":"1.5rem","spacing-3xl":"2.5rem","spacing-md":"1rem","spacing-xs":"0.5rem","spacing-xl":"1.5rem","spacing-sm":"0.75rem"},"fontFamily":{"title-lg":["Outfit"],"body-md":["Plus Jakarta Sans"],"label-code-lg":["JetBrains Mono"],"label-code-sm":["JetBrains Mono"],"body-lg":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"display-lg":["Outfit"],"display-md":["Outfit"],"title-md":["Plus Jakarta Sans"],"label-code-md":["JetBrains Mono"]},"fontSize":{"title-lg":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","letterSpacing":"0","fontWeight":"400"}],"label-code-lg":["18px",{"lineHeight":"24px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-code-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"body-lg":["16px",{"lineHeight":"24px","letterSpacing":"0","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"400"}],"display-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"display-md":["26px",{"lineHeight":"34px","letterSpacing":"-0.015em","fontWeight":"600"}],"title-md":["17px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"600"}],"label-code-md":["14px",{"lineHeight":"18px","letterSpacing":"-0.01em","fontWeight":"500"}]}}}};</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col justify-between pt-safe pb-safe selection:bg-primary-fixed selection:text-on-primary-fixed"><main class="flex-1 flex flex-col relative w-full bg-surface"><div class="flex flex-col w-full pb-safe">
+<!-- Subtle ambient glow background decoration -->
+<div class="relative w-full px-margin-screen pt-spacing-sm pb-spacing-md flex flex-col gap-spacing-lg">
+<!-- Header Block -->
+<header class="flex flex-col gap-spacing-2xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-spacing-xs">
+<h1 class="font-display-md text-display-md text-on-surface tracking-tight">Escalation Inbox</h1>
+<span class="inline-flex items-center justify-center h-6 min-w-6 px-spacing-2xs rounded-full bg-error text-on-error font-label-code-sm text-label-code-sm font-semibold shadow-sm">
+            7
+          </span>
+</div>
+<button aria-label="Refresh Queue" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high active:scale-95 transition-transform text-primary" id="refreshBtn" type="button">
+<span class="material-symbols-outlined text-[20px]" id="refreshIcon">sync</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Questions the AI Assistant could not answer confidently
+      </p>
+</header>
+<!-- Queue Stats Horizontal Scrollable Strip -->
+<section aria-label="Queue Metrics" class="w-full -mx-margin-screen px-margin-screen overflow-x-auto no-scrollbar">
+<div class="flex items-stretch gap-spacing-xs min-w-max pb-spacing-2xs">
+<!-- Metric Tile 1: Open -->
+<div class="flex flex-col justify-between p-spacing-sm rounded-xl bg-surface-container-low w-32 shadow-sm">
+<div class="flex items-center justify-between text-primary">
+<span class="font-body-sm text-body-sm font-medium">Open</span>
+<span class="material-symbols-outlined text-[18px]">inbox</span>
+</div>
+<div class="mt-spacing-xs">
+<span class="font-display-md text-display-md font-bold text-primary-container">7</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block">unresolved</span>
+</div>
+</div>
+<!-- Metric Tile 2: Overdue -->
+<div class="flex flex-col justify-between p-spacing-sm rounded-xl bg-error-container w-32 shadow-sm">
+<div class="flex items-center justify-between text-error">
+<span class="font-body-sm text-body-sm font-medium">Overdue</span>
+<span class="material-symbols-outlined text-[18px]">alarm</span>
+</div>
+<div class="mt-spacing-xs">
+<span class="font-display-md text-display-md font-bold text-on-error-container">2</span>
+<span class="font-body-sm text-body-sm text-error block">breached SLA</span>
+</div>
+</div>
+<!-- Metric Tile 3: Median First Reply -->
+<div class="flex flex-col justify-between p-spacing-sm rounded-xl bg-surface-container-low w-36 shadow-sm">
+<div class="flex items-center justify-between text-secondary">
+<span class="font-body-sm text-body-sm font-medium">Median Reply</span>
+<span class="material-symbols-outlined text-[18px]">avg_time</span>
+</div>
+<div class="mt-spacing-xs">
+<span class="font-display-md text-display-md font-bold text-on-surface">3.2h</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block">target &lt;4.0h</span>
+</div>
+</div>
+<!-- Metric Tile 4: KB Flywheel -->
+<div class="flex flex-col justify-between p-spacing-sm rounded-xl bg-secondary-container w-36 shadow-sm">
+<div class="flex items-center justify-between text-on-secondary-container">
+<span class="font-body-sm text-body-sm font-medium">KB Created</span>
+<span class="material-symbols-outlined text-[18px]">autorenew</span>
+</div>
+<div class="mt-spacing-xs">
+<span class="font-display-md text-display-md font-bold text-on-secondary-container">14</span>
+<span class="font-body-sm text-body-sm text-on-secondary-container block">flywheel syncs</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Filter Chips Scrollable Row -->
+<section aria-label="Filter Presets" class="w-full -mx-margin-screen px-margin-screen overflow-x-auto no-scrollbar">
+<div class="flex items-center gap-spacing-xs min-w-max" role="tablist">
+<!-- Chip 1 (Active) -->
+<button aria-selected="true" class="filter-chip px-spacing-md py-spacing-xs rounded-full bg-primary text-on-primary font-body-sm text-body-sm font-semibold shadow-sm transition-all duration-150" role="tab">
+          All (7)
+        </button>
+<!-- Chip 2 -->
+<button aria-selected="false" class="filter-chip px-spacing-md py-spacing-xs rounded-full bg-surface-container text-on-surface-variant font-body-sm text-body-sm font-medium hover:bg-surface-container-high transition-all duration-150" role="tab">
+          Unassigned (4)
+        </button>
+<!-- Chip 3 -->
+<button aria-selected="false" class="filter-chip px-spacing-md py-spacing-xs rounded-full bg-surface-container text-on-surface-variant font-body-sm text-body-sm font-medium hover:bg-surface-container-high transition-all duration-150" role="tab">
+          Mine (3)
+        </button>
+<!-- Chip 4 -->
+<button aria-selected="false" class="filter-chip flex items-center gap-spacing-3xs px-spacing-md py-spacing-xs rounded-full bg-error-container text-on-error-container font-body-sm text-body-sm font-medium hover:opacity-90 transition-all duration-150" role="tab">
+<span class="material-symbols-outlined text-[15px]">alarm</span>
+<span>Overdue (2)</span>
+</button>
+<!-- Chip 5 -->
+<button aria-selected="false" class="filter-chip px-spacing-md py-spacing-xs rounded-full bg-surface-container text-on-surface-variant font-body-sm text-body-sm font-medium hover:bg-surface-container-high transition-all duration-150" role="tab">
+          Answered
+        </button>
+</div>
+</section>
+<!-- Ticket Cards List -->
+<section aria-label="Escalation Tickets" class="flex flex-col gap-spacing-md">
+<!-- Card 1: Urgent Breached SLA -->
+<article class="ticket-card relative rounded-xl bg-surface-container-lowest shadow-md overflow-hidden transition-all duration-200" id="ticket-1">
+<!-- 4px Left Edge Priority Stripe: Crimson / Alert -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="pl-spacing-lg pr-spacing-md py-spacing-md flex flex-col gap-spacing-sm">
+<!-- Top Row: ID, Category, SLA Badge -->
+<div class="flex items-center justify-between gap-spacing-xs flex-wrap">
+<div class="flex items-center gap-spacing-xs">
+<span class="font-label-code-sm text-label-code-sm font-bold text-on-surface-variant tracking-wider">
+                ESC/2026/0001
+              </span>
+<span class="inline-flex items-center px-spacing-xs py-spacing-3xs rounded-full bg-secondary-container text-on-secondary-container font-body-sm text-body-sm font-medium">
+                Payroll &amp; Salary
+              </span>
+</div>
+<div class="flex items-center gap-spacing-3xs text-error font-label-code-sm text-label-code-sm font-semibold">
+<span class="material-symbols-outlined text-[15px]">alarm</span>
+<span>Overdue by 1h 20m</span>
+</div>
+</div>
+<!-- Question Body -->
+<div class="flex flex-col gap-spacing-3xs">
+<h2 class="font-title-md text-title-md text-on-surface leading-snug font-semibold">
+              Why is my February PF deduction different from January if my salary didn't change?
+            </h2>
+</div>
+<!-- Asker Metadata & Confidence Level -->
+<div class="flex items-center justify-between pt-spacing-2xs">
+<div class="flex items-center gap-spacing-xs">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed font-title-md text-title-md flex items-center justify-center font-bold">
+                AM
+              </div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Aarav Mehta</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Finance • 10m ago</span>
+</div>
+</div>
+<!-- Measured AI Refusal Metric -->
+<div class="flex items-center gap-spacing-3xs px-spacing-xs py-spacing-3xs rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm" title="Measured failure boundary triggering human handoff">
+<span class="material-symbols-outlined text-[14px]">psychology</span>
+<span>conf 0.31</span>
+</div>
+</div>
+<!-- Bottom Action Bar & Status -->
+<div class="flex items-center justify-between pt-spacing-xs">
+<div class="flex items-center gap-spacing-xs">
+<span class="inline-flex items-center gap-spacing-3xs px-spacing-xs py-spacing-3xs rounded-full bg-surface-container text-on-surface-variant font-body-sm text-body-sm font-medium">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+                Open
+              </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant hidden xs:inline">Unassigned</span>
+</div>
+<!-- Quick Claim Action -->
+<button class="claim-btn inline-flex items-center gap-spacing-3xs px-spacing-md py-spacing-xs rounded-full bg-primary text-on-primary font-body-sm text-body-sm font-semibold shadow-sm active:scale-95 transition-transform" data-ticket="ESC/2026/0001" type="button">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+<span>Assign to me</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 2: Normal Ticket (Assigned to current user) -->
+<article class="ticket-card relative rounded-xl bg-surface-container-lowest shadow-md overflow-hidden transition-all duration-200" id="ticket-2">
+<!-- 4px Left Edge Priority Stripe: Slate/Indigo -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-surface-tint"></div>
+<div class="pl-spacing-lg pr-spacing-md py-spacing-md flex flex-col gap-spacing-sm">
+<!-- Top Row: ID, Category, SLA Badge -->
+<div class="flex items-center justify-between gap-spacing-xs flex-wrap">
+<div class="flex items-center gap-spacing-xs">
+<span class="font-label-code-sm text-label-code-sm font-bold text-on-surface-variant tracking-wider">
+                ESC/2026/0002
+              </span>
+<span class="inline-flex items-center px-spacing-xs py-spacing-3xs rounded-full bg-surface-container-high text-on-surface font-body-sm text-body-sm font-medium">
+                Leave Policy
+              </span>
+</div>
+<div class="flex items-center gap-spacing-3xs text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>Due in 5h 12m</span>
+</div>
+</div>
+<!-- Question Body -->
+<div class="flex flex-col gap-spacing-3xs">
+<h2 class="font-title-md text-title-md text-on-surface leading-snug font-semibold">
+              Can I carry forward unused Comp Off into next year?
+            </h2>
+</div>
+<!-- Asker Metadata & Confidence Level -->
+<div class="flex items-center justify-between pt-spacing-2xs">
+<div class="flex items-center gap-spacing-xs">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed font-title-md text-title-md flex items-center justify-center font-bold">
+                SK
+              </div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Sara Khan</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">HR Ops • 2h ago</span>
+</div>
+</div>
+<!-- Measured AI Refusal Metric -->
+<div class="flex items-center gap-spacing-3xs px-spacing-xs py-spacing-3xs rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[14px]">psychology</span>
+<span>conf 0.38</span>
+</div>
+</div>
+<!-- Bottom Action Bar & Status -->
+<div class="flex items-center justify-between pt-spacing-xs">
+<span class="inline-flex items-center gap-spacing-3xs px-spacing-xs py-spacing-3xs rounded-full bg-secondary-container text-on-secondary-container font-body-sm text-body-sm font-medium">
+<span class="material-symbols-outlined text-[15px]">assignment_ind</span>
+<span>Assigned to you</span>
+</span>
+<button class="inline-flex items-center gap-spacing-3xs px-spacing-md py-spacing-xs rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm font-medium active:scale-95 transition-transform" type="button">
+<span>Reply</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 3: Resolved & Published to KB Flywheel -->
+<article class="ticket-card relative rounded-xl bg-surface-container-lowest shadow-md overflow-hidden transition-all duration-200" id="ticket-3">
+<!-- 4px Left Edge Priority Stripe: Emerald Green -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="pl-spacing-lg pr-spacing-md py-spacing-md flex flex-col gap-spacing-sm">
+<!-- Top Row: ID, Category, Status -->
+<div class="flex items-center justify-between gap-spacing-xs flex-wrap">
+<div class="flex items-center gap-spacing-xs">
+<span class="font-label-code-sm text-label-code-sm font-bold text-on-surface-variant tracking-wider">
+                ESC/2026/0003
+              </span>
+<span class="inline-flex items-center px-spacing-xs py-spacing-3xs rounded-full bg-surface-container-high text-on-surface font-body-sm text-body-sm font-medium">
+                Attendance
+              </span>
+</div>
+<div class="flex items-center gap-spacing-3xs">
+<span class="inline-flex items-center gap-spacing-3xs px-spacing-xs py-spacing-3xs rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-code-sm text-label-code-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Answered</span>
+</span>
+</div>
+</div>
+<!-- Question Body -->
+<div class="flex flex-col gap-spacing-3xs">
+<h2 class="font-title-md text-title-md text-on-surface leading-snug font-semibold">
+              Does a missed check-out count as absent for payroll?
+            </h2>
+</div>
+<!-- Snippet Preview -->
+<div class="p-spacing-xs rounded-lg bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+<span class="font-semibold text-on-surface">Resolution:</span> "A missing check-out is flagged as an attendance exception, not immediate absence. Employee has 48h to regularize via biometric regularization portal."
+          </div>
+<!-- Bottom Row: Asker + KB Flywheel Chip -->
+<div class="flex items-center justify-between pt-spacing-xs flex-wrap gap-spacing-xs">
+<div class="flex items-center gap-spacing-xs">
+<div class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-title-md text-title-md flex items-center justify-center font-bold">
+                JD
+              </div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">John Dsouza • Ops</span>
+</div>
+<!-- Published to Knowledge Base Flywheel -->
+<div class="flex items-center gap-spacing-3xs px-spacing-xs py-spacing-3xs rounded-full bg-secondary-container text-on-secondary-container font-label-code-sm text-label-code-sm font-medium">
+<span class="material-symbols-outlined text-[14px]">autorenew</span>
+<span>Published to KB #892</span>
+</div>
+</div>
+</div>
+</article>
+</section>
+<!-- Bottom Floating Assist Strip & Flywheel Telemetry -->
+<aside aria-label="Workflow Guide" class="sticky bottom-spacing-md mt-spacing-xs z-10 w-full rounded-2xl bg-inverse-surface/95 text-inverse-on-surface p-spacing-sm shadow-xl flex flex-col gap-spacing-xs backdrop-blur-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-spacing-xs">
+<span class="material-symbols-outlined text-secondary-fixed text-[20px]">swipe</span>
+<p class="font-body-sm text-body-sm text-inverse-on-surface">
+            Swipe right to claim ticket • Swipe left to reject
+          </p>
+</div>
+<button aria-label="Dismiss hint" class="p-spacing-3xs text-inverse-on-surface hover:text-white" id="dismissCueBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-spacing-2xs">
+<div class="flex items-center gap-spacing-3xs text-tertiary-fixed font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>Knowledge Loop: 88% resolved without re-escalation</span>
+</div>
+<a class="font-body-sm text-body-sm font-semibold text-secondary-fixed hover:underline flex items-center gap-spacing-3xs" href="#flywheel-analytics">
+<span>Flywheel</span>
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+</aside>
+</div>
+</div>
+<script>
+  // Simple interactive filter tabs
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(c => {
+        c.classList.remove('bg-primary', 'text-on-primary');
+        c.classList.add('bg-surface-container', 'text-on-surface-variant');
+        c.setAttribute('aria-selected', 'false');
+      });
+      chip.classList.remove('bg-surface-container', 'text-on-surface-variant');
+      chip.classList.add('bg-primary', 'text-on-primary');
+      chip.setAttribute('aria-selected', 'true');
+    });
+  });
+
+  // Assign to me micro-interaction
+  document.querySelectorAll('.claim-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget;
+      target.innerHTML = `<span class="material-symbols-outlined text-[16px]">check</span><span>Claimed</span>`;
+      target.classList.remove('bg-primary');
+      target.classList.add('bg-tertiary', 'text-on-tertiary');
+      setTimeout(() => {
+        target.closest('.ticket-card').classList.add('translate-x-2', 'opacity-90');
+      }, 300);
+    });
+  });
+
+  // Quick refresh spin animation
+  const refreshBtn = document.getElementById('refreshBtn');
+  const refreshIcon = document.getElementById('refreshIcon');
+  if (refreshBtn && refreshIcon) {
+    refreshBtn.addEventListener('click', () => {
+      refreshIcon.classList.add('rotate-180', 'transition-transform', 'duration-500');
+      setTimeout(() => {
+        refreshIcon.classList.remove('rotate-180', 'duration-500');
+      }, 500);
+    });
+  }
+
+  // Dismiss gesture guide
+  const dismissBtn = document.getElementById('dismissCueBtn');
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', () => {
+      dismissBtn.closest('aside').style.display = 'none';
+    });
+  }
+</script></main></body></html>

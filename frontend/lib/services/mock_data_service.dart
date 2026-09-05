@@ -158,4 +158,62 @@ class MockDataService {
       retrievalConfidence: 0.41,
     ),
   ];
+
+  static List<WorkingScheduleModel> workingSchedules = [
+    WorkingScheduleModel(
+      id: 'ws-01',
+      name: 'Standard 40 Hours / Week',
+      averageHoursPerWeek: 40,
+      daysPerWeek: 5,
+      timezone: 'Asia/Kolkata',
+    ),
+    WorkingScheduleModel(
+      id: 'ws-02',
+      name: 'Night Shift 45 Hours / Week',
+      averageHoursPerWeek: 45,
+      daysPerWeek: 5,
+      timezone: 'Asia/Kolkata',
+    ),
+  ];
+
+  static List<TimeOffTypeModel> timeOffTypes = [
+    TimeOffTypeModel(
+      id: 'tot-01',
+      name: 'Paid Time Off',
+      code: 'PTO',
+      requiresApproval: true,
+      color: '#0d9488', // odooTeal
+    ),
+    TimeOffTypeModel(
+      id: 'tot-02',
+      name: 'Sick Leave',
+      code: 'SL',
+      requiresApproval: false,
+      color: '#e11d48', // odooRed
+    ),
+    TimeOffTypeModel(
+      id: 'tot-03',
+      name: 'Maternity Leave',
+      code: 'ML',
+      requiresApproval: true,
+      color: '#57344f', // odooAubergine
+    ),
+  ];
+
+  static List<SalaryStructureModel> salaryStructures = [
+    SalaryStructureModel(
+      id: 'struct-01',
+      name: 'Regular Employee Base',
+      reference: 'BASE-IN',
+      country: 'India',
+      ruleIds: ['BASIC', 'HRA', 'STD', 'GROSS', 'PF', 'PT', 'NET'],
+    ),
+    SalaryStructureModel(
+      id: 'struct-02',
+      name: 'Contractor Base',
+      reference: 'CONT-IN',
+      country: 'India',
+      ruleIds: ['BASIC', 'TDS', 'NET'],
+    ),
+  ];
 }

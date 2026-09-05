@@ -10,6 +10,11 @@ import 'payrun_screen.dart';
 import 'analytics_screen.dart';
 import 'ai_copilot_screen.dart';
 import 'auth_login_screen.dart';
+import 'user_management_screen.dart';
+import 'employee_directory_screen.dart';
+import 'working_schedules_screen.dart';
+import 'time_off_setup_screen.dart';
+import 'payroll_config_screen.dart';
 
 class HomeNavigationScreen extends StatefulWidget {
   final String userRole;
@@ -81,6 +86,11 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
       const PayrunScreen(),
       const AnalyticsScreen(),
       const AiCopilotScreen(),
+      EmployeeDirectoryScreen(onNavigateTab: _onTabSelected),
+      const WorkingSchedulesScreen(),
+      const TimeOffSetupScreen(),
+      const PayrollConfigScreen(),
+      const UserManagementScreen(),
     ];
 
     return Scaffold(
@@ -216,6 +226,41 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                     title: const Text('AI HR Copilot (RAG)'),
                     selected: _currentIndex == 6,
                     onTap: () { Navigator.pop(context); _onTabSelected(6); },
+                  ),
+                  const Divider(),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                    child: Text('CONFIGURATION & SETUP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.people_alt_outlined, color: AppTheme.odooAubergine),
+                    title: const Text('Employee Master Data'),
+                    selected: _currentIndex == 7,
+                    onTap: () { Navigator.pop(context); _onTabSelected(7); },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.schedule_rounded, color: AppTheme.odooAubergine),
+                    title: const Text('Working Schedules'),
+                    selected: _currentIndex == 8,
+                    onTap: () { Navigator.pop(context); _onTabSelected(8); },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.beach_access_rounded, color: AppTheme.odooAubergine),
+                    title: const Text('Time Off Types & Alloc'),
+                    selected: _currentIndex == 9,
+                    onTap: () { Navigator.pop(context); _onTabSelected(9); },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings_suggest_outlined, color: AppTheme.odooAubergine),
+                    title: const Text('Payroll Rules & Structure'),
+                    selected: _currentIndex == 10,
+                    onTap: () { Navigator.pop(context); _onTabSelected(10); },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.odooAubergine),
+                    title: const Text('User Management (RBAC)'),
+                    selected: _currentIndex == 11,
+                    onTap: () { Navigator.pop(context); _onTabSelected(11); },
                   ),
                   const Divider(),
                   ListTile(

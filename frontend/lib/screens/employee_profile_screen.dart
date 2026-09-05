@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/mock_data_service.dart';
-import '../theme/app_theme.dart';
 import '../widgets/payslip_pdf_dialog.dart';
 
 class EmployeeProfileScreen extends StatefulWidget {
@@ -11,27 +11,31 @@ class EmployeeProfileScreen extends StatefulWidget {
   State<EmployeeProfileScreen> createState() => _EmployeeProfileScreenState();
 }
 
-class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
+  int _selectedTabIndex = 0;
   final emp = MockDataService.currentEmployee;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
   void _openEditEmployeeSheet() {
+    final nameCtrl = TextEditingController(text: emp.name);
+    final titleCtrl = TextEditingController(text: emp.jobTitle);
+    final deptCtrl = TextEditingController(text: emp.department);
+    final emailCtrl = TextEditingController(text: emp.email);
+    final phoneCtrl = TextEditingController(text: emp.workPhone);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return Padding(
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
           padding: EdgeInsets.only(
-            top: 24, left: 20, right: 20,
+            top: 20,
+            left: 20,
+            right: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 24,
           ),
           child: SingleChildScrollView(
@@ -39,62 +43,95 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Edit Employee Profile', style: Theme.of(context).textTheme.headlineMedium),
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFD7F1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.edit_note, color: Color(0xFF714B67), size: 22),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Edit Employee Profile',
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF131B2E),
+                          ),
+                        ),
+                      ],
+                    ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                const Divider(),
+                const SizedBox(height: 16),
+                _buildFormField('Full Name', nameCtrl),
                 const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: 'Aarav Mehta',
-                  decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
-                ),
+                _buildFormField('Job Title', titleCtrl),
                 const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: 'Payroll Specialist',
-                  decoration: const InputDecoration(labelText: 'Job Title', border: OutlineInputBorder()),
-                ),
+                _buildFormField('Department', deptCtrl),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: 'Finance',
-                  decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder()),
-                  items: const [
-                    DropdownMenuItem(value: 'Finance', child: Text('Finance Department')),
-                    DropdownMenuItem(value: 'Tech Ops', child: Text('Tech Ops Department')),
-                    DropdownMenuItem(value: 'Human Resources', child: Text('Human Resources')),
-                  ],
-                  onChanged: (_) {},
-                ),
+                _buildFormField('Work Email', emailCtrl),
                 const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: 'aarav@oxp.com',
-                  decoration: const InputDecoration(labelText: 'Work Email', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: '+91 98765 43210',
-                  decoration: const InputDecoration(labelText: 'Work Phone', border: OutlineInputBorder()),
-                ),
+                _buildFormField('Work Phone', phoneCtrl),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooAubergine, foregroundColor: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('✅ Employee Record Updated Successfully')),
-                      );
-                    },
-                    child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF714B67),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              backgroundColor: Color(0xFF004A31),
+                              behavior: SnackBarBehavior.floating,
+                              content: Text('✓ Employee profile updated in Odoo Master Data'),
+                            ),
+                          );
+                        },
+                        child: const Text('Save Changes'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -104,404 +141,114 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.deepBgDark : const Color(0xFFF4F7FC),
-      appBar: AppBar(
-        backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black87),
-          onPressed: () {},
+  Widget _buildFormField(String label, TextEditingController ctrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF0F172A),
+          ),
         ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppTheme.odooAubergine,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.person, size: 16, color: Colors.white),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Employee Profile Detail',
-              style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 17),
-            ),
-          ],
-        ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100'),
+        const SizedBox(height: 6),
+        Container(
+          height: 46,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F3FF),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: ctrl,
+            style: GoogleFonts.plusJakartaSans(fontSize: 14, color: const Color(0xFF131B2E)),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        ),
+      ],
+    );
+  }
+
+  void _openMessageSheet() {
+    final msgCtrl = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: EdgeInsets.only(
+          top: 20,
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Employee Banner Card (Stitch Exact Match)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.network(
-                              'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150',
-                              width: 64,
-                              height: 64,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Positioned(
-                            top: 0,
-                            left: 0,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppTheme.odooAubergine,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'OXP',
-                                style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 2,
-                            right: 2,
-                            child: Container(
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: AppTheme.emeraldSuccess,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Aarav Mehta',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.emeraldSuccess.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Icon(Icons.circle, size: 6, color: AppTheme.emeraldSuccess),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'ACTIVE',
-                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.emeraldSuccess),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'Payroll Specialist • Finance Depart...',
-                              style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: const [
-                                Text(
-                                  'EMP-84920',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.odooTeal),
-                                ),
-                                Text('  •  ', style: TextStyle(color: Colors.grey)),
-                                Text(
-                                  'Mumbai Hub',
-                                  style: TextStyle(fontSize: 12, color: Colors.black54),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.email_outlined, size: 16, color: AppTheme.odooAubergine),
-                        const SizedBox(width: 6),
-                        const Text('aarav@oxp.com', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                        const Spacer(),
-                        Container(height: 16, width: 1, color: Colors.grey.shade300),
-                        const Spacer(),
-                        const Icon(Icons.phone_outlined, size: 16, color: AppTheme.odooTeal),
-                        const SizedBox(width: 6),
-                        const Text('+91 98765 432...', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // 2. OPERATIONAL HUB (Smart Cards)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  'OPERATIONAL HUB',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 0.5),
-                ),
-                Text(
-                  'Filtered: Aarav M.',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.odooTeal),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () => widget.onNavigateTab?.call(2), // Time Off tab
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F2FE), // Light Blue
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFBAE6FD)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Icon(Icons.confirmation_number, size: 18, color: Colors.redAccent),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0369A1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  '3 Pending',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            '3 Req.',
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0369A1)),
-                          ),
-                          const Text(
-                            'Time Off Hub',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => widget.onNavigateTab?.call(3), // Contracts tab
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFCE7F3), // Light Pink
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFBCFE8)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Icon(Icons.description, size: 18, color: Colors.amber),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF831843),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'Active',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            '2 (1 Current)',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF831843)),
-                          ),
-                          const Text(
-                            'Contracts & Terms',
-                            style: TextStyle(fontSize: 11, color: Color(0xFFBE185D), fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // 3. Segmented Tabs
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE2E8F0),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
-                  ],
-                ),
-                labelColor: AppTheme.odooAubergine,
-                unselectedLabelColor: Colors.black54,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                tabs: const [
-                  Tab(text: 'Work\nInformation'),
-                  Tab(text: 'Private Info'),
-                  Tab(text: 'Payroll Settings'),
-                ],
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
-            // 4. Tab Content Cards
-            SizedBox(
-              height: 520,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildWorkInformationContent(),
-                  _buildPrivateInfoContent(),
-                  _buildPayrollSettingsContent(),
-                ],
-              ),
+            Text(
+              'Send Internal Message to Aarav Mehta',
+              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ],
-        ),
-      ),
-      // 5. Floating Bottom Action Bar (Stitch Exact Match)
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.surfaceDark : Colors.white,
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, -4)),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B4668), // Aubergine
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: _openEditEmployeeSheet,
-                  icon: const Icon(Icons.edit_note, size: 20),
-                  label: const Text('Edit Employee', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 6),
+            Text(
+              'Message will be delivered to Odoo Enterprise Discuss channel.',
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A)),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F3FF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TextField(
+                controller: msgCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Type your message or payroll note here...',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(12),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.black87),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF714B67),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  elevation: 0,
+                ),
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => PayslipPdfDialog(payslip: MockDataService.payslips.first),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.share_outlined, color: Colors.black87),
-                onPressed: () {
+                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('⚡ Profile Link & OAuth Pass Copied to Clipboard')),
+                    const SnackBar(
+                      backgroundColor: Color(0xFF004A31),
+                      behavior: SnackBarBehavior.floating,
+                      content: Text('✓ Message dispatched to Aarav Mehta on Odoo Discuss'),
+                    ),
                   );
                 },
+                child: const Text('Send Message'),
               ),
             ),
           ],
@@ -510,160 +257,508 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
     );
   }
 
-  Widget _buildWorkInformationContent() {
-    return Column(
-      children: [
-        // Card A: Organizational Mapping
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+  void _openManagerProfileDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            const CircleAvatar(
+              radius: 18,
+              backgroundColor: Color(0xFF714B67),
+              child: Icon(Icons.person, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Text('Sara Khan', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Direct Manager • Executive Director', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey[700])),
+            const SizedBox(height: 8),
+            Text('Department: Finance & Global Operations', style: GoogleFonts.plusJakartaSans(fontSize: 13)),
+            const SizedBox(height: 4),
+            Text('Email: sara.khan@oxp.com', style: GoogleFonts.jetBrainsMono(fontSize: 12, color: const Color(0xFF00696E))),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAF8FF),
+      body: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                // Top Ambient Glass Header Strip
+                _buildHeaderStrip(),
+
+                // Scrollable Content
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                    children: [
+                      // Hero Identity Card
+                      _buildHeroIdentityCard(),
+
+                      const SizedBox(height: 18),
+
+                      // Linked Operations Ribbon
+                      _buildLinkedOperationsRibbon(),
+
+                      const SizedBox(height: 18),
+
+                      // Segmented Navigation Tabs
+                      _buildSegmentedTabs(),
+
+                      const SizedBox(height: 16),
+
+                      // Active Tab Content
+                      if (_selectedTabIndex == 0)
+                        _buildWorkInfoTab()
+                      else if (_selectedTabIndex == 1)
+                        _buildPrivateInfoTab()
+                      else
+                        _buildPayrollTab(),
+
+                      const SizedBox(height: 16),
+
+                      // Weekly Activity Metric Summary Mini-Panel
+                      _buildWeeklyActivityMiniPanel(),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Bottom Floating Glass Action Bar
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: _buildBottomActionBar(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderStrip() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: const [
-                      Icon(Icons.corporate_fare, color: AppTheme.odooTeal, size: 20),
-                      SizedBox(width: 8),
-                      Text('Organizational Mapping', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ],
+              InkWell(
+                onTap: () => Navigator.maybePop(context),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF2F3FF),
+                    shape: BoxShape.circle,
                   ),
-                  const Text('Corp ID #302', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('DEPARTMENT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      SizedBox(height: 2),
-                      Text('Finance', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                    ],
+                  child: const Center(
+                    child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.account_balance, size: 18, color: Colors.black54),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(12)),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 14,
-                      backgroundImage: NetworkImage('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100'),
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('DIRECT MANAGER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black54)),
-                        Text('Sara Khan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const Spacer(),
-                    const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.odooTeal),
-                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('LEGAL COMPANY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      SizedBox(height: 2),
-                      Text('OXP Pvt Ltd', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    ],
+                  Text(
+                    'EMPLOYEE MASTER 360',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF00696E),
+                    ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: AppTheme.emeraldSuccess.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-                    child: const Text('GST-IN Active', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.emeraldSuccess)),
+                  Text(
+                    emp.name,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF131B2E),
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 12),
-        // Card B: Scheduling & Deployment
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF2F3FF),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF4E444A)),
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('⚡ Odoo Actions: Duplicate • Archive • Print Badge')),
+                );
+              },
+            ),
           ),
-          child: Column(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroIdentityCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Row(
-                    children: [
-                      Icon(Icons.badge_outlined, color: AppTheme.odooTeal, size: 20),
-                      SizedBox(width: 8),
-                      Text('Scheduling & Deployment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ],
+              // Avatar with Live Pulse Status
+              Stack(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF714B67),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.network(
+                      'https://lh3.googleusercontent.com/aida-public/AB6AXuCbsoTZ0Vx9N04FD4eL7UQMy_-yAeybZT8_7RHikoeGs9c0SVRwpRjiGrGotFyDJ04pM2GKizqU9K7o224NaNtpnByX7QOUPjpqHkhoDENWwXg9qncIehOXYyq2mD99puGihph51lABkPxJ7-nLZQUnVhtnMiWcUxndCHpKSifBjAXMvmNNO8h-674VvcYIBj2MgK1P_Mgi8FE8gH7JexHEFPQ_cTnvwt-zbEJHQBXOBEgVMYX01mSY',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Text(
+                            'AM',
+                            style: GoogleFonts.outfit(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  Icon(Icons.more_horiz, color: Colors.grey),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF006443),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2.5),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('WORKING SCHEDULE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      SizedBox(height: 2),
-                      Text('Standard Full-Time Flex', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                  Container(
+              const SizedBox(width: 14),
+              // Main Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          emp.name,
+                          style: GoogleFonts.outfit(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF131B2E),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF006443),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'EMP-4092',
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${emp.jobTitle} • ${emp.department}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: const Color(0xFF4E444A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Tags row
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE2E7FF),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 5,
+                                height: 5,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF00696E),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Full-time Regular',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF131B2E),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF92EFF5),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Level 3',
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF006E73),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // Quick Contact Row
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF2F3FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.mail_outline, color: Color(0xFF00696E), size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      emp.email,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF131B2E)),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('📋 Copied ${emp.email} to clipboard')),
+                    );
+                  },
+                  child: const Icon(Icons.content_copy, size: 15, color: Color(0xFF80747A)),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF2F3FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.phone_outlined, color: Color(0xFF00696E), size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      emp.workPhone,
+                      style: GoogleFonts.jetBrainsMono(fontSize: 12.5, color: const Color(0xFF131B2E)),
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00696E),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFFCCFBF1), borderRadius: BorderRadius.circular(12)),
-                    child: const Text('40 Hours / Week', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.odooTeal)),
+                    minimumSize: Size.zero,
+                    elevation: 0,
                   ),
-                ],
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('📞 Dialing ${emp.workPhone}...')),
+                    );
+                  },
+                  icon: const Icon(Icons.call, size: 13),
+                  label: Text('Call', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinkedOperationsRibbon() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'LINKED OPERATIONS',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.8,
+                color: const Color(0xFF4E444A),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('WORK LOCATION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      SizedBox(height: 2),
-                      Text('Mumbai Head Office', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                      Text('BKC Tower 3, Floor 14', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                    ],
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.location_city, size: 20, color: AppTheme.odooAubergine),
-                  ),
-                ],
+            ),
+            Text(
+              'Auto-Synced',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF00696E),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              // Smart Button 1: Time Off
+              _buildSmartButton(
+                bgColor: const Color(0xFF92EFF5),
+                textColor: const Color(0xFF006E73),
+                icon: Icons.confirmation_number_outlined,
+                metric: '3 Requests',
+                label: 'Time Off',
+                onTap: () => widget.onNavigateTab?.call(2),
+              ),
+              const SizedBox(width: 8),
+              // Smart Button 2: Contracts
+              _buildSmartButton(
+                bgColor: const Color(0xFF57344F),
+                textColor: Colors.white,
+                icon: Icons.description_outlined,
+                metric: '2 (1 Active)',
+                label: 'Contracts',
+                onTap: () => widget.onNavigateTab?.call(3),
+              ),
+              const SizedBox(width: 8),
+              // Smart Button 3: Attendance
+              _buildSmartButton(
+                bgColor: const Color(0xFFE2E7FF),
+                textColor: const Color(0xFF131B2E),
+                icon: Icons.schedule_outlined,
+                metric: '14 Days',
+                label: 'Attendance',
+                onTap: () => widget.onNavigateTab?.call(1),
+              ),
+              const SizedBox(width: 8),
+              // Smart Button 4: Allocations
+              _buildSmartButton(
+                bgColor: const Color(0xFF714B67),
+                textColor: Colors.white,
+                icon: Icons.donut_large_outlined,
+                metric: '20 Days',
+                label: 'Allocations',
+                onTap: () => widget.onNavigateTab?.call(2),
               ),
             ],
           ),
@@ -672,39 +767,729 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
     );
   }
 
-  Widget _buildPrivateInfoContent() {
+  Widget _buildSmartButton({
+    required Color bgColor,
+    required Color textColor,
+    required IconData icon,
+    required String metric,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 140,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Icon(icon, color: textColor, size: 18),
+                  ),
+                ),
+                Icon(Icons.arrow_forward, color: textColor.withValues(alpha: 0.7), size: 16),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              metric,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.5,
+                color: textColor.withValues(alpha: 0.85),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedTabs() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Private Identification & Statutory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          SizedBox(height: 12),
-          Text('Resident Address: Bandra West, Mumbai, MH'),
-          Divider(),
-          Text('Bank Account: HDFC Bank (Account •••• 4321)'),
-          Divider(),
-          Text('PAN Number: ABCDE1234F (Verified)'),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAEDFF),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          _buildTabItem('Work Info', 0),
+          _buildTabItem('Private Info', 1),
+          _buildTabItem('Payroll', 2),
         ],
       ),
     );
   }
 
-  Widget _buildPayrollSettingsContent() {
+  Widget _buildTabItem(String label, int index) {
+    final isSelected = _selectedTabIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedTabIndex = index),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSelected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x14000000),
+                      blurRadius: 4,
+                      offset: Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? const Color(0xFF131B2E) : const Color(0xFF4E444A),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkInfoTab() {
+    return Column(
+      children: [
+        // Active Status Ribbon Banner
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF006443),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.verified_user, color: Color(0xFF56E5A9), size: 20),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CURRENT EMPLOYMENT STATUS',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.6,
+                          color: const Color(0xFF56E5A9),
+                        ),
+                      ),
+                      Text(
+                        'Active Employee',
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF004A31),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'OXP/2024/09',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF6FFBBE),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Work Organization Card
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Work Organization',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF131B2E),
+                    ),
+                  ),
+                  Text(
+                    'HR-REG-301',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 11,
+                      color: const Color(0xFF80747A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Department
+              _buildOrgRow(
+                icon: Icons.account_tree_outlined,
+                iconColor: const Color(0xFF00696E),
+                title: 'Department',
+                value: emp.department,
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCCF7FA),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.groups, size: 13, color: Color(0xFF006E73)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Team 04',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF006E73),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const Divider(height: 20),
+
+              // Direct Manager
+              _buildOrgRow(
+                icon: Icons.supervisor_account_outlined,
+                iconColor: const Color(0xFF714B67),
+                title: 'Direct Manager',
+                value: 'Sara Khan',
+                trailing: InkWell(
+                  onTap: _openManagerProfileDialog,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F3FF),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircleAvatar(
+                          radius: 9,
+                          backgroundColor: Color(0xFF714B67),
+                          child: Text('SK', style: TextStyle(color: Colors.white, fontSize: 8)),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Profile',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 3),
+                        const Icon(Icons.arrow_forward, size: 12, color: Color(0xFF4E444A)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const Divider(height: 20),
+
+              // Working Schedule
+              _buildOrgRow(
+                icon: Icons.calendar_today_outlined,
+                iconColor: const Color(0xFF00696E),
+                title: 'Working Schedule',
+                value: '40 Hours / Week',
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAEDFF),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'CON/SCHED-01',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF131B2E),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.tune, size: 12, color: Color(0xFF131B2E)),
+                    ],
+                  ),
+                ),
+              ),
+
+              const Divider(height: 20),
+
+              // Work Location
+              _buildOrgRow(
+                icon: Icons.corporate_fare_outlined,
+                iconColor: const Color(0xFFBA1A1A),
+                title: 'Work Location',
+                value: 'Mumbai Head Office',
+                subtitle: 'Building B, Floor 4 • Desk B-412',
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F3FF),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Zone IN-1',
+                    style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+
+              const Divider(height: 20),
+
+              // Desk Extension
+              _buildOrgRow(
+                icon: Icons.desk_outlined,
+                iconColor: const Color(0xFF00696E),
+                title: 'Desk Extension',
+                value: '+91 98765 43210',
+                trailing: Text(
+                  'Ext. #482',
+                  style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF80747A)),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // Odoo Linked System Account
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F3FF),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.manage_accounts_outlined, color: Color(0xFF714B67), size: 18),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Odoo Linked System Account',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF4E444A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Icon(Icons.check_circle, color: Color(0xFF006443), size: 16),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'aarav@company.com',
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF131B2E),
+                            ),
+                          ),
+                          Text(
+                            'HR Payroll User • Automated Sync Active',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF00696E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrivateInfoTab() {
     return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Payroll Configuration', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          SizedBox(height: 12),
-          Text('Salary Structure: Regular Pay Structure (IND)'),
-          Divider(),
-          Text('Monthly Basic Wage: ₹100,000.00'),
-          Divider(),
-          Text('PF Contribution: Enabled (6.0%)'),
+        children: [
+          Text(
+            'Private Contact & Identity',
+            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          _buildOrgRow(icon: Icons.home_outlined, iconColor: const Color(0xFF714B67), title: 'Home Address', value: '402 Sunrise Heights, Andheri East, Mumbai 400069'),
+          const Divider(height: 20),
+          _buildOrgRow(icon: Icons.badge_outlined, iconColor: const Color(0xFF00696E), title: 'National ID / PAN', value: 'ABCDE1234F', trailing: const Text('Verified', style: TextStyle(color: Color(0xFF006443), fontWeight: FontWeight.bold, fontSize: 12))),
+          const Divider(height: 20),
+          _buildOrgRow(icon: Icons.account_balance_outlined, iconColor: const Color(0xFF714B67), title: 'Bank Account (Salary)', value: 'HDFC Bank • •••• 8829', trailing: const Text('IFSC: HDFC0001234', style: TextStyle(fontSize: 11, color: Colors.grey))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayrollTab() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Active Salary Structure',
+                style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(color: const Color(0xFFCCF7FA), borderRadius: BorderRadius.circular(16)),
+                child: Text('RULE-IND-REG-01', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006E73))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildOrgRow(icon: Icons.currency_rupee, iconColor: const Color(0xFF006443), title: 'Monthly Base Salary', value: '₹ 85,000.00 / Mo'),
+          const Divider(height: 20),
+          _buildOrgRow(icon: Icons.add_circle_outline, iconColor: const Color(0xFF00696E), title: 'Allowances (HRA + Special)', value: '₹ 28,500.00 / Mo'),
+          const Divider(height: 20),
+          _buildOrgRow(icon: Icons.remove_circle_outline, iconColor: const Color(0xFFBA1A1A), title: 'Statutory Deductions (PF + TDS)', value: '- ₹ 12,400.00 / Mo'),
+          const Divider(height: 20),
+          _buildOrgRow(icon: Icons.account_balance_wallet_outlined, iconColor: const Color(0xFF714B67), title: 'Estimated Net Monthly', value: '₹ 1,01,100.00', trailing: const Text('Gross: ₹ 1.13L', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF714B67)))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrgRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String value,
+    String? subtitle,
+    Widget? trailing,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F3FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Icon(icon, color: iconColor, size: 18),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: const Color(0xFF4E444A),
+                      ),
+                    ),
+                    Text(
+                      value,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
+                    if (subtitle != null)
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: const Color(0xFF80747A),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        ?trailing,
+      ],
+    );
+  }
+
+  Widget _buildWeeklyActivityMiniPanel() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAEDFF),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(Icons.bar_chart, color: Color(0xFF714B67), size: 20),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pay Cycle Accrual (Nov)',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      color: const Color(0xFF4E444A),
+                    ),
+                  ),
+                  Text(
+                    '158.5 / 168.0 Hrs',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF131B2E),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Circular progress indicator (94%)
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                const CircularProgressIndicator(
+                  value: 0.94,
+                  strokeWidth: 4,
+                  backgroundColor: Color(0xFFDAE2FD),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00696E)),
+                ),
+                Center(
+                  child: Text(
+                    '94%',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF131B2E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActionBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        children: [
+          // PDF Export Button
+          InkWell(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => PayslipPdfDialog(payslip: MockDataService.payslips.first),
+              );
+            },
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF2F3FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Icon(Icons.picture_as_pdf, color: Color(0xFF131B2E), size: 19),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // Message Button
+          InkWell(
+            onTap: _openMessageSheet,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF2F3FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Icon(Icons.chat_outlined, color: Color(0xFF131B2E), size: 19),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          // Edit Employee Primary Button
+          Expanded(
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF714B67),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                elevation: 2,
+              ),
+              onPressed: _openEditEmployeeSheet,
+              icon: const Icon(Icons.edit_note, size: 18),
+              label: Text(
+                'Edit Employee',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

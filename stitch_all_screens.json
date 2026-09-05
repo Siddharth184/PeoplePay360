@@ -1,0 +1,707 @@
+{
+  "screens": [
+    {
+      "screenshot": {
+        "name": "projects/3583947416522068317/screens/9c4b812edf2c4c63875651d09fef4e3e/fileEntries/screenshot",
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1WQWjUTlLlbdrzEoqav_9atVOviVD_1r7bNOTUHP5UK8VKHYDurtwpqVB47uHWzjhD04y78di5bGCkd8PF0JR4Sl7Yqinv__1YY5Q2lxzIRH-3CZIBFxgXHtSYXEm6P1U9hDe65lRw1tK1ZhXFN0sMo8hlosdW3Tsce0lXqeyi0DJuNXr-WR6TMAayzs5hdgJKiD9LF1kADyyXE-vpNcgdS1pheOUSfrOZU-fTF6QviBslMDHaY0gbo16A"
+      },
+      "htmlCode": {
+        "name": "projects/3583947416522068317/screens/9c4b812edf2c4c63875651d09fef4e3e/fileEntries/html",
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1YWJhODdlYzY4ZGQwNzc5YTA2YWZmMGE3MTBlEgsSBxDUhaTSoQEYAZIBIwoKcHJvamVjdF9pZBIVQhMzNTgzOTQ3NDE2NTIyMDY4MzE3&filename=&opi=89354086",
+        "mimeType": "text/html"
+      },
+      "id": "9c4b812edf2c4c63875651d09fef4e3e",
+      "generatedBy": "figaro_agent",
+      "width": "780",
+      "height": "2534",
+      "title": "Admin User Management Directory",
+      "prompt": "Design an elite Admin User Management mobile directory screen for \"PeoplePay360\" (Screen ID: STITCH_USER_MANAGEMENT_LIST, target route: /settings/users) based on Odoo 18 Enterprise Modern + Apple HIG + Glassmorphism aesthetic.\n\nTop Navigation & Header:\n- Top bar with back arrow button, centered title \"User Management\", subtitle pill or small caption \"ADMIN ONLY • RBAC v2026.1\".\n- Top right action button: \"+ New User\" pill button in Aubergine (#714B67) with white text and plus icon.\n\nSearch & Filter System:\n- Debounced search input bar: magnifying glass icon, placeholder \"Search users, employees, or email...\", clear button.\n- Horizontal scrollable filter chips with count indicators:\n  * \"All (5)\" [Active state: Aubergine #714B67 fill, white text, pill shape, soft shadow]\n  * \"Admin (1)\" [Inactive: #FFFFFF with subtle 1px border #E2E8F0, muted text #64748B]\n  * \"Payroll Admin (1)\" [Inactive]\n  * \"Payroll User (1)\" [Inactive]\n  * \"Time Off Admin (1)\" [Inactive]\n  * \"Employee (1)\" [Inactive]\n\nDirectory Summary Metrics:\n- Compact stats strip: \"Total Users: 5 • 5 Active • 0 Suspended\" with an export icon and bulk actions trigger.\n\nModern User Cards (Odoo Enterprise Glassmorphic Cards, 16px radius, soft border, subtle elevation):\n1. Card 1 (Aarav Mehta):\n   - Avatar: Circular badge with initials \"AM\" in teal gradient (#00A09D to #017E84) with white bold lettering.\n   - Name & Email: \"Aarav Mehta\" (16px SemiBold #0F172A), \"aarav@company.com\" (13px #64748B).\n   - Linked Employee tag: Chip with link icon \"Linked: Aarav Mehta (Finance)\" (#F1F5F9 bg).\n   - Role badge: \"Payroll User\" (Teal badge #017E84 / #E6FFFA).\n   - Status: Green status indicator dot + \"Active\" (#10B981).\n   - Right chevron or 3-dots action icon.\n\n2. Card 2 (Maya Shah):\n   - Avatar: Circular badge with initials \"MS\" in purple/aubergine gradient (#714B67 to #9333EA).\n   - Name & Email: \"Maya Shah\", \"maya@company.com\".\n   - Linked Employee: \"Linked: Maya Shah (People Ops)\".\n   - Role badge: \"Time Off Admin\" (Amber/Indigo badge).\n   - Status: Green dot + \"Active\".\n\n3. Card 3 (Rohan Patel - demonstrating left swipe reveal action tray):\n   - Show Card 3 with quick slide-out actions preview:\n     * Card content shifted slightly to reveal action buttons on the right:\n     * \"Edit Roles\" button in Aubergine (#714B67) with pencil/shield icon.\n     * \"Deactivate\" button in Crimson Red (#EF4444) with ban/trash icon.\n   - Details: Initials \"RP\", \"rohan@company.com\", Role: \"Time Off User\", Status: \"Active\".\n\n4. Card 4 (Nisha Rao):\n   - Avatar: Circular badge with initials \"NR\" in blue/cyan gradient.\n   - Name & Email: \"Nisha Rao\", \"nisha@company.com\".\n   - Linked Employee: \"Linked: Nisha Rao (Payroll Lead)\".\n   - Role badge: \"Payroll Admin\" (Aubergine badge #714B67).\n   - Status: Green dot + \"Active\".\n\n5. Card 5 (Alex Morgan - Admin):\n   - Avatar: Circular badge with initials \"AM\" with Crown / Star indicator for SysAdmin.\n   - Name & Email: \"Alex Morgan (You)\", \"alex.morgan@enterprise.odoo.com\".\n   - Role badge: \"System Admin\" (High-priority badge).\n   - Status: Green dot + \"Active\".\n\nInteractions & Bottom Sheet Peek:\n- Subtle micro-hint bar or floating action reminder: \"Tap card to edit user permissions • Swipe left for quick actions\".\n- Floating \"+ Quick Invite\" or bottom navigation matching PeoplePay360 mobile app.\n- Ensure cohesive typography using Outfit / Plus Jakarta Sans, Odoo Aubergine (#714B67), Odoo Teal (#017E84), and slate neutrals. Include {{DATA:IMAGE:IMAGE_4}} brand logo in header if appropriate.\n## Available Images\nYou MUST include the following images in this design. You must reference them\nby putting their exact placeholder IDs in `src` attributes or CSS\n`background-image` rules. Do NOT use external URLs or generate new\nplaceholders. Preserve these IDs exactly as written. Read each image's\nDescription to understand its subject, intended section, and visual role.\n\n- {{DATA:IMAGE:IMAGE_4}}\n  Description: Brand logo. - Primary color: #714b67\n- Font: outfit\n- Mode: light\n- Roundness: rounded-md\n\n  Dimensions: 128x128\n  Aspect Ratio: 1.00\n  Colors: #00A09D, #017E84, #4A2E43, #714B67\n",
+      "name": "projects/3583947416522068317/screens/9c4b812edf2c4c63875651d09fef4e3e",
+      "theme": {
+        "colorMode": "LIGHT",
+        "font": "OUTFIT",
+        "roundness": "ROUND_EIGHT",
+        "customColor": "#714b67",
+        "headlineFont": "OUTFIT",
+        "bodyFont": "PLUS_JAKARTA_SANS",
+        "labelFont": "JETBRAINS_MONO",
+        "namedColors": {
+          "tertiary_container": "#006443",
+          "outline_variant": "#d1c3ca",
+          "primary_fixed_dim": "#e9b8d9",
+          "tertiary": "#004a31",
+          "outline": "#80747a",
+          "tertiary_fixed_dim": "#4edea3",
+          "on_secondary_container": "#006e73",
+          "surface_container_low": "#f2f3ff",
+          "surface_container_lowest": "#ffffff",
+          "on_error_container": "#93000a",
+          "background": "#faf8ff",
+          "secondary_fixed_dim": "#78d5db",
+          "on_tertiary_container": "#56e5a9",
+          "primary": "#57344f",
+          "error": "#ba1a1a",
+          "secondary_container": "#92eff5",
+          "on_primary": "#ffffff",
+          "error_container": "#ffdad6",
+          "inverse_on_surface": "#eef0ff",
+          "on_tertiary_fixed_variant": "#005236",
+          "secondary": "#00696e",
+          "surface_container_high": "#e2e7ff",
+          "inverse_surface": "#283044",
+          "on_error": "#ffffff",
+          "on_surface_variant": "#4e444a",
+          "surface_container": "#eaedff",
+          "tertiary_fixed": "#6ffbbe",
+          "on_secondary_fixed_variant": "#004f53",
+          "on_primary_fixed_variant": "#5f3b56",
+          "secondary_fixed": "#95f1f8",
+          "on_secondary": "#ffffff",
+          "on_primary_fixed": "#2f1029",
+          "on_background": "#131b2e",
+          "surface_dim": "#d2d9f4",
+          "on_secondary_fixed": "#002022",
+          "on_tertiary": "#ffffff",
+          "on_surface": "#131b2e",
+          "surface_variant": "#dae2fd",
+          "surface_tint": "#79526f",
+          "primary_container": "#714b67",
+          "surface_container_highest": "#dae2fd",
+          "on_primary_container": "#f0bfe0",
+          "surface_bright": "#faf8ff",
+          "on_tertiary_fixed": "#002113",
+          "primary_fixed": "#ffd7f1",
+          "surface": "#faf8ff",
+          "inverse_primary": "#e9b8d9"
+        },
+        "colorVariant": "FIDELITY",
+        "overridePrimaryColor": "#714b67",
+        "overrideSecondaryColor": "#017e84",
+        "overrideTertiaryColor": "#10b981",
+        "overrideNeutralColor": "#0f172a",
+        "spacingScale": 2,
+        "typography": {
+          "body-lg": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24px",
+            "letterSpacing": "0"
+          },
+          "title-md": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "17px",
+            "fontWeight": "600",
+            "lineHeight": "24px",
+            "letterSpacing": "-0.005em"
+          },
+          "label-code-sm": {
+            "fontFamily": "JetBrains Mono",
+            "fontSize": "11px",
+            "fontWeight": "500",
+            "lineHeight": "14px",
+            "letterSpacing": "0.02em"
+          },
+          "body-sm": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "lineHeight": "16px",
+            "letterSpacing": "0.01em"
+          },
+          "display-md": {
+            "fontFamily": "Outfit",
+            "fontSize": "26px",
+            "fontWeight": "600",
+            "lineHeight": "34px",
+            "letterSpacing": "-0.015em"
+          },
+          "label-code-md": {
+            "fontFamily": "JetBrains Mono",
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "lineHeight": "18px",
+            "letterSpacing": "-0.01em"
+          },
+          "label-code-lg": {
+            "fontFamily": "JetBrains Mono",
+            "fontSize": "18px",
+            "fontWeight": "600",
+            "lineHeight": "24px",
+            "letterSpacing": "-0.02em"
+          },
+          "display-lg": {
+            "fontFamily": "Outfit",
+            "fontSize": "32px",
+            "fontWeight": "700",
+            "lineHeight": "40px",
+            "letterSpacing": "-0.02em"
+          },
+          "body-md": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "20px",
+            "letterSpacing": "0"
+          },
+          "title-lg": {
+            "fontFamily": "Outfit",
+            "fontSize": "20px",
+            "fontWeight": "600",
+            "lineHeight": "28px",
+            "letterSpacing": "-0.01em"
+          }
+        },
+        "spacing": {
+          "gutter-mobile": "1rem",
+          "spacing-xs": "0.5rem",
+          "spacing-3xs": "0.125rem",
+          "spacing-2xl": "2rem",
+          "spacing-lg": "1.25rem",
+          "gutter-tablet": "1.5rem",
+          "spacing-md": "1rem",
+          "spacing-2xs": "0.25rem",
+          "spacing-xl": "1.5rem",
+          "spacing-sm": "0.75rem",
+          "margin-screen": "1rem",
+          "spacing-3xl": "2.5rem"
+        },
+        "headlineFontFamily": "Outfit",
+        "bodyFontFamily": "Plus Jakarta Sans",
+        "labelFontFamily": "JetBrains Mono"
+      },
+      "deviceType": "MOBILE",
+      "screenType": "DESIGN",
+      "screenMetadata": {
+        "agentType": "PRO_AGENT",
+        "status": "COMPLETE"
+      },
+      "designSystem": {
+        "name": "assets/d02c0868d5854e279ce1d1fd08b4fe41",
+        "designSystem": {
+          "displayName": "Aubergine Glass & Slate",
+          "styleGuidelines": "## Brand & Style\n\nThis design system blends the operational rigor of modern enterprise ERP interfaces with the tactile fluidity of Apple Human Interface Guidelines and frosted glassmorphism. Built specifically for mission-critical mobile HR and payroll operations, it balances executive prestige with day-to-day administrative speed.\n\n### Visual Signature\n- **Style Archetype:** Enterprise Modern Glassmorphism. Translucent floating surfaces, crisp 1px structural boundaries, subtle specular edge reflections, and ambient depth tinted with brand pigments.\n- **Tone & Mood:** Authoritative, dependable, frictionless, and premium. Complex payroll data and approval workflows feel serene and legible rather than overwhelming.\n- **Form & Tactility:** Glass cards float over a calibrated slate backdrop, anchoring dense financial figures and employee statuses with high legibility and clear touch affordances.\n\n## Layout & Spacing\n\nThis design system uses a strict 4px/8px incremental base grid tuned for handheld enterprise usage:\n\n- **Mobile Grid:** Single-column layout with 16px screen margins (`margin-screen`) and 12px or 16px vertical gutters between card modules. All primary tap targets are pinned to a minimum hit box of 48px × 48px.\n- **Tablet / Split View Grid:** 6-column fluid responsive grid with 24px gutters, enabling side-by-side employee list navigation and detailed payslip previews without contextual switching.\n- **Safe Area Insets:** Fixed bottom action ribbons integrate dynamic safe-area padding (`env(safe-area-inset-bottom) + 12px`) to float smoothly above mobile home indicators.\n\n## Elevation & Depth\n\nVisual depth is achieved through layered frosted glass combined with soft, aubergine-tinted ambient shadows. This keeps the interface airy while differentiating interactive controls from fixed backdrops.\n\n### Elevation Levels\n\n- **Base (Level 0 - Ground):** Flat `#F8FAFC` (Light) or `#0B0F17` (Dark). No elevation.\n- **Level 1 (Card & Module Layer):** Background `rgba(255, 255, 255, 0.85)` with `backdrop-filter: blur(8px)`, bound by a 1px solid border of `#E2E8F0`. Shadow: `0 4px 16px -2px rgba(113, 75, 103, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04)`.\n- **Level 2 (Floating Controls & Smart Buttons):** Elevated actionable glass. Shadow: `0 8px 24px -4px rgba(113, 75, 103, 0.12), 0 2px 6px -1px rgba(1, 126, 132, 0.08)`.\n- **Level 3 (Modals, Action Drawers, & Sticky Footers):** Background `rgba(255, 255, 255, 0.94)` with `backdrop-filter: blur(16px)` and top border highlight `rgba(255, 255, 255, 0.6)`. Shadow: `0 20px 40px -8px rgba(15, 23, 42, 0.2), 0 0 1px 1px rgba(113, 75, 103, 0.08)`.\n- **Dark Mode Elevation:** Replace white translucent fills with `rgba(22, 31, 48, 0.75)` and tune aubergine cast shadows to `rgba(0, 0, 0, 0.45)` with a 1px inner specular glow `rgba(255, 255, 255, 0.06)`.\n\n## Components\n\n### Buttons\n- **Primary Aubergine:** Full capsule (24px radius), 48px height. Background `#714B67`, text `#FFFFFF`, subtle inner bevel `inset 0 1px 0 rgba(255, 255, 255, 0.2)`. Active press drops opacity to 0.9 and scales to 0.98.\n- **Smart / Stat Buttons (Teal Accent):** Capsule button with `#017E84` tint at 10% background fill, `#017E84` 1px border, and `#017E84` bold label text with an embedded JetBrains Mono numerical badge.\n- **Secondary Glass:** Translucent `#FFFFFF` (60% opacity), 1px border `#E2E8F0`, text `#0F172A`.\n\n### Cards & Payslip Modules\n- 16px corner radius, 1px border `#E2E8F0`, `backdrop-filter: blur(8px)`.\n- **Financial Header:** Outfit Bold for net pay display, accompanied by a JetBrains Mono currency code (`USD`, `EUR`) and an Emerald Green `#10B981` status pill.\n- **Inner Dividers:** Subtle dotted or translucent lines `rgba(226, 232, 240, 0.8)` separating gross earnings, tax withholdings, and net distributions.\n\n### Input Fields & Search Bars\n- 12px corner radius, 44px height, background `rgba(255, 255, 255, 0.9)`.\n- Border is 1px `#CBD5E1`. On focus: 1.5px `#714B67` with a soft 3px blur ring `rgba(113, 75, 103, 0.15)`.\n- Floating labels in Plus Jakarta Sans 12px; active monetary values formatted in JetBrains Mono.\n\n### Chips & Status Badges\n- 24px full pill radius, 24px height, padding 4px 10px.\n- **Paid / Validated:** Background `rgba(16, 185, 129, 0.12)`, text `#047857`, 1px border `rgba(16, 185, 129, 0.25)`.\n- **To Approve / Pending:** Background `rgba(245, 158, 11, 0.12)`, text `#B45309`, 1px border `rgba(245, 158, 11, 0.25)`.\n- **Refused / Overdue:** Background `rgba(239, 68, 68, 0.12)`, text `#B91C1C`, 1px border `rgba(239, 68, 68, 0.25)`.\n\n### Lists & Activity Rows\n- Edge-to-edge glass container with 16px outer radius.\n- List items feature 1px separator lines inset by 56px to clear leading employee avatar or category icons.\n- Right accessory shows JetBrains Mono timestamp or monetary differential with a trailing chevron icon.\n\n### Checkboxes & Radio Controls\n- 6px rounded checkbox (20px × 20px) or 20px full circle radio.\n- Unchecked: 1.5px border `#94A3B8`, clear background.\n- Checked: `#714B67` fill with crisp white checkmark or center pip.",
+          "theme": {
+            "colorMode": "LIGHT",
+            "font": "OUTFIT",
+            "roundness": "ROUND_EIGHT",
+            "customColor": "#714b67",
+            "headlineFont": "OUTFIT",
+            "bodyFont": "PLUS_JAKARTA_SANS",
+            "labelFont": "JETBRAINS_MONO",
+            "namedColors": {
+              "tertiary_container": "#006443",
+              "surface_container_lowest": "#ffffff",
+              "error_container": "#ffdad6",
+              "tertiary": "#004a31",
+              "inverse_surface": "#283044",
+              "on_tertiary_container": "#56e5a9",
+              "tertiary_fixed_dim": "#4edea3",
+              "on_surface": "#131b2e",
+              "surface_bright": "#faf8ff",
+              "on_error_container": "#93000a",
+              "on_background": "#131b2e",
+              "surface_container": "#eaedff",
+              "on_tertiary_fixed": "#002113",
+              "tertiary_fixed": "#6ffbbe",
+              "on_primary_container": "#f0bfe0",
+              "on_tertiary_fixed_variant": "#005236",
+              "primary_container": "#714b67",
+              "error": "#ba1a1a",
+              "primary_fixed": "#ffd7f1",
+              "on_secondary_fixed_variant": "#004f53",
+              "outline_variant": "#d1c3ca",
+              "inverse_on_surface": "#eef0ff",
+              "surface": "#faf8ff",
+              "surface_container_low": "#f2f3ff",
+              "secondary_container": "#92eff5",
+              "on_surface_variant": "#4e444a",
+              "on_primary": "#ffffff",
+              "on_tertiary": "#ffffff",
+              "surface_tint": "#79526f",
+              "outline": "#80747a",
+              "on_error": "#ffffff",
+              "inverse_primary": "#e9b8d9",
+              "secondary": "#00696e",
+              "surface_variant": "#dae2fd",
+              "primary_fixed_dim": "#e9b8d9",
+              "on_primary_fixed": "#2f1029",
+              "on_primary_fixed_variant": "#5f3b56",
+              "on_secondary_container": "#006e73",
+              "primary": "#57344f",
+              "surface_container_highest": "#dae2fd",
+              "on_secondary_fixed": "#002022",
+              "secondary_fixed": "#95f1f8",
+              "background": "#faf8ff",
+              "secondary_fixed_dim": "#78d5db",
+              "surface_container_high": "#e2e7ff",
+              "on_secondary": "#ffffff",
+              "surface_dim": "#d2d9f4"
+            },
+            "designMd": "---\nname: Aubergine Glass & Slate\ncolors:\n  surface: '#faf8ff'\n  surface-dim: '#d2d9f4'\n  surface-bright: '#faf8ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f2f3ff'\n  surface-container: '#eaedff'\n  surface-container-high: '#e2e7ff'\n  surface-container-highest: '#dae2fd'\n  on-surface: '#131b2e'\n  on-surface-variant: '#4e444a'\n  inverse-surface: '#283044'\n  inverse-on-surface: '#eef0ff'\n  outline: '#80747a'\n  outline-variant: '#d1c3ca'\n  surface-tint: '#79526f'\n  primary: '#57344f'\n  on-primary: '#ffffff'\n  primary-container: '#714b67'\n  on-primary-container: '#f0bfe0'\n  inverse-primary: '#e9b8d9'\n  secondary: '#00696e'\n  on-secondary: '#ffffff'\n  secondary-container: '#92eff5'\n  on-secondary-container: '#006e73'\n  tertiary: '#004a31'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#006443'\n  on-tertiary-container: '#56e5a9'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#ffd7f1'\n  primary-fixed-dim: '#e9b8d9'\n  on-primary-fixed: '#2f1029'\n  on-primary-fixed-variant: '#5f3b56'\n  secondary-fixed: '#95f1f8'\n  secondary-fixed-dim: '#78d5db'\n  on-secondary-fixed: '#002022'\n  on-secondary-fixed-variant: '#004f53'\n  tertiary-fixed: '#6ffbbe'\n  tertiary-fixed-dim: '#4edea3'\n  on-tertiary-fixed: '#002113'\n  on-tertiary-fixed-variant: '#005236'\n  background: '#faf8ff'\n  on-background: '#131b2e'\n  surface-variant: '#dae2fd'\ntypography:\n  display-lg:\n    fontFamily: Outfit\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  display-md:\n    fontFamily: Outfit\n    fontSize: 26px\n    fontWeight: '600'\n    lineHeight: 34px\n    letterSpacing: -0.015em\n  title-lg:\n    fontFamily: Outfit\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n    letterSpacing: -0.01em\n  title-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 17px\n    fontWeight: '600'\n    lineHeight: 24px\n    letterSpacing: -0.005em\n  body-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n    letterSpacing: '0'\n  body-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n    letterSpacing: '0'\n  body-sm:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 12px\n    fontWeight: '400'\n    lineHeight: 16px\n    letterSpacing: 0.01em\n  label-code-lg:\n    fontFamily: JetBrains Mono\n    fontSize: 18px\n    fontWeight: '600'\n    lineHeight: 24px\n    letterSpacing: -0.02em\n  label-code-md:\n    fontFamily: JetBrains Mono\n    fontSize: 14px\n    fontWeight: '500'\n    lineHeight: 18px\n    letterSpacing: -0.01em\n  label-code-sm:\n    fontFamily: JetBrains Mono\n    fontSize: 11px\n    fontWeight: '500'\n    lineHeight: 14px\n    letterSpacing: 0.02em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  spacing-3xs: 0.125rem\n  spacing-2xs: 0.25rem\n  spacing-xs: 0.5rem\n  spacing-sm: 0.75rem\n  spacing-md: 1rem\n  spacing-lg: 1.25rem\n  spacing-xl: 1.5rem\n  spacing-2xl: 2rem\n  spacing-3xl: 2.5rem\n  gutter-mobile: 1rem\n  gutter-tablet: 1.5rem\n  margin-screen: 1rem\n---\n\n## Brand & Style\n\nThis design system blends the operational rigor of modern enterprise ERP interfaces with the tactile fluidity of Apple Human Interface Guidelines and frosted glassmorphism. Built specifically for mission-critical mobile HR and payroll operations, it balances executive prestige with day-to-day administrative speed.\n\n### Visual Signature\n- **Style Archetype:** Enterprise Modern Glassmorphism. Translucent floating surfaces, crisp 1px structural boundaries, subtle specular edge reflections, and ambient depth tinted with brand pigments.\n- **Tone & Mood:** Authoritative, dependable, frictionless, and premium. Complex payroll data and approval workflows feel serene and legible rather than overwhelming.\n- **Form & Tactility:** Glass cards float over a calibrated slate backdrop, anchoring dense financial figures and employee statuses with high legibility and clear touch affordances.\n\n## Colors\n\nThe color palette balances a signature aubergine authority with active functional teal and a slate neutral scale. Semantic colors deliver clear signals for payroll statuses, approvals, and anomalies.\n\n### Theme Modes\n\n#### Light Mode (Default Canvas)\n- **Brand Primary (Aubergine):** `#714B67` — primary navigation, master actions, executive metrics, and active states.\n- **Accent & Smart Actions (Teal):** `#017E84` — smart buttons, actionable links, positive interactive cues, and inline toggles.\n- **Canvas Background:** `#F8FAFC` (Slate 50) — clean, glare-free ground for elevated glass layers.\n- **Card Surface:** `#FFFFFF` at 85% opacity with 8px backdrop blur and `#E2E8F0` border.\n- **Text Primary:** `#0F172A` (Slate 900) — high-contrast clarity for dense data.\n- **Text Muted:** `#64748B` (Slate 500) — metadata, secondary timestamps, and input hints.\n\n#### Dark Mode\n- **Brand Primary (Aubergine Glow):** `#8E6083` — brightened for legibility against deep dark substrates.\n- **Accent & Smart Actions (Teal Glow):** `#00A09D` — luminous interaction targets and active tags.\n- **Canvas Background:** `#0B0F17` (Deep Obsidian) — minimizes OLED power consumption and eye fatigue during late-night payroll cycles.\n- **Card Surface:** `#161F30` at 75% opacity with 12px backdrop blur and `#334155` border.\n- **Text Primary:** `#F8FAFC` (Slate 50).\n- **Text Muted:** `#94A3B8` (Slate 400).\n\n### Semantic Accents\n- **Success / Active / Paid:** `#10B981` (Emerald Green) — pay runs confirmed, attendance validated, deposits processed.\n- **Warning / Pending / Anomaly:** `#F59E0B` (Amber Flame) — pending approvals, overtime discrepancies, tax form alerts.\n- **Danger / Refused / Absent:** `#EF4444` (Crimson Red) — unexcused absences, rejected expense claims, compliance blocks.\n\n## Typography\n\nThe typographic hierarchy coordinates three purpose-built typefaces to partition visual priority:\n\n1. **Outfit (Headlines & Card Titles):** Geometric clarity and modern editorial posture for executive KPI summaries, employee headers, and total compensation banners.\n2. **Plus Jakarta Sans (Body & Context):** Clean, humanist curves optimized for high legibility at micro sizes on retina displays. Used across data lists, workflow descriptions, and form labels.\n3. **JetBrains Mono (Codes, Timestamps & Currency):** Monospaced numeric alignment guarantees that payslip balances, employee IDs, tax calculations, and hourly timesheet rates never jump or misalign when values update in real time.\n\n## Layout & Spacing\n\nThis design system uses a strict 4px/8px incremental base grid tuned for handheld enterprise usage:\n\n- **Mobile Grid:** Single-column layout with 16px screen margins (`margin-screen`) and 12px or 16px vertical gutters between card modules. All primary tap targets are pinned to a minimum hit box of 48px × 48px.\n- **Tablet / Split View Grid:** 6-column fluid responsive grid with 24px gutters, enabling side-by-side employee list navigation and detailed payslip previews without contextual switching.\n- **Safe Area Insets:** Fixed bottom action ribbons integrate dynamic safe-area padding (`env(safe-area-inset-bottom) + 12px`) to float smoothly above mobile home indicators.\n\n## Elevation & Depth\n\nVisual depth is achieved through layered frosted glass combined with soft, aubergine-tinted ambient shadows. This keeps the interface airy while differentiating interactive controls from fixed backdrops.\n\n### Elevation Levels\n\n- **Base (Level 0 - Ground):** Flat `#F8FAFC` (Light) or `#0B0F17` (Dark). No elevation.\n- **Level 1 (Card & Module Layer):** Background `rgba(255, 255, 255, 0.85)` with `backdrop-filter: blur(8px)`, bound by a 1px solid border of `#E2E8F0`. Shadow: `0 4px 16px -2px rgba(113, 75, 103, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04)`.\n- **Level 2 (Floating Controls & Smart Buttons):** Elevated actionable glass. Shadow: `0 8px 24px -4px rgba(113, 75, 103, 0.12), 0 2px 6px -1px rgba(1, 126, 132, 0.08)`.\n- **Level 3 (Modals, Action Drawers, & Sticky Footers):** Background `rgba(255, 255, 255, 0.94)` with `backdrop-filter: blur(16px)` and top border highlight `rgba(255, 255, 255, 0.6)`. Shadow: `0 20px 40px -8px rgba(15, 23, 42, 0.2), 0 0 1px 1px rgba(113, 75, 103, 0.08)`.\n- **Dark Mode Elevation:** Replace white translucent fills with `rgba(22, 31, 48, 0.75)` and tune aubergine cast shadows to `rgba(0, 0, 0, 0.45)` with a 1px inner specular glow `rgba(255, 255, 255, 0.06)`.\n\n## Shapes\n\nThe shape system communicates component hierarchy through three distinct curvature categories:\n\n- **Cards and Containers (16px / `1rem`):** Applied to payroll summary cards, time-tracking modules, profile containers, and bottom-sheet trays.\n- **Form Controls & Inputs (12px / `0.75rem`):** Applied to text inputs, search fields, date pickers, and filter boxes for a sturdy, legible visual framing.\n- **Pills, Chips, and Buttons (24px / `1.5rem` or Full Capsule):** Used on primary actions, smart metrics, status badges, and quick-filter pills, echoing iOS tactile pills and Odoo 18 stat-buttons.\n\n## Components\n\n### Buttons\n- **Primary Aubergine:** Full capsule (24px radius), 48px height. Background `#714B67`, text `#FFFFFF`, subtle inner bevel `inset 0 1px 0 rgba(255, 255, 255, 0.2)`. Active press drops opacity to 0.9 and scales to 0.98.\n- **Smart / Stat Buttons (Teal Accent):** Capsule button with `#017E84` tint at 10% background fill, `#017E84` 1px border, and `#017E84` bold label text with an embedded JetBrains Mono numerical badge.\n- **Secondary Glass:** Translucent `#FFFFFF` (60% opacity), 1px border `#E2E8F0`, text `#0F172A`.\n\n### Cards & Payslip Modules\n- 16px corner radius, 1px border `#E2E8F0`, `backdrop-filter: blur(8px)`.\n- **Financial Header:** Outfit Bold for net pay display, accompanied by a JetBrains Mono currency code (`USD`, `EUR`) and an Emerald Green `#10B981` status pill.\n- **Inner Dividers:** Subtle dotted or translucent lines `rgba(226, 232, 240, 0.8)` separating gross earnings, tax withholdings, and net distributions.\n\n### Input Fields & Search Bars\n- 12px corner radius, 44px height, background `rgba(255, 255, 255, 0.9)`.\n- Border is 1px `#CBD5E1`. On focus: 1.5px `#714B67` with a soft 3px blur ring `rgba(113, 75, 103, 0.15)`.\n- Floating labels in Plus Jakarta Sans 12px; active monetary values formatted in JetBrains Mono.\n\n### Chips & Status Badges\n- 24px full pill radius, 24px height, padding 4px 10px.\n- **Paid / Validated:** Background `rgba(16, 185, 129, 0.12)`, text `#047857`, 1px border `rgba(16, 185, 129, 0.25)`.\n- **To Approve / Pending:** Background `rgba(245, 158, 11, 0.12)`, text `#B45309`, 1px border `rgba(245, 158, 11, 0.25)`.\n- **Refused / Overdue:** Background `rgba(239, 68, 68, 0.12)`, text `#B91C1C`, 1px border `rgba(239, 68, 68, 0.25)`.\n\n### Lists & Activity Rows\n- Edge-to-edge glass container with 16px outer radius.\n- List items feature 1px separator lines inset by 56px to clear leading employee avatar or category icons.\n- Right accessory shows JetBrains Mono timestamp or monetary differential with a trailing chevron icon.\n\n### Checkboxes & Radio Controls\n- 6px rounded checkbox (20px × 20px) or 20px full circle radio.\n- Unchecked: 1.5px border `#94A3B8`, clear background.\n- Checked: `#714B67` fill with crisp white checkmark or center pip.",
+            "colorVariant": "FIDELITY",
+            "overridePrimaryColor": "#714b67",
+            "overrideSecondaryColor": "#017e84",
+            "overrideTertiaryColor": "#10b981",
+            "overrideNeutralColor": "#0f172a",
+            "spacingScale": 2,
+            "typography": {
+              "label-code-sm": {
+                "fontFamily": "JetBrains Mono",
+                "fontSize": "11px",
+                "fontWeight": "500",
+                "lineHeight": "14px",
+                "letterSpacing": "0.02em"
+              },
+              "label-code-md": {
+                "fontFamily": "JetBrains Mono",
+                "fontSize": "14px",
+                "fontWeight": "500",
+                "lineHeight": "18px",
+                "letterSpacing": "-0.01em"
+              },
+              "display-md": {
+                "fontFamily": "Outfit",
+                "fontSize": "26px",
+                "fontWeight": "600",
+                "lineHeight": "34px",
+                "letterSpacing": "-0.015em"
+              },
+              "body-md": {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontSize": "14px",
+                "fontWeight": "400",
+                "lineHeight": "20px",
+                "letterSpacing": "0"
+              },
+              "title-lg": {
+                "fontFamily": "Outfit",
+                "fontSize": "20px",
+                "fontWeight": "600",
+                "lineHeight": "28px",
+                "letterSpacing": "-0.01em"
+              },
+              "label-code-lg": {
+                "fontFamily": "JetBrains Mono",
+                "fontSize": "18px",
+                "fontWeight": "600",
+                "lineHeight": "24px",
+                "letterSpacing": "-0.02em"
+              },
+              "title-md": {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontSize": "17px",
+                "fontWeight": "600",
+                "lineHeight": "24px",
+                "letterSpacing": "-0.005em"
+              },
+              "display-lg": {
+                "fontFamily": "Outfit",
+                "fontSize": "32px",
+                "fontWeight": "700",
+                "lineHeight": "40px",
+                "letterSpacing": "-0.02em"
+              },
+              "body-lg": {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontSize": "16px",
+                "fontWeight": "400",
+                "lineHeight": "24px",
+                "letterSpacing": "0"
+              },
+              "body-sm": {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontSize": "12px",
+                "fontWeight": "400",
+                "lineHeight": "16px",
+                "letterSpacing": "0.01em"
+              }
+            },
+            "spacing": {
+              "gutter-mobile": "1rem",
+              "spacing-3xl": "2.5rem",
+              "spacing-sm": "0.75rem",
+              "spacing-xl": "1.5rem",
+              "spacing-2xs": "0.25rem",
+              "gutter-tablet": "1.5rem",
+              "spacing-md": "1rem",
+              "spacing-2xl": "2rem",
+              "spacing-lg": "1.25rem",
+              "margin-screen": "1rem",
+              "spacing-xs": "0.5rem",
+              "spacing-3xs": "0.125rem"
+            },
+            "headlineFontFamily": "Outfit",
+            "bodyFontFamily": "Plus Jakarta Sans",
+            "labelFontFamily": "JetBrains Mono"
+          }
+        },
+        "version": "1"
+      }
+    },
+    {
+      "screenshot": {
+        "name": "projects/3583947416522068317/screens/120127c28bfc4c9abdfc5ccc0c13a376/fileEntries/screenshot",
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1VkZ_avCFEcfE3mAkyjR3G4Nfo3s2uhjfSSHRwwdDuRUsduzi4RJxPG1H84EIzrVNN6kF3WdZJy8m8oedxtmi9S-pU1WPrOtKPVHaNoezKZesjbVsyHrGvQ2Vm2e73CXBCE0dMy84FiKv7n5eQcezuEKMUvBnLnPQR9_ynQwwr_YAv6q6fQXT9hUxLsS53qazENXdNP_gOi7Hsmrjqb9tYGw630Q7X-BGpUix1UkvJMNu59_f8G-4vBLWo"
+      },
+      "htmlCode": {
+        "name": "projects/3583947416522068317/screens/120127c28bfc4c9abdfc5ccc0c13a376/fileEntries/html",
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1YWJhODJmNDdhZDYwNzc5YTAyZjJmMDA4ZDI2EgsSBxDUhaTSoQEYAZIBIwoKcHJvamVjdF9pZBIVQhMzNTgzOTQ3NDE2NTIyMDY4MzE3&filename=&opi=89354086",
+        "mimeType": "text/html"
+      },
+      "id": "120127c28bfc4c9abdfc5ccc0c13a376",
+      "generatedBy": "figaro_agent",
+      "width": "780",
+      "height": "1768",
+      "title": "Enterprise Login & Workspace Access",
+      "prompt": "Design a sleek, modern enterprise mobile login screen for \"PeoplePay360\" (390x844px), matching the Odoo 18 Enterprise Modern + Apple Human Interface Design System + Glassmorphism specifications.\n\nUse the brand logo {{DATA:IMAGE:IMAGE_2}}.\n\nVisual Hierarchy & Layout:\n1. Top Section (Aubergine Gradient Header):\n   - Deep rich gradient from #714B67 to #4A2E43 with subtle ambient lighting.\n   - Minimalist glowing Odoo-style app mark using {{DATA:IMAGE:IMAGE_2}} (48x48px) with subtle backdrop glow.\n   - Brand title: \"PeoplePay360\" in bold white (22px, Outfit font) with subtitle badge: \"Enterprise HR & Payroll • Odoo 18\".\n   - Headline: \"Welcome Back\" (24px, Bold, tracking -0.5px, text-white) with subtext: \"Sign in to continue to your workspace.\" (14px, rgba(255,255,255,0.8)).\n\n2. Center Card (Elevated Glass Surface):\n   - Crisp white card container with rounded corners (24px), 1px border (#E2E8F0/border-slate-200), and soft multi-layered elevation shadow (0 10px 30px -4px rgba(113, 75, 103, 0.12)).\n   - Field 1: Work Email input field:\n     - Label: \"Work Email\" (13px, font-medium, #0F172A)\n     - Input box with mail icon (SVG), value/placeholder \"alex.morgan@enterprise.odoo.com\", clean focus ring in Odoo Teal (#017E84), and a green checkmark validation indicator badge (\"Verified Domain\").\n   - Field 2: Password input field:\n     - Label: \"Password\" (13px, font-medium, #0F172A)\n     - Input box with lock icon (SVG), masked password \"••••••••••••\", and an interactive toggle eye icon.\n   - Extra row: Remember me checkbox (\"Keep me signed in\") and \"Forgot Password?\" link aligned right in primary aubergine (#714B67, font-semibold hover:underline).\n   - Primary Action Button:\n     - \"Sign In to Workspace\" with deep aubergine fill (#714B67), pill shape (rounded-full), bold white text, subtle arrow icon, and hover shadow glow.\n   - Biometric option:\n     - \"or sign in with Face ID\" button with FaceID SVG icon and soft slate border.\n\n3. Quick Role Demo Switcher (Hackathon Standout Feature):\n   - Dedicated section labeled: \"⚡ Quick Demo Roles (1-Tap Fast Evaluation)\" with subtitle \"Instantly populate credentials for judging\".\n   - Horizontal pill selector tags:\n     - [ ★ Admin ] (aubergine highlight badge, \"SysAdmin • Full Access\")\n     - [ HR Manager ] (\"Sarah Jenkins • HR Lead\")\n     - [ Payroll User ] (\"David Kim • Finance & Comp\")\n     - [ Employee ] (\"Elena Rostova • Engineering\")\n   - Include lightweight vanilla JS to let the user tap any pill to populate the email and role preview dynamically with a smooth feedback state.\n\n4. Bottom Legal Footer:\n   - \"Secured by Odoo Enterprise RBAC • Version 2026.1\" in 11px muted gray (#64748B) with an encrypted lock badge.\n   - Company switcher preview: \"Acme Global Industries (US-East Cluster)\".\n\nEnsure high contrast, immaculate typography, 16px/24px rounded corners, and pixel perfection.\n## Available Images\nYou MUST include the following images in this design. You must reference them\nby putting their exact placeholder IDs in `src` attributes or CSS\n`background-image` rules. Do NOT use external URLs or generate new\nplaceholders. Preserve these IDs exactly as written. Read each image's\nDescription to understand its subject, intended section, and visual role.\n\n- {{DATA:IMAGE:IMAGE_2}}\n  Alt Text: PeoplePay360 Logo\n  Description: Brand logo. - Primary color: #714b67\n- Font: outfit\n- Mode: light\n- Roundness: rounded-md\n\n  Dimensions: 64x64\n  Aspect Ratio: 1.00\n  Colors: #00A09D, #017E84, #4A2E43, #714B67\n",
+      "name": "projects/3583947416522068317/screens/120127c28bfc4c9abdfc5ccc0c13a376",
+      "theme": {
+        "colorMode": "LIGHT",
+        "font": "OUTFIT",
+        "roundness": "ROUND_EIGHT",
+        "customColor": "#714b67",
+        "headlineFont": "OUTFIT",
+        "bodyFont": "PLUS_JAKARTA_SANS",
+        "labelFont": "JETBRAINS_MONO",
+        "namedColors": {
+          "on_primary": "#ffffff",
+          "surface": "#faf8ff",
+          "on_primary_container": "#f0bfe0",
+          "on_secondary_container": "#006e73",
+          "inverse_on_surface": "#eef0ff",
+          "secondary_container": "#92eff5",
+          "on_tertiary_fixed": "#002113",
+          "on_tertiary": "#ffffff",
+          "primary_container": "#714b67",
+          "surface_container_low": "#f2f3ff",
+          "on_tertiary_fixed_variant": "#005236",
+          "outline_variant": "#d1c3ca",
+          "surface_tint": "#79526f",
+          "on_secondary": "#ffffff",
+          "surface_container_high": "#e2e7ff",
+          "error": "#ba1a1a",
+          "inverse_surface": "#283044",
+          "tertiary_container": "#006443",
+          "background": "#faf8ff",
+          "error_container": "#ffdad6",
+          "on_tertiary_container": "#56e5a9",
+          "surface_dim": "#d2d9f4",
+          "surface_container": "#eaedff",
+          "tertiary": "#004a31",
+          "on_primary_fixed_variant": "#5f3b56",
+          "tertiary_fixed_dim": "#4edea3",
+          "secondary_fixed_dim": "#78d5db",
+          "on_error_container": "#93000a",
+          "tertiary_fixed": "#6ffbbe",
+          "secondary_fixed": "#95f1f8",
+          "on_secondary_fixed": "#002022",
+          "on_background": "#131b2e",
+          "surface_container_highest": "#dae2fd",
+          "on_surface": "#131b2e",
+          "on_primary_fixed": "#2f1029",
+          "primary": "#57344f",
+          "secondary": "#00696e",
+          "on_secondary_fixed_variant": "#004f53",
+          "on_error": "#ffffff",
+          "inverse_primary": "#e9b8d9",
+          "primary_fixed_dim": "#e9b8d9",
+          "surface_container_lowest": "#ffffff",
+          "on_surface_variant": "#4e444a",
+          "surface_bright": "#faf8ff",
+          "outline": "#80747a",
+          "primary_fixed": "#ffd7f1",
+          "surface_variant": "#dae2fd"
+        },
+        "colorVariant": "FIDELITY",
+        "overridePrimaryColor": "#714b67",
+        "overrideSecondaryColor": "#017e84",
+        "overrideTertiaryColor": "#10b981",
+        "overrideNeutralColor": "#0f172a",
+        "spacingScale": 2,
+        "typography": {
+          "label-code-sm": {
+            "fontFamily": "JetBrains Mono",
+            "fontSize": "11px",
+            "fontWeight": "500",
+            "lineHeight": "14px",
+            "letterSpacing": "0.02em"
+          },
+          "display-lg": {
+            "fontFamily": "Outfit",
+            "fontSize": "32px",
+            "fontWeight": "700",
+            "lineHeight": "40px",
+            "letterSpacing": "-0.02em"
+          },
+          "title-md": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "17px",
+            "fontWeight": "600",
+            "lineHeight": "24px",
+            "letterSpacing": "-0.005em"
+          },
+          "label-code-md": {
+            "fontFamily": "JetBrains Mono",
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "lineHeight": "18px",
+            "letterSpacing": "-0.01em"
+          },
+          "body-md": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "20px",
+            "letterSpacing": "0"
+          },
+          "display-md": {
+            "fontFamily": "Outfit",
+            "fontSize": "26px",
+            "fontWeight": "600",
+            "lineHeight": "34px",
+            "letterSpacing": "-0.015em"
+          },
+          "label-code-lg": {
+            "fontFamily": "JetBrains Mono",
+            "fontSize": "18px",
+            "fontWeight": "600",
+            "lineHeight": "24px",
+            "letterSpacing": "-0.02em"
+          },
+          "title-lg": {
+            "fontFamily": "Outfit",
+            "fontSize": "20px",
+            "fontWeight": "600",
+            "lineHeight": "28px",
+            "letterSpacing": "-0.01em"
+          },
+          "body-lg": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24px",
+            "letterSpacing": "0"
+          },
+          "body-sm": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "lineHeight": "16px",
+            "letterSpacing": "0.01em"
+          }
+        },
+        "spacing": {
+          "spacing-3xs": "0.125rem",
+          "spacing-md": "1rem",
+          "gutter-mobile": "1rem",
+          "gutter-tablet": "1.5rem",
+          "spacing-xl": "1.5rem",
+          "spacing-sm": "0.75rem",
+          "spacing-2xl": "2rem",
+          "spacing-2xs": "0.25rem",
+          "spacing-xs": "0.5rem",
+          "margin-screen": "1rem",
+          "spacing-lg": "1.25rem",
+          "spacing-3xl": "2.5rem"
+        },
+        "headlineFontFamily": "Outfit",
+        "bodyFontFamily": "Plus Jakarta Sans",
+        "labelFontFamily": "JetBrains Mono"
+      },
+      "deviceType": "MOBILE",
+      "screenType": "DESIGN",
+      "screenMetadata": {
+        "agentType": "PRO_AGENT",
+        "status": "COMPLETE"
+      },
+      "designSystem": {
+        "name": "assets/d02c0868d5854e279ce1d1fd08b4fe41",
+        "designSystem": {
+          "displayName": "Aubergine Glass & Slate",
+          "styleGuidelines": "## Brand & Style\n\nThis design system blends the operational rigor of modern enterprise ERP interfaces with the tactile fluidity of Apple Human Interface Guidelines and frosted glassmorphism. Built specifically for mission-critical mobile HR and payroll operations, it balances executive prestige with day-to-day administrative speed.\n\n### Visual Signature\n- **Style Archetype:** Enterprise Modern Glassmorphism. Translucent floating surfaces, crisp 1px structural boundaries, subtle specular edge reflections, and ambient depth tinted with brand pigments.\n- **Tone & Mood:** Authoritative, dependable, frictionless, and premium. Complex payroll data and approval workflows feel serene and legible rather than overwhelming.\n- **Form & Tactility:** Glass cards float over a calibrated slate backdrop, anchoring dense financial figures and employee statuses with high legibility and clear touch affordances.\n\n## Layout & Spacing\n\nThis design system uses a strict 4px/8px incremental base grid tuned for handheld enterprise usage:\n\n- **Mobile Grid:** Single-column layout with 16px screen margins (`margin-screen`) and 12px or 16px vertical gutters between card modules. All primary tap targets are pinned to a minimum hit box of 48px × 48px.\n- **Tablet / Split View Grid:** 6-column fluid responsive grid with 24px gutters, enabling side-by-side employee list navigation and detailed payslip previews without contextual switching.\n- **Safe Area Insets:** Fixed bottom action ribbons integrate dynamic safe-area padding (`env(safe-area-inset-bottom) + 12px`) to float smoothly above mobile home indicators.\n\n## Elevation & Depth\n\nVisual depth is achieved through layered frosted glass combined with soft, aubergine-tinted ambient shadows. This keeps the interface airy while differentiating interactive controls from fixed backdrops.\n\n### Elevation Levels\n\n- **Base (Level 0 - Ground):** Flat `#F8FAFC` (Light) or `#0B0F17` (Dark). No elevation.\n- **Level 1 (Card & Module Layer):** Background `rgba(255, 255, 255, 0.85)` with `backdrop-filter: blur(8px)`, bound by a 1px solid border of `#E2E8F0`. Shadow: `0 4px 16px -2px rgba(113, 75, 103, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04)`.\n- **Level 2 (Floating Controls & Smart Buttons):** Elevated actionable glass. Shadow: `0 8px 24px -4px rgba(113, 75, 103, 0.12), 0 2px 6px -1px rgba(1, 126, 132, 0.08)`.\n- **Level 3 (Modals, Action Drawers, & Sticky Footers):** Background `rgba(255, 255, 255, 0.94)` with `backdrop-filter: blur(16px)` and top border highlight `rgba(255, 255, 255, 0.6)`. Shadow: `0 20px 40px -8px rgba(15, 23, 42, 0.2), 0 0 1px 1px rgba(113, 75, 103, 0.08)`.\n- **Dark Mode Elevation:** Replace white translucent fills with `rgba(22, 31, 48, 0.75)` and tune aubergine cast shadows to `rgba(0, 0, 0, 0.45)` with a 1px inner specular glow `rgba(255, 255, 255, 0.06)`.\n\n## Components\n\n### Buttons\n- **Primary Aubergine:** Full capsule (24px radius), 48px height. Background `#714B67`, text `#FFFFFF`, subtle inner bevel `inset 0 1px 0 rgba(255, 255, 255, 0.2)`. Active press drops opacity to 0.9 and scales to 0.98.\n- **Smart / Stat Buttons (Teal Accent):** Capsule button with `#017E84` tint at 10% background fill, `#017E84` 1px border, and `#017E84` bold label text with an embedded JetBrains Mono numerical badge.\n- **Secondary Glass:** Translucent `#FFFFFF` (60% opacity), 1px border `#E2E8F0`, text `#0F172A`.\n\n### Cards & Payslip Modules\n- 16px corner radius, 1px border `#E2E8F0`, `backdrop-filter: blur(8px)`.\n- **Financial Header:** Outfit Bold for net pay display, accompanied by a JetBrains Mono currency code (`USD`, `EUR`) and an Emerald Green `#10B981` status pill.\n- **Inner Dividers:** Subtle dotted or translucent lines `rgba(226, 232, 240, 0.8)` separating gross earnings, tax withholdings, and net distributions.\n\n### Input Fields & Search Bars\n- 12px corner radius, 44px height, background `rgba(255, 255, 255, 0.9)`.\n- Border is 1px `#CBD5E1`. On focus: 1.5px `#714B67` with a soft 3px blur ring `rgba(113, 75, 103, 0.15)`.\n- Floating labels in Plus Jakarta Sans 12px; active monetary values formatted in JetBrains Mono.\n\n### Chips & Status Badges\n- 24px full pill radius, 24px height, padding 4px 10px.\n- **Paid / Validated:** Background `rgba(16, 185, 129, 0.12)`, text `#047857`, 1px border `rgba(16, 185, 129, 0.25)`.\n- **To Approve / Pending:** Background `rgba(245, 158, 11, 0.12)`, text `#B45309`, 1px border `rgba(245, 158, 11, 0.25)`.\n- **Refused / Overdue:** Background `rgba(239, 68, 68, 0.12)`, text `#B91C1C`, 1px border `rgba(239, 68, 68, 0.25)`.\n\n### Lists & Activity Rows\n- Edge-to-edge glass container with 16px outer radius.\n- List items feature 1px separator lines inset by 56px to clear leading employee avatar or category icons.\n- Right accessory shows JetBrains Mono timestamp or monetary differential with a trailing chevron icon.\n\n### Checkboxes & Radio Controls\n- 6px rounded checkbox (20px × 20px) or 20px full circle radio.\n- Unchecked: 1.5px border `#94A3B8`, clear background.\n- Checked: `#714B67` fill with crisp white checkmark or center pip.",
+          "theme": {
+            "colorMode": "LIGHT",
+            "font": "OUTFIT",
+            "roundness": "ROUND_EIGHT",
+            "customColor": "#714b67",
+            "headlineFont": "OUTFIT",
+            "bodyFont": "PLUS_JAKARTA_SANS",
+            "labelFont": "JETBRAINS_MONO",
+            "namedColors": {
+              "on_secondary": "#ffffff",
+              "tertiary_fixed": "#6ffbbe",
+              "on_surface_variant": "#4e444a",
+              "surface": "#faf8ff",
+              "secondary_fixed": "#95f1f8",
+              "primary_fixed_dim": "#e9b8d9",
+              "on_tertiary_container": "#56e5a9",
+              "on_surface": "#131b2e",
+              "secondary_container": "#92eff5",
+              "on_tertiary_fixed_variant": "#005236",
+              "on_primary_fixed": "#2f1029",
+              "tertiary": "#004a31",
+              "surface_container_low": "#f2f3ff",
+              "surface_variant": "#dae2fd",
+              "on_primary_fixed_variant": "#5f3b56",
+              "secondary": "#00696e",
+              "inverse_primary": "#e9b8d9",
+              "on_secondary_fixed": "#002022",
+              "secondary_fixed_dim": "#78d5db",
+              "surface_tint": "#79526f",
+              "surface_bright": "#faf8ff",
+              "on_error_container": "#93000a",
+              "tertiary_fixed_dim": "#4edea3",
+              "on_primary": "#ffffff",
+              "outline_variant": "#d1c3ca",
+              "surface_dim": "#d2d9f4",
+              "primary": "#57344f",
+              "surface_container_high": "#e2e7ff",
+              "primary_fixed": "#ffd7f1",
+              "surface_container": "#eaedff",
+              "tertiary_container": "#006443",
+              "on_primary_container": "#f0bfe0",
+              "background": "#faf8ff",
+              "outline": "#80747a",
+              "primary_container": "#714b67",
+              "on_error": "#ffffff",
+              "surface_container_highest": "#dae2fd",
+              "on_tertiary_fixed": "#002113",
+              "inverse_on_surface": "#eef0ff",
+              "on_secondary_fixed_variant": "#004f53",
+              "inverse_surface": "#283044",
+              "surface_container_lowest": "#ffffff",
+              "on_tertiary": "#ffffff",
+              "on_background": "#131b2e",
+              "error": "#ba1a1a",
+              "error_container": "#ffdad6",
+              "on_secondary_container": "#006e73"
+            },
+            "designMd": "---\nname: Aubergine Glass & Slate\ncolors:\n  surface: '#faf8ff'\n  surface-dim: '#d2d9f4'\n  surface-bright: '#faf8ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f2f3ff'\n  surface-container: '#eaedff'\n  surface-container-high: '#e2e7ff'\n  surface-container-highest: '#dae2fd'\n  on-surface: '#131b2e'\n  on-surface-variant: '#4e444a'\n  inverse-surface: '#283044'\n  inverse-on-surface: '#eef0ff'\n  outline: '#80747a'\n  outline-variant: '#d1c3ca'\n  surface-tint: '#79526f'\n  primary: '#57344f'\n  on-primary: '#ffffff'\n  primary-container: '#714b67'\n  on-primary-container: '#f0bfe0'\n  inverse-primary: '#e9b8d9'\n  secondary: '#00696e'\n  on-secondary: '#ffffff'\n  secondary-container: '#92eff5'\n  on-secondary-container: '#006e73'\n  tertiary: '#004a31'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#006443'\n  on-tertiary-container: '#56e5a9'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#ffd7f1'\n  primary-fixed-dim: '#e9b8d9'\n  on-primary-fixed: '#2f1029'\n  on-primary-fixed-variant: '#5f3b56'\n  secondary-fixed: '#95f1f8'\n  secondary-fixed-dim: '#78d5db'\n  on-secondary-fixed: '#002022'\n  on-secondary-fixed-variant: '#004f53'\n  tertiary-fixed: '#6ffbbe'\n  tertiary-fixed-dim: '#4edea3'\n  on-tertiary-fixed: '#002113'\n  on-tertiary-fixed-variant: '#005236'\n  background: '#faf8ff'\n  on-background: '#131b2e'\n  surface-variant: '#dae2fd'\ntypography:\n  display-lg:\n    fontFamily: Outfit\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  display-md:\n    fontFamily: Outfit\n    fontSize: 26px\n    fontWeight: '600'\n    lineHeight: 34px\n    letterSpacing: -0.015em\n  title-lg:\n    fontFamily: Outfit\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n    letterSpacing: -0.01em\n  title-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 17px\n    fontWeight: '600'\n    lineHeight: 24px\n    letterSpacing: -0.005em\n  body-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n    letterSpacing: '0'\n  body-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n    letterSpacing: '0'\n  body-sm:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 12px\n    fontWeight: '400'\n    lineHeight: 16px\n    letterSpacing: 0.01em\n  label-code-lg:\n    fontFamily: JetBrains Mono\n    fontSize: 18px\n    fontWeight: '600'\n    lineHeight: 24px\n    letterSpacing: -0.02em\n  label-code-md:\n    fontFamily: JetBrains Mono\n    fontSize: 14px\n    fontWeight: '500'\n    lineHeight: 18px\n    letterSpacing: -0.01em\n  label-code-sm:\n    fontFamily: JetBrains Mono\n    fontSize: 11px\n    fontWeight: '500'\n    lineHeight: 14px\n    letterSpacing: 0.02em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  spacing-3xs: 0.125rem\n  spacing-2xs: 0.25rem\n  spacing-xs: 0.5rem\n  spacing-sm: 0.75rem\n  spacing-md: 1rem\n  spacing-lg: 1.25rem\n  spacing-xl: 1.5rem\n  spacing-2xl: 2rem\n  spacing-3xl: 2.5rem\n  gutter-mobile: 1rem\n  gutter-tablet: 1.5rem\n  margin-screen: 1rem\n---\n\n## Brand & Style\n\nThis design system blends the operational rigor of modern enterprise ERP interfaces with the tactile fluidity of Apple Human Interface Guidelines and frosted glassmorphism. Built specifically for mission-critical mobile HR and payroll operations, it balances executive prestige with day-to-day administrative speed.\n\n### Visual Signature\n- **Style Archetype:** Enterprise Modern Glassmorphism. Translucent floating surfaces, crisp 1px structural boundaries, subtle specular edge reflections, and ambient depth tinted with brand pigments.\n- **Tone & Mood:** Authoritative, dependable, frictionless, and premium. Complex payroll data and approval workflows feel serene and legible rather than overwhelming.\n- **Form & Tactility:** Glass cards float over a calibrated slate backdrop, anchoring dense financial figures and employee statuses with high legibility and clear touch affordances.\n\n## Colors\n\nThe color palette balances a signature aubergine authority with active functional teal and a slate neutral scale. Semantic colors deliver clear signals for payroll statuses, approvals, and anomalies.\n\n### Theme Modes\n\n#### Light Mode (Default Canvas)\n- **Brand Primary (Aubergine):** `#714B67` — primary navigation, master actions, executive metrics, and active states.\n- **Accent & Smart Actions (Teal):** `#017E84` — smart buttons, actionable links, positive interactive cues, and inline toggles.\n- **Canvas Background:** `#F8FAFC` (Slate 50) — clean, glare-free ground for elevated glass layers.\n- **Card Surface:** `#FFFFFF` at 85% opacity with 8px backdrop blur and `#E2E8F0` border.\n- **Text Primary:** `#0F172A` (Slate 900) — high-contrast clarity for dense data.\n- **Text Muted:** `#64748B` (Slate 500) — metadata, secondary timestamps, and input hints.\n\n#### Dark Mode\n- **Brand Primary (Aubergine Glow):** `#8E6083` — brightened for legibility against deep dark substrates.\n- **Accent & Smart Actions (Teal Glow):** `#00A09D` — luminous interaction targets and active tags.\n- **Canvas Background:** `#0B0F17` (Deep Obsidian) — minimizes OLED power consumption and eye fatigue during late-night payroll cycles.\n- **Card Surface:** `#161F30` at 75% opacity with 12px backdrop blur and `#334155` border.\n- **Text Primary:** `#F8FAFC` (Slate 50).\n- **Text Muted:** `#94A3B8` (Slate 400).\n\n### Semantic Accents\n- **Success / Active / Paid:** `#10B981` (Emerald Green) — pay runs confirmed, attendance validated, deposits processed.\n- **Warning / Pending / Anomaly:** `#F59E0B` (Amber Flame) — pending approvals, overtime discrepancies, tax form alerts.\n- **Danger / Refused / Absent:** `#EF4444` (Crimson Red) — unexcused absences, rejected expense claims, compliance blocks.\n\n## Typography\n\nThe typographic hierarchy coordinates three purpose-built typefaces to partition visual priority:\n\n1. **Outfit (Headlines & Card Titles):** Geometric clarity and modern editorial posture for executive KPI summaries, employee headers, and total compensation banners.\n2. **Plus Jakarta Sans (Body & Context):** Clean, humanist curves optimized for high legibility at micro sizes on retina displays. Used across data lists, workflow descriptions, and form labels.\n3. **JetBrains Mono (Codes, Timestamps & Currency):** Monospaced numeric alignment guarantees that payslip balances, employee IDs, tax calculations, and hourly timesheet rates never jump or misalign when values update in real time.\n\n## Layout & Spacing\n\nThis design system uses a strict 4px/8px incremental base grid tuned for handheld enterprise usage:\n\n- **Mobile Grid:** Single-column layout with 16px screen margins (`margin-screen`) and 12px or 16px vertical gutters between card modules. All primary tap targets are pinned to a minimum hit box of 48px × 48px.\n- **Tablet / Split View Grid:** 6-column fluid responsive grid with 24px gutters, enabling side-by-side employee list navigation and detailed payslip previews without contextual switching.\n- **Safe Area Insets:** Fixed bottom action ribbons integrate dynamic safe-area padding (`env(safe-area-inset-bottom) + 12px`) to float smoothly above mobile home indicators.\n\n## Elevation & Depth\n\nVisual depth is achieved through layered frosted glass combined with soft, aubergine-tinted ambient shadows. This keeps the interface airy while differentiating interactive controls from fixed backdrops.\n\n### Elevation Levels\n\n- **Base (Level 0 - Ground):** Flat `#F8FAFC` (Light) or `#0B0F17` (Dark). No elevation.\n- **Level 1 (Card & Module Layer):** Background `rgba(255, 255, 255, 0.85)` with `backdrop-filter: blur(8px)`, bound by a 1px solid border of `#E2E8F0`. Shadow: `0 4px 16px -2px rgba(113, 75, 103, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04)`.\n- **Level 2 (Floating Controls & Smart Buttons):** Elevated actionable glass. Shadow: `0 8px 24px -4px rgba(113, 75, 103, 0.12), 0 2px 6px -1px rgba(1, 126, 132, 0.08)`.\n- **Level 3 (Modals, Action Drawers, & Sticky Footers):** Background `rgba(255, 255, 255, 0.94)` with `backdrop-filter: blur(16px)` and top border highlight `rgba(255, 255, 255, 0.6)`. Shadow: `0 20px 40px -8px rgba(15, 23, 42, 0.2), 0 0 1px 1px rgba(113, 75, 103, 0.08)`.\n- **Dark Mode Elevation:** Replace white translucent fills with `rgba(22, 31, 48, 0.75)` and tune aubergine cast shadows to `rgba(0, 0, 0, 0.45)` with a 1px inner specular glow `rgba(255, 255, 255, 0.06)`.\n\n## Shapes\n\nThe shape system communicates component hierarchy through three distinct curvature categories:\n\n- **Cards and Containers (16px / `1rem`):** Applied to payroll summary cards, time-tracking modules, profile containers, and bottom-sheet trays.\n- **Form Controls & Inputs (12px / `0.75rem`):** Applied to text inputs, search fields, date pickers, and filter boxes for a sturdy, legible visual framing.\n- **Pills, Chips, and Buttons (24px / `1.5rem` or Full Capsule):** Used on primary actions, smart metrics, status badges, and quick-filter pills, echoing iOS tactile pills and Odoo 18 stat-buttons.\n\n## Components\n\n### Buttons\n- **Primary Aubergine:** Full capsule (24px radius), 48px height. Background `#714B67`, text `#FFFFFF`, subtle inner bevel `inset 0 1px 0 rgba(255, 255, 255, 0.2)`. Active press drops opacity to 0.9 and scales to 0.98.\n- **Smart / Stat Buttons (Teal Accent):** Capsule button with `#017E84` tint at 10% background fill, `#017E84` 1px border, and `#017E84` bold label text with an embedded JetBrains Mono numerical badge.\n- **Secondary Glass:** Translucent `#FFFFFF` (60% opacity), 1px border `#E2E8F0`, text `#0F172A`.\n\n### Cards & Payslip Modules\n- 16px corner radius, 1px border `#E2E8F0`, `backdrop-filter: blur(8px)`.\n- **Financial Header:** Outfit Bold for net pay display, accompanied by a JetBrains Mono currency code (`USD`, `EUR`) and an Emerald Green `#10B981` status pill.\n- **Inner Dividers:** Subtle dotted or translucent lines `rgba(226, 232, 240, 0.8)` separating gross earnings, tax withholdings, and net distributions.\n\n### Input Fields & Search Bars\n- 12px corner radius, 44px height, background `rgba(255, 255, 255, 0.9)`.\n- Border is 1px `#CBD5E1`. On focus: 1.5px `#714B67` with a soft 3px blur ring `rgba(113, 75, 103, 0.15)`.\n- Floating labels in Plus Jakarta Sans 12px; active monetary values formatted in JetBrains Mono.\n\n### Chips & Status Badges\n- 24px full pill radius, 24px height, padding 4px 10px.\n- **Paid / Validated:** Background `rgba(16, 185, 129, 0.12)`, text `#047857`, 1px border `rgba(16, 185, 129, 0.25)`.\n- **To Approve / Pending:** Background `rgba(245, 158, 11, 0.12)`, text `#B45309`, 1px border `rgba(245, 158, 11, 0.25)`.\n- **Refused / Overdue:** Background `rgba(239, 68, 68, 0.12)`, text `#B91C1C`, 1px border `rgba(239, 68, 68, 0.25)`.\n\n### Lists & Activity Rows\n- Edge-to-edge glass container with 16px outer radius.\n- List items feature 1px separator lines inset by 56px to clear leading employee avatar or category icons.\n- Right accessory shows JetBrains Mono timestamp or monetary differential with a trailing chevron icon.\n\n### Checkboxes & Radio Controls\n- 6px rounded checkbox (20px × 20px) or 20px full circle radio.\n- Unchecked: 1.5px border `#94A3B8`, clear background.\n- Checked: `#714B67` fill with crisp white checkmark or center pip.",
+            "colorVariant": "FIDELITY",
+            "overridePrimaryColor": "#714b67",
+            "overrideSecondaryColor": "#017e84",
+            "overrideTertiaryColor": "#10b981",
+            "overrideNeutralColor": "#0f172a",
+            "spacingScale": 2,
+            "typography": {
+              "label-code-lg": {
+                "fontFamily": "JetBrains Mono",
+                "fontSize": "18px",
+                "fontWeight": "600",
+                "lineHeight": "24px",
+                "letterSpacing": "-0.02em"
+              },
+              "title-md": {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontSize": "17px",
+                "fontWeight": "600",
+                "lineHeight": "24px",
+                "letterSpacing": "-0.005em"
+              },
+              "display-md": {
+                "fontFamily": "Outfit",
+                "fontSize": "26px",
+                "fontWeight": "600",
+                "lineHeight": "34px",
+                "letterSpacing": "-0.015em"
+              },
+              "body-md": {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontSize": "14px",
+                "fontWeight": "400",
+                "lineHeight": "20px",
+                "letterSpacing": "0"
+              },
+              "label-code-sm": {
+                "fontFamily": "JetBrains Mono",
+                "fontSize": "11px",
+                "fontWeight": "500",
+                "lineHeight": "14px",
+                "letterSpacing": "0.02em"
+              },
+              "display-lg": {
+                "fontFamily": "Outfit",
+                "fontSize": "32px",
+                "fontWeight": "700",
+                "lineHeight": "40px",
+                "letterSpacing": "-0.02em"
+              },
+              "body-lg": {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontSize": "16px",
+                "fontWeight": "400",
+                "lineHeight": "24px",
+                "letterSpacing": "0"
+              },
+              "body-sm": {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontSize": "12px",
+                "fontWeight": "400",
+                "lineHeight": "16px",
+                "letterSpacing": "0.01em"
+              },
+              "label-code-md": {
+                "fontFamily": "JetBrains Mono",
+                "fontSize": "14px",
+                "fontWeight": "500",
+                "lineHeight": "18px",
+                "letterSpacing": "-0.01em"
+              },
+              "title-lg": {
+                "fontFamily": "Outfit",
+                "fontSize": "20px",
+                "fontWeight": "600",
+                "lineHeight": "28px",
+                "letterSpacing": "-0.01em"
+              }
+            },
+            "spacing": {
+              "spacing-xl": "1.5rem",
+              "spacing-sm": "0.75rem",
+              "gutter-mobile": "1rem",
+              "spacing-3xs": "0.125rem",
+              "gutter-tablet": "1.5rem",
+              "spacing-2xl": "2rem",
+              "spacing-md": "1rem",
+              "spacing-2xs": "0.25rem",
+              "spacing-lg": "1.25rem",
+              "spacing-3xl": "2.5rem",
+              "margin-screen": "1rem",
+              "spacing-xs": "0.5rem"
+            },
+            "headlineFontFamily": "Outfit",
+            "bodyFontFamily": "Plus Jakarta Sans",
+            "labelFontFamily": "JetBrains Mono"
+          }
+        },
+        "version": "1"
+      }
+    },
+    {
+      "screenshot": {
+        "name": "projects/3583947416522068317/screens/cf63b837218bd97ff6cacc7469dde6be78d3a196859a05dc62a5a38ffca3fff6/fileEntries/screenshot",
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1U3YMT01QbVNBrysufiuX9ZBOsFZvHaGdsbPLV1BUZSAlqnPHTjGZqj5PXI1n5_ZEB9ZNrOVRVSb1X3YykYzMJNqrHQlvDzpM1NYaVTsdPYFEDltcXNUIbw14IPepXozxNdzI7v_022Qv1Q1R5aBv_U9zWMUKw3K-w686YRtZ7RpEG3NcuXGKkDxsAIDBs1JSXdpAXUzSIS32N4C4f8mV-nDd1NdwyQW8UiBp2gutoElt0ie7wAcNG0mcs"
+      },
+      "htmlCode": {
+        "name": "projects/3583947416522068317/screens/e0b0d8aa244c4d14b136cb19bb4d7da5/fileEntries/html",
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1YWJhODE2NmE0ZDEwNTIyOTdhNzY0MTFhNzYxEgsSBxDUhaTSoQEYAZIBIwoKcHJvamVjdF9pZBIVQhMzNTgzOTQ3NDE2NTIyMDY4MzE3&filename=&opi=89354086",
+        "mimeType": "image/svg+xml"
+      },
+      "id": "e0b0d8aa244c4d14b136cb19bb4d7da5",
+      "generatedBy": "interactive_ui_controller",
+      "width": "64",
+      "height": "64",
+      "title": "PeoplePay360 Logo",
+      "prompt": "Brand logo. - Primary color: #714b67\n- Font: outfit\n- Mode: light\n- Roundness: rounded-md\n",
+      "name": "projects/3583947416522068317/screens/e0b0d8aa244c4d14b136cb19bb4d7da5",
+      "theme": {},
+      "screenType": "IMAGE",
+      "screenMetadata": {
+        "agentType": "PRO_AGENT",
+        "status": "COMPLETE",
+        "displayMode": "SVG"
+      }
+    }
+  ]
+}

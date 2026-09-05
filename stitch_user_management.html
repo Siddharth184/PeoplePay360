@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><title>Sign In</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Outfit:wght@500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;min-height:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-container-high":"#e2e7ff","on-secondary-fixed":"#002022","error-container":"#ffdad6","on-surface":"#131b2e","on-secondary":"#ffffff","on-primary-fixed":"#2f1029","on-surface-variant":"#4e444a","on-error":"#ffffff","on-secondary-container":"#006e73","surface-variant":"#dae2fd","outline":"#80747a","surface-container-low":"#f2f3ff","secondary-fixed-dim":"#78d5db","secondary-container":"#92eff5","tertiary":"#004a31","primary-container":"#714b67","tertiary-fixed-dim":"#4edea3","on-primary-fixed-variant":"#5f3b56","on-tertiary-fixed-variant":"#005236","on-primary":"#ffffff","on-background":"#131b2e","surface-container-lowest":"#ffffff","error":"#ba1a1a","primary-fixed-dim":"#e9b8d9","outline-variant":"#d1c3ca","inverse-on-surface":"#eef0ff","tertiary-fixed":"#6ffbbe","inverse-surface":"#283044","on-error-container":"#93000a","primary":"#57344f","surface-tint":"#79526f","tertiary-container":"#006443","surface-container-highest":"#dae2fd","background":"#faf8ff","primary-fixed":"#ffd7f1","on-tertiary-container":"#56e5a9","on-tertiary":"#ffffff","surface-bright":"#faf8ff","on-primary-container":"#f0bfe0","on-secondary-fixed-variant":"#004f53","inverse-primary":"#e9b8d9","surface-container":"#eaedff","on-tertiary-fixed":"#002113","secondary-fixed":"#95f1f8","surface":"#faf8ff","secondary":"#00696e","surface-dim":"#d2d9f4"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-screen":"1rem","spacing-lg":"1.25rem","gutter-mobile":"1rem","spacing-3xs":"0.125rem","spacing-2xs":"0.25rem","spacing-2xl":"2rem","gutter-tablet":"1.5rem","spacing-3xl":"2.5rem","spacing-md":"1rem","spacing-xs":"0.5rem","spacing-xl":"1.5rem","spacing-sm":"0.75rem"},"fontFamily":{"title-lg":["Outfit"],"body-md":["Plus Jakarta Sans"],"label-code-lg":["JetBrains Mono"],"label-code-sm":["JetBrains Mono"],"body-lg":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"display-lg":["Outfit"],"display-md":["Outfit"],"title-md":["Plus Jakarta Sans"],"label-code-md":["JetBrains Mono"]},"fontSize":{"title-lg":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","letterSpacing":"0","fontWeight":"400"}],"label-code-lg":["18px",{"lineHeight":"24px","letterSpacing":"-0.02em","fontWeight":"600"}],"label-code-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"body-lg":["16px",{"lineHeight":"24px","letterSpacing":"0","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"400"}],"display-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"display-md":["26px",{"lineHeight":"34px","letterSpacing":"-0.015em","fontWeight":"600"}],"title-md":["17px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"600"}],"label-code-md":["14px",{"lineHeight":"18px","letterSpacing":"-0.01em","fontWeight":"500"}]}}}};</script></head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col justify-between pt-safe pb-safe selection:bg-primary-fixed selection:text-on-primary-fixed"><main class="flex-1 flex flex-col relative w-full bg-surface"><div class="flex flex-col w-full pb-spacing-3xl text-on-surface">
+<!-- Top Navigation & Header -->
+<header class="px-margin-screen py-spacing-sm bg-surface-container-lowest/80 backdrop-blur-md sticky top-0 z-30 shadow-sm flex flex-col gap-spacing-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-spacing-xs">
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low active:bg-surface-container transition-transform active:scale-95 text-on-surface">
+<span class="material-symbols-outlined text-[22px]">arrow_back_ios_new</span>
+</button>
+<div class="flex items-center gap-spacing-2xs">
+<img alt="PeoplePay360 Logo" class="w-7 h-7 rounded-lg object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1U3YMT01QbVNBrysufiuX9ZBOsFZvHaGdsbPLV1BUZSAlqnPHTjGZqj5PXI1n5_ZEB9ZNrOVRVSb1X3YykYzMJNqrHQlvDzpM1NYaVTsdPYFEDltcXNUIbw14IPepXozxNdzI7v_022Qv1Q1R5aBv_U9zWMUKw3K-w686YRtZ7RpEG3NcuXGKkDxsAIDBs1JSXdpAXUzSIS32N4C4f8mV-nDd1NdwyQW8UiBp2gutoElt0ie7wAcNG0mcs"/>
+<div>
+<div class="flex items-center gap-1.5">
+<h1 class="font-title-md text-title-md font-semibold text-on-surface tracking-tight">User Management</h1>
+</div>
+<span class="inline-block px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-code-sm text-label-code-sm">ADMIN • RBAC v2026.1</span>
+</div>
+</div>
+</div>
+<button class="h-9 px-spacing-sm rounded-full bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all" id="btn-new-user">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>+ New User</span>
+</button>
+</div>
+<!-- Search Input Bar -->
+<div class="relative w-full mt-spacing-2xs">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="w-full h-11 pl-10 pr-9 rounded-xl bg-surface-container-low text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest shadow-sm transition-all" id="user-search-input" placeholder="Search users, employees, or email..." type="text"/>
+<button class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface" id="clear-search-btn">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+</button>
+</div>
+<!-- Horizontal Scrollable Filter Chips -->
+<div class="flex items-center gap-spacing-xs overflow-x-auto py-1 no-scrollbar">
+<button class="filter-chip px-3 py-1.5 rounded-full bg-primary-container text-on-primary font-body-sm text-body-sm font-medium shadow-sm whitespace-nowrap flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform">
+<span>All</span>
+<span class="w-4 h-4 rounded-full bg-white/20 text-white font-label-code-sm text-label-code-sm flex items-center justify-center">5</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm font-medium whitespace-nowrap flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform">
+<span>Admin</span>
+<span class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center justify-center">1</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm font-medium whitespace-nowrap flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform">
+<span>Payroll Admin</span>
+<span class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center justify-center">1</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm font-medium whitespace-nowrap flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform">
+<span>Payroll User</span>
+<span class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center justify-center">1</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm font-medium whitespace-nowrap flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform">
+<span>Time Off Admin</span>
+<span class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center justify-center">1</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm font-medium whitespace-nowrap flex items-center gap-1.5 shrink-0 active:scale-95 transition-transform">
+<span>Employee</span>
+<span class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center justify-center">1</span>
+</button>
+</div>
+</header>
+<!-- Main Directory Body -->
+<div class="px-margin-screen flex flex-col gap-spacing-sm mt-spacing-sm">
+<!-- Directory Summary Metrics Banner -->
+<div class="p-spacing-sm rounded-xl bg-surface-container-low shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-spacing-xs">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">group</span>
+</div>
+<div>
+<div class="font-title-md text-title-md font-semibold text-on-surface flex items-center gap-2">
+<span>5 Directory Users</span>
+<span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">5 Active • 0 Suspended • 1 Pending 2FA</p>
+</div>
+</div>
+<div class="flex items-center gap-spacing-2xs">
+<button class="w-8 h-8 rounded-lg bg-surface-container text-on-surface flex items-center justify-center active:scale-90 transition-transform" title="Export directory CSV">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container text-on-surface flex items-center justify-center active:scale-90 transition-transform" title="Bulk Action Menu">
+<span class="material-symbols-outlined text-[18px]">checklist</span>
+</button>
+</div>
+</div>
+<!-- Micro interaction hint ribbon -->
+<div class="flex items-center justify-between px-spacing-xs py-1.5 rounded-lg bg-secondary-container/40 text-on-secondary-container font-body-sm text-body-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">touch_app</span>
+<span>Tap card for RBAC permissions • Swipe left for quick actions</span>
+</div>
+<span class="material-symbols-outlined text-[16px]">swipe_left</span>
+</div>
+<!-- User Cards List -->
+<div class="flex flex-col gap-spacing-sm">
+<!-- Card 5 (Alex Morgan - Admin) [Elevated Priority] -->
+<div class="group relative rounded-2xl bg-surface-container-lowest shadow-md p-spacing-md transition-all active:scale-[0.99] overflow-hidden">
+<div class="absolute top-0 right-0 w-24 h-24 bg-primary-fixed/30 rounded-bl-full pointer-events-none"></div>
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-spacing-sm">
+<div class="relative w-12 h-12 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-display-md text-display-md font-semibold shadow-sm shrink-0">
+<span>AM</span>
+<div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-2 flex-wrap">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface truncate">Alex Morgan</h3>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm">You</span>
+</div>
+<p class="font-label-code-sm text-label-code-sm text-outline truncate mt-0.5">alex.morgan@enterprise.odoo.com</p>
+<div class="flex items-center gap-2 mt-spacing-xs flex-wrap">
+<span class="px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-body-sm text-body-sm font-semibold flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[14px]">shield_person</span>
+<span>System Admin</span>
+</span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-container/10 text-tertiary font-body-sm text-body-sm font-medium">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span>Active</span>
+</span>
+</div>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="mt-spacing-sm pt-spacing-xs flex items-center justify-between bg-surface-container-low/60 rounded-xl px-3 py-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span>Full System &amp; Audit Logs Access</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">PIN: Active</span>
+</div>
+</div>
+<!-- Card 1 (Aarav Mehta) -->
+<div class="relative rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md p-spacing-md transition-all active:scale-[0.99]">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-spacing-sm">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-display-md text-display-md font-semibold shrink-0 shadow-xs">
+<span>AM</span>
+</div>
+<div class="min-w-0">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface truncate">Aarav Mehta</h3>
+<p class="font-label-code-sm text-label-code-sm text-outline truncate mt-0.5">aarav@company.com</p>
+<div class="flex items-center gap-2 mt-spacing-xs flex-wrap">
+<span class="px-2.5 py-1 rounded-full bg-secondary-container/70 text-on-secondary-container font-body-sm text-body-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">payments</span>
+<span>Payroll User</span>
+</span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-container/10 text-tertiary font-body-sm text-body-sm font-medium">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span>Active</span>
+</span>
+</div>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+<div class="mt-spacing-sm pt-spacing-xs flex items-center justify-between bg-surface-container-low/60 rounded-xl px-3 py-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm truncate">
+<span class="material-symbols-outlined text-[16px] text-secondary">link</span>
+<span class="truncate">Linked: <span class="font-medium text-on-surface">Aarav Mehta</span> (Finance)</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-tertiary bg-tertiary-fixed/30 px-2 py-0.5 rounded-full">2FA Enforced</span>
+</div>
+</div>
+<!-- Card 2 (Maya Shah) -->
+<div class="relative rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md p-spacing-md transition-all active:scale-[0.99]">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-spacing-sm">
+<div class="w-12 h-12 rounded-full bg-primary-fixed-dim text-on-primary-fixed flex items-center justify-center font-display-md text-display-md font-semibold shrink-0 shadow-xs">
+<span>MS</span>
+</div>
+<div class="min-w-0">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface truncate">Maya Shah</h3>
+<p class="font-label-code-sm text-label-code-sm text-outline truncate mt-0.5">maya@company.com</p>
+<div class="flex items-center gap-2 mt-spacing-xs flex-wrap">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-body-sm text-body-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">event_available</span>
+<span>Time Off Admin</span>
+</span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-container/10 text-tertiary font-body-sm text-body-sm font-medium">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span>Active</span>
+</span>
+</div>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+<div class="mt-spacing-sm pt-spacing-xs flex items-center justify-between bg-surface-container-low/60 rounded-xl px-3 py-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm truncate">
+<span class="material-symbols-outlined text-[16px] text-secondary">link</span>
+<span class="truncate">Linked: <span class="font-medium text-on-surface">Maya Shah</span> (People Ops)</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Dept Approver</span>
+</div>
+</div>
+<!-- Card 3 (Rohan Patel - Demonstrating swipe reveal action tray) -->
+<div class="relative overflow-hidden rounded-2xl bg-surface-container-low shadow-sm">
+<!-- Underneath Action Tray Revealed on Left Swipe -->
+<div class="absolute inset-y-0 right-0 flex items-stretch z-0">
+<button class="w-20 bg-primary-container text-on-primary flex flex-col items-center justify-center gap-1 active:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[22px]">manage_accounts</span>
+<span class="font-body-sm text-body-sm font-medium">Roles</span>
+</button>
+<button class="w-20 bg-error text-on-error flex flex-col items-center justify-center gap-1 active:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[22px]">person_off</span>
+<span class="font-body-sm text-body-sm font-medium">Suspend</span>
+</button>
+</div>
+<!-- Shifted Card Front Surface (Simulating swipe state) -->
+<div class="relative z-10 bg-surface-container-lowest p-spacing-md transition-transform transform -translate-x-40 shadow-md">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-spacing-sm">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-display-md text-display-md font-semibold shrink-0">
+<span>RP</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface truncate">Rohan Patel</h3>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-highest text-on-surface font-label-code-sm text-label-code-sm">Swiped</span>
+</div>
+<p class="font-label-code-sm text-label-code-sm text-outline truncate mt-0.5">rohan@company.com</p>
+<div class="flex items-center gap-2 mt-spacing-xs flex-wrap">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-body-sm text-body-sm font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Time Off User</span>
+</span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-container/10 text-tertiary font-body-sm text-body-sm font-medium">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span>Active</span>
+</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-spacing-sm pt-spacing-xs flex items-center justify-between bg-surface-container-low/60 rounded-xl px-3 py-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm truncate">
+<span class="material-symbols-outlined text-[16px] text-secondary">link</span>
+<span class="truncate">Linked: <span class="font-medium text-on-surface">Rohan Patel</span> (Logistics)</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Self Service Only</span>
+</div>
+</div>
+</div>
+<!-- Card 4 (Nisha Rao) -->
+<div class="relative rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md p-spacing-md transition-all active:scale-[0.99]">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-spacing-sm">
+<div class="w-12 h-12 rounded-full bg-surface-container-high text-primary font-display-md text-display-md font-semibold flex items-center justify-center shrink-0 shadow-xs">
+<span>NR</span>
+</div>
+<div class="min-w-0">
+<h3 class="font-title-md text-title-md font-semibold text-on-surface truncate">Nisha Rao</h3>
+<p class="font-label-code-sm text-label-code-sm text-outline truncate mt-0.5">nisha@company.com</p>
+<div class="flex items-center gap-2 mt-spacing-xs flex-wrap">
+<span class="px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-body-sm text-body-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">admin_panel_settings</span>
+<span>Payroll Admin</span>
+</span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-container/10 text-tertiary font-body-sm text-body-sm font-medium">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span>Active</span>
+</span>
+</div>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+<div class="mt-spacing-sm pt-spacing-xs flex items-center justify-between bg-surface-container-low/60 rounded-xl px-3 py-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm truncate">
+<span class="material-symbols-outlined text-[16px] text-secondary">link</span>
+<span class="truncate">Linked: <span class="font-medium text-on-surface">Nisha Rao</span> (Payroll Lead)</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-secondary font-medium">Signer 1</span>
+</div>
+</div>
+</div>
+<!-- Security & RBAC Status Bottom Notice -->
+<div class="mt-spacing-xs p-spacing-sm rounded-2xl bg-surface-container-low flex items-center gap-spacing-sm shadow-xs">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">policy</span>
+</div>
+<div class="min-w-0">
+<h4 class="font-title-md text-title-md font-semibold text-on-surface">Odoo 18 Multi-Company Isolation</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Global tenant rules enforce company ID locks on record operations.</p>
+</div>
+</div>
+</div>
+<!-- Bottom Sheet Quick Action Floating Hub -->
+<div class="fixed bottom-4 inset-x-margin-screen max-w-md mx-auto z-40">
+<div class="bg-surface-container-lowest/95 backdrop-blur-xl rounded-full p-2 shadow-xl flex items-center justify-between">
+<div class="flex items-center gap-2 pl-3">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary animate-ping"></span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Directory Synced</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 rounded-full bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-transform" id="btn-quick-invite">
+<span class="material-symbols-outlined text-[18px]">forward_to_inbox</span>
+<span>Quick Invite</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-surface-container text-on-surface flex items-center justify-center active:scale-95 transition-transform" id="btn-rbac-roles" title="Manage RBAC Roles">
+<span class="material-symbols-outlined text-[20px]">security</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Interactive Mock Logic -->
+<script>
+    (function() {
+      const searchInput = document.getElementById('user-search-input');
+      const clearBtn = document.getElementById('clear-search-btn');
+      const filterChips = document.querySelectorAll('.filter-chip');
+
+      if (searchInput && clearBtn) {
+        searchInput.addEventListener('input', (e) => {
+          if (e.target.value.length > 0) {
+            clearBtn.classList.remove('hidden');
+          } else {
+            clearBtn.classList.add('hidden');
+          }
+        });
+
+        clearBtn.addEventListener('click', () => {
+          searchInput.value = '';
+          clearBtn.classList.add('hidden');
+          searchInput.focus();
+        });
+      }
+
+      filterChips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          filterChips.forEach(c => {
+            c.classList.remove('bg-primary-container', 'text-on-primary', 'shadow-sm');
+            c.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+            const countBadge = c.querySelector('span:last-child');
+            if (countBadge) {
+              countBadge.classList.remove('bg-white/20', 'text-white');
+              countBadge.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+            }
+          });
+
+          chip.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+          chip.classList.add('bg-primary-container', 'text-on-primary', 'shadow-sm');
+          const activeBadge = chip.querySelector('span:last-child');
+          if (activeBadge) {
+            activeBadge.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+            activeBadge.classList.add('bg-white/20', 'text-white');
+          }
+        });
+      });
+    })();
+  </script>
+</div></main></body></html>
