@@ -135,9 +135,18 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     );
   }
 
+  bool get _isOwnProfile {
+    if (widget.initialEmployee == null) return true;
+    if (ApiClient.isOwnProfile(emp.id)) return true;
+    if (ApiClient.currentEmail != null && emp.email.toLowerCase() == ApiClient.currentEmail!.toLowerCase()) return true;
+    return false;
+  }
+
+  bool get _canEdit => ApiClient.hasHrAccess && !_isOwnProfile;
+
   void _openEditEmployeeSheet() {
-    if (!ApiClient.hasHrAccess) {
-      _toast('Access restricted: Only HR Manager and Admin can edit employee profiles.');
+    if (!_canEdit) {
+      _toast('Access restricted: You cannot edit your own profile.');
       return;
     }
     final nameCtrl = TextEditingController(text: emp.name);
@@ -653,9 +662,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               ),
               onSelected: _onProfileAction,
               itemBuilder: (context) {
-                final bool canEdit = ApiClient.hasHrAccess;
                 return [
-                  if (canEdit) _menuItem('edit', Icons.edit_outlined, 'Edit Profile', iconColor: const Color(0xFF714B67)),
+                  if (_canEdit) _menuItem('edit', Icons.edit_outlined, 'Edit Profile', iconColor: const Color(0xFF714B67)),
                   _menuItem('copy_email', Icons.alternate_email_rounded, 'Copy Work Email', iconColor: const Color(0xFF00696E)),
                   _menuItem('copy_id', Icons.badge_outlined, 'Copy Employee ID', iconColor: const Color(0xFF714B67)),
                   _menuItem('print_payslip', Icons.receipt_long_rounded, 'Print Latest Payslip', iconColor: const Color(0xFF00696E)),
@@ -1646,7 +1654,6 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildBottomActionBar() {
-    final bool canEdit = ApiClient.hasHrAccess;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
@@ -1702,7 +1709,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
             ),
           ),
 
-          if (canEdit) ...[
+          if (_canEdit) ...[
             const SizedBox(width: 10),
 
             // Edit Employee Primary Button (HR+ only)
