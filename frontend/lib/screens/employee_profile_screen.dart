@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/models.dart';
 import '../services/mock_data_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/smart_button.dart';
@@ -51,7 +50,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
               Expanded(
                 child: ListView.separated(
                   itemCount: MockDataService.payslips.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final slip = MockDataService.payslips[index];
                     return Card(
