@@ -20,6 +20,12 @@ class AuthService {
     _localCredentials[key] = password;
   }
 
+  /// Returns the current password known for this email (or the default demo password).
+  static String getKnownPassword(String email) {
+    final key = email.toLowerCase().trim();
+    return _localCredentials[key] ?? _defaultDemoPassword;
+  }
+
   static Future<ApiResponse<Map<String, dynamic>>> login({
     required String email,
     required String password,
@@ -52,8 +58,8 @@ class AuthService {
       // Enforce a locally changed password: if we have a stored credential for
       // this account, the entered password must match it. This makes a reset
       // done via "Forgot Password" actually take effect on the next login.
-      final knownPassword = _localCredentials[cleanEmail];
-      if (knownPassword != null && password != knownPassword) {
+      final knownPassword = _localCredentials[cleanEmail] ?? _defaultDemoPassword;
+      if (password != knownPassword) {
         return ApiResponse.failure('Incorrect email or password.', statusCode: 401);
       }
       _rememberCredential(email, password);

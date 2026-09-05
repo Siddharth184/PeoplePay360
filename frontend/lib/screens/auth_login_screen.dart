@@ -81,7 +81,9 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
   void initState() {
     super.initState();
     _emailController = TextEditingController(text: _demoRoles[0]['email']);
-    _passwordController = TextEditingController(text: _demoRoles[0]['pass']);
+    _passwordController = TextEditingController(
+      text: AuthService.getKnownPassword(_demoRoles[0]['email']!),
+    );
   }
 
   @override
@@ -96,7 +98,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
       _selectedRoleIndex = index;
       final item = _demoRoles[index];
       _emailController.text = item['email']!;
-      _passwordController.text = item['pass']!;
+      _passwordController.text = AuthService.getKnownPassword(item['email']!);
       _currentRoleBadge = 'Role: ${item['role']}';
       _notificationText = 'Loaded demo credentials: ${item['badge']}';
     });
@@ -161,16 +163,17 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
 
 
   void _openForgotPasswordDialog() {
-    final emailCtrl = TextEditingController(text: _emailController.text);
+    final emailCtrl = TextEditingController(text: _emailController.text.trim());
     final currentPassCtrl = TextEditingController();
     final newPassCtrl = TextEditingController();
     final confirmPassCtrl = TextEditingController();
 
-    int step = 1; // 1 = verify current password, 2 = set new password
+    int step = 1; // 1 = verify previous password, 2 = set new password
     bool isBusy = false;
     String? localError;
     bool obscureCurrent = true;
     bool obscureNew = true;
+    bool obscureConfirm = true;
 
     void showResultSnack(BuildContext c, String message, {required bool ok}) {
       ScaffoldMessenger.of(c).showSnackBar(
@@ -203,29 +206,26 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            InputDecoration fieldDecoration(IconData icon, String hint,
-                {Widget? suffix}) {
+            InputDecoration fieldDecoration(IconData icon, String hint, {Widget? suffix}) {
               return InputDecoration(
                 prefixIcon: Icon(icon, color: const Color(0xFF00696E), size: 20),
                 suffixIcon: suffix,
                 border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 hintText: hint,
-                hintStyle:
-                    GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
+                hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: Colors.grey),
               );
             }
 
             Widget fieldBox(Widget child) {
               return Container(
-                margin: const EdgeInsets.only(top: 12),
+                margin: const EdgeInsets.only(top: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF2F3FF),
                   borderRadius: BorderRadius.circular(12),
                   border: localError != null
-                      ? Border.all(color: const Color(0xFFBA1A1A))
-                      : null,
+                      ? Border.all(color: const Color(0xFFBA1A1A).withValues(alpha: 0.5))
+                      : Border.all(color: const Color(0xFFDAE2FD)),
                 ),
                 child: child,
               );
@@ -240,11 +240,11 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
             Future<void> onVerify() async {
               final email = emailCtrl.text.trim();
               if (email.isEmpty || !email.contains('@')) {
-                setSheetState(() => localError = 'Enter a valid work email address.');
+                setSheetState(() => localError = 'Please enter a valid work email address.');
                 return;
               }
               if (currentPassCtrl.text.isEmpty) {
-                setSheetState(() => localError = 'Enter your current password.');
+                setSheetState(() => localError = 'Please enter your previous (current) password.');
                 return;
               }
               setSheetState(() {
@@ -262,25 +262,23 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                   step = 2;
                   localError = null;
                 } else {
-                  localError = res.errorMessage ?? 'Current password is incorrect.';
+                  localError = res.errorMessage ?? 'Previous password does not match our records.';
                 }
               });
             }
 
             Future<void> onSave() async {
               final newPass = newPassCtrl.text;
-              if (newPass.length < 8) {
-                setSheetState(() =>
-                    localError = 'New password must be at least 8 characters.');
+              if (newPass.length < 6) {
+                setSheetState(() => localError = 'New password must be at least 6 characters.');
                 return;
               }
               if (newPass != confirmPassCtrl.text) {
-                setSheetState(() => localError = 'The two passwords do not match.');
+                setSheetState(() => localError = 'The new passwords do not match.');
                 return;
               }
               if (newPass == currentPassCtrl.text) {
-                setSheetState(() =>
-                    localError = 'New password must differ from the current one.');
+                setSheetState(() => localError = 'New password must differ from your previous password.');
                 return;
               }
               setSheetState(() {
@@ -295,24 +293,21 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
               if (!ctx.mounted) return;
               if (res.isSuccess) {
                 Navigator.pop(ctx);
-                // Prefill the login form for an immediate sign-in with the new password.
                 if (mounted) {
                   setState(() {
                     _emailController.text = emailCtrl.text.trim();
-                    _passwordController.clear();
+                    _passwordController.text = newPass;
                   });
                 }
                 showResultSnack(
                   context,
-                  res.data?['detail']?.toString() ??
-                      'Password updated. Sign in with your new password.',
+                  '✓ Password reset successfully! You can now sign in with your new password.',
                   ok: true,
                 );
               } else {
                 setSheetState(() {
                   isBusy = false;
-                  localError = res.errorMessage ?? 'Unable to update password.';
-                  // A rejected current password sends the user back to step 1.
+                  localError = res.errorMessage ?? 'Unable to update password. Please try again.';
                   if (res.statusCode == 400 || res.statusCode == 401) step = 1;
                 });
               }
@@ -347,13 +342,44 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        step == 1 ? 'Reset Password' : 'Set New Password',
-                        style: GoogleFonts.outfit(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF131B2E),
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: step == 1 ? const Color(0xFFFFD7F1) : const Color(0xFF92EFF5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              step == 1 ? Icons.lock_reset : Icons.verified_user_outlined,
+                              color: step == 1 ? const Color(0xFF714B67) : const Color(0xFF00696E),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                step == 1 ? 'Verify Previous Password' : 'Set New Password',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF131B2E),
+                                ),
+                              ),
+                              Text(
+                                step == 1 ? 'Step 1 of 2 • Identity Verification' : 'Step 2 of 2 • Update Password',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 10.5,
+                                  color: const Color(0xFF00696E),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                       IconButton(
                         icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
@@ -361,26 +387,23 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    step == 1
-                        ? 'Step 1 of 2 — confirm your identity by entering your current password.'
-                        : 'Step 2 of 2 — choose a new password. It will be required the next time you sign in.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      color: const Color(0xFF4E444A),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 12),
 
                   if (step == 1) ...[
+                    Text(
+                      'Enter your work email and previous password. If they match, you will be allowed to set a new password.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: const Color(0xFF4E444A),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     fieldBox(TextField(
                       controller: emailCtrl,
                       keyboardType: TextInputType.emailAddress,
                       style: textStyle,
-                      decoration: fieldDecoration(
-                          Icons.mail_outline, 'name@enterprise.odoo.com'),
+                      decoration: fieldDecoration(Icons.mail_outline, 'Work email address (e.g. admin@oxp.com)'),
                     )),
                     fieldBox(TextField(
                       controller: currentPassCtrl,
@@ -389,60 +412,107 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                       onSubmitted: (_) => onVerify(),
                       decoration: fieldDecoration(
                         Icons.lock_outline,
-                        'Current password',
+                        'Enter previous password',
                         suffix: IconButton(
                           icon: Icon(
-                            obscureCurrent
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+                            obscureCurrent ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                             color: const Color(0xFF80747A),
                             size: 19,
                           ),
-                          onPressed: () => setSheetState(
-                              () => obscureCurrent = !obscureCurrent),
+                          onPressed: () => setSheetState(() => obscureCurrent = !obscureCurrent),
                         ),
                       ),
                     )),
                   ] else ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6FFBBE).withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF00696E).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Color(0xFF004A31), size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Previous password matched! Enter your new password below.',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF004A31),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     fieldBox(TextField(
                       controller: newPassCtrl,
                       obscureText: obscureNew,
                       style: textStyle,
                       decoration: fieldDecoration(
                         Icons.lock_reset_outlined,
-                        'New password (min 8 characters)',
+                        'New password (min 6 characters)',
                         suffix: IconButton(
                           icon: Icon(
-                            obscureNew
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+                            obscureNew ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                             color: const Color(0xFF80747A),
                             size: 19,
                           ),
-                          onPressed: () =>
-                              setSheetState(() => obscureNew = !obscureNew),
+                          onPressed: () => setSheetState(() => obscureNew = !obscureNew),
                         ),
                       ),
                     )),
                     fieldBox(TextField(
                       controller: confirmPassCtrl,
-                      obscureText: obscureNew,
+                      obscureText: obscureConfirm,
                       style: textStyle,
                       onSubmitted: (_) => onSave(),
                       decoration: fieldDecoration(
-                          Icons.lock_outline, 'Confirm new password'),
+                        Icons.lock_outline,
+                        'Confirm new password',
+                        suffix: IconButton(
+                          icon: Icon(
+                            obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: const Color(0xFF80747A),
+                            size: 19,
+                          ),
+                          onPressed: () => setSheetState(() => obscureConfirm = !obscureConfirm),
+                        ),
+                      ),
                     )),
                   ],
 
                   if (localError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      localError!,
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12, color: const Color(0xFFBA1A1A)),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFDAD6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Color(0xFFBA1A1A), size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              localError!,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFBA1A1A),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
                     height: 48,
@@ -450,28 +520,24 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF714B67),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         elevation: 0,
                       ),
-                      onPressed: isBusy
-                          ? null
-                          : (step == 1 ? onVerify : onSave),
+                      onPressed: isBusy ? null : (step == 1 ? onVerify : onSave),
                       child: isBusy
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
                           : Text(
-                              step == 1 ? 'Verify & Continue' : 'Save New Password',
-                              style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 15, fontWeight: FontWeight.bold),
+                              step == 1 ? 'Verify Previous Password →' : 'Save New Password & Continue',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.bold),
                             ),
                     ),
                   ),
-                  if (step == 2)
+                  if (step == 2) ...[
+                    const SizedBox(height: 6),
                     Align(
                       alignment: Alignment.center,
                       child: TextButton(
@@ -482,7 +548,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                                   localError = null;
                                 }),
                         child: Text(
-                          '← Back',
+                          '← Back to Previous Password',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -491,6 +557,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                         ),
                       ),
                     ),
+                  ],
                 ],
               ),
             );
