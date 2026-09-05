@@ -1,0 +1,39 @@
+# ============================================================================
+# PeoplePay360 Backend - Python 3.11+ (tested on 3.13)
+# ============================================================================
+
+# --- Web framework -----------------------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# --- Data / validation -------------------------------------------------------
+pydantic==2.10.5
+pydantic-settings==2.7.1
+email-validator==2.2.0
+
+# --- Database ----------------------------------------------------------------
+SQLAlchemy==2.0.37
+psycopg[binary]==3.2.4        # psycopg3: wheels available for Python 3.13
+alembic==1.14.1
+pgvector==0.3.6               # SQLAlchemy Vector type
+
+# --- Security ----------------------------------------------------------------
+PyJWT==2.10.1
+bcrypt==4.2.1
+
+# --- AI subsystem ------------------------------------------------------------
+httpx==0.28.1                 # every LLM provider call; ~40 lines total
+fastembed==0.8.0              # local CPU embeddings (ONNX). Pulls NO torch, NO CUDA.
+                              # Downloads ~130MB of model weights on first use.
+                              # If this wheel is unavailable on your platform, set
+                              # EMBEDDING_PROVIDER=hash and every endpoint still
+                              # works with the built-in lexical embedder.
+
+# --- PDF ---------------------------------------------------------------------
+reportlab==4.2.5              # pure-python, no GTK/Cairo native deps on Windows
+
+# --- Deliberately NOT included ----------------------------------------------
+#   langchain / llama-index -> hundreds of MB, weekly breaking changes, ~3% used
+#   torch / transformers    -> multi-GB, unnecessary for ONNX inference
+#   weasyprint              -> needs GTK native libs; reportlab covers A4 payslips
