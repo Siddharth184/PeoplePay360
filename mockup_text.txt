@@ -1,0 +1,1276 @@
+﻿       29       202  0) Login & User Access Flow
+       55       202  Administrators create user accounts and assign access. Employees use Login to enter the HR and Payroll application.
+      128       227  HR Portal
+      129     1,003  User Management
+      129     1,215  ADMIN ONLY
+      195       228  Welcome back
+      202     1,023  +  New User
+      202     1,116  Search users, employees or emailâ€¦
+      202     1,597  Role Filter
+      214     1,695  Open on New User
+      219       228  Sign in to continue to your workspace.
+      261       972  User
+      261     1,104  Employee
+      261     1,236  Work Email
+      261     1,413  Role
+      261     1,560  Status
+      266       228  Work Email
+      269     1,703  Create / Edit User
+      295     1,702  Employee *
+      300       242  name@company.com
+      300     2,251  LOGIN / USER ACCESS NOTE
+      308       972  Aarav Mehta
+      308     1,104  Aarav Mehta
+      308     1,236  aarav@company.com
+      308     1,413  Payroll User
+      310     1,598  Active
+      323     1,714  Select employee
+      338     2,242  â€¢ In the ERP flow. User accounts are created by an Admin.
+      341       228  Password
+      358     2,242  â€¢ When creating a user, link the account to the relevant employee and assign one or more roles.
+      360     1,702  Work Email *
+      366       972  Maya Shah
+      366     1,104  Maya Shah
+      366     1,236  maya@company.com
+      366     1,413  Time Off Admin
+      368     1,598  Active
+      375       242  â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢
+      377       888  User can
+      378     2,242  â€¢ Roles control which modules, records and actions become available after login.
+      388     1,714  employee@company.com
+      390       888  now log in
+      398     2,242  â€¢ Users must not be able to assign or elevate their own roles.
+      409       822  Forgot password?
+      418     2,242  â€¢ Password reset, invitations, SSO, etc. can be added as enhancements.
+      424       972  Rohan Patel
+      424     1,104  Rohan Patel
+      424     1,236  rohan@company.com
+      424     1,413  Time Off User
+      425     1,702  Roles *
+      426     1,598  Active
+      448     1,726  Employee
+      457       527  Sign In
+      478     1,726  Hr Manager
+      482       972  Nisha Rao
+      482     1,104  Nisha Rao
+      482     1,236  nisha@company.com
+      482     1,413  Payroll Admin
+      484     1,598  Active
+      508     1,726  Hr Payroll User
+      530     1,729  Hr Payroll Admin
+      536       960  Select a user to edit access, or create a new user.
+      542       527  Accounts are created by an administrator.
+      550     1,729  Admin
+      574     1,702  Account Status
+      575     1,894  Active
+      607       228  After sign-in, show only the modules and actions allowed by the userâ€™s assigned role.
+      624     1,888  Create User / Save Access
+      666       960  User accounts are separate from Employee records, but should be linked to an employee for access and ownership.
+      747       522  Successful sign in
+      880       228  Odoo HR Payroll Hackathon â€” Functional Screen Flow
+      975       228  1) Employee & Contract Flow
+    1,009       230  Use arrows as navigation flow: user reaches Employee screens, opens a record, then accesses related Contract records.
+    1,095       338  Menus under Employees
+    1,137       371  Employees
+    1,175       400  contracts
+    1,210       403  departments
+    1,244       404  Working Schedule
+    1,369     4,111  Working Schedule â€” List & Form Views
+    1,383       234  Employees â–¼
+    1,383       342  Contracts â–¼
+    1,383       450  Attendance
+    1,383       550  Time Off â–¼
+    1,383       650  Payroll
+    1,383     1,008  Employees â–¼
+    1,383     1,116  Contracts â–¼
+    1,383     1,224  Attendance
+    1,383     1,324  Time Off â–¼
+    1,383     1,424  Payroll
+    1,383     1,782  Employees â–¼
+    1,383     1,890  Contracts â–¼
+    1,383     1,998  Attendance
+    1,383     2,098  Time Off â–¼
+    1,383     2,198  Payroll
+    1,384       198  HR
+    1,384       972  HR
+    1,384     1,746  HR
+    1,412     4,128  +  New Schedule
+    1,412     4,967  â†  Back to list
+    1,416     5,093  40 Hours / Week
+    1,418     4,252  Working Schedules
+    1,436       202  Employees
+    1,436       976  Employees
+    1,436     1,750  Employee / Aarav Mehta
+    1,459       202  Default view: Kanban
+    1,459       976  List view for sort, filter and bulk scanning
+    1,459     1,750  Main employee form with related HR actions
+    1,471     4,121  List
+    1,471     4,190  Calendar
+    1,480     4,971  Schedule Name
+    1,480     5,363  Company
+    1,493     2,614  Employee & Contract
+    1,495     2,103  Time Off 3
+    1,495     2,210  Contracts 2
+    1,495     2,318  Attendance 14
+    1,499       223  NEW
+    1,499       284  Search employeesâ€¦
+    1,499       746  Kanban
+    1,499       837  List
+    1,499       997  NEW
+    1,499     1,058  Search employeesâ€¦
+    1,499     1,522  Kanban
+    1,499     1,610  List
+    1,499     1,767  EDIT
+    1,511     4,983  40 Hours / Week
+    1,511     5,375  My Company
+    1,524     4,135  Search schedulesâ€¦
+    1,524     4,597  Filter
+    1,524     4,695  Columns
+    1,554       984  Employee
+    1,554     1,149  Work Email
+    1,554     1,319  Job Position
+    1,554     1,454  Department
+    1,554     1,569  Status
+    1,560     1,838  Aarav Mehta
+    1,563     2,614  - Employees should be viewable in both Kanban and List views.
+    1,563       272  Aarav Mehta
+    1,563       614  Sara Khan
+    1,564     4,971  Days per Week
+    1,564     5,163  Hours per Week
+    1,564     5,363  Timezone
+    1,571       224  AM
+    1,571       566  SK
+    1,581     1,772  AM
+    1,582       272  Payroll Specialist
+    1,582       614  HR Officer
+    1,585     1,838  Payroll Specialist â€¢ Finance
+    1,591       984  Aarav Mehta
+    1,591     1,149  aarav@oxp.com
+    1,591     1,319  Payroll Specialist
+    1,591     1,454  Finance
+    1,591     1,569  Active
+    1,592     4,140  Schedule Name
+    1,592     4,445  Days / Week
+    1,592     4,539  Hours / Week
+    1,592     4,640  Company
+    1,592     4,780  Status
+    1,595     4,983  5
+    1,595     5,175  40h
+    1,595     5,375  Company timezone
+    1,598     2,614  - Opening an employee should show their HR details and related records such as Contracts,
+    1,606     1,838  aarav@oxp.com | +91 98765 43210
+    1,616       216  Finance
+    1,616       558  HR
+    1,633       984  Sara Khan
+    1,633     1,149  sara@oxp.com
+    1,633     1,319  HR Officer
+    1,633     1,454  HR
+    1,633     1,569  Active
+    1,633     2,614  Attendance, Time Off, and Allocations.
+    1,634       216  â— Active
+    1,634       558  â— Active
+    1,646     1,750  Work Information
+    1,646     1,920  Private Information
+    1,651     4,140  40 Hours / Week
+    1,651     4,455  5
+    1,651     4,549  40h
+    1,651     4,640  My Company
+    1,651     4,789  Active
+    1,653     5,945  +  Add Day
+    1,658     4,971  Weekly Schedule
+    1,668     2,614  - An employee can have multiple contracts over time.
+    1,675       984  John Dsouza
+    1,675     1,149  john@oxp.com
+    1,675     1,319  Developer
+    1,675     1,454  Engineering
+    1,675     1,569  Active
+    1,692     1,750  Department
+    1,692     2,086  Job Position
+    1,696     1,874  Finance
+    1,696     2,210  Payroll Specialist
+    1,703     2,614  - Payroll should use the contract applicable to the selected payroll period.
+    1,708     5,021  Day
+    1,708     5,221  Start Time
+    1,708     5,381  End Time
+    1,708     5,541  Break
+    1,708     5,691  Hours
+    1,716     4,919  Open schedule
+    1,717       984  Neha Patel
+    1,717     1,149  neha@oxp.com
+    1,717     1,319  Recruiter
+    1,717     1,454  HR
+    1,717     1,569  Active
+    1,719       272  John Dsouza
+    1,719       614  Neha Patel
+    1,723     4,140  Night Shift
+    1,723     4,455  5
+    1,723     4,549  40h
+    1,723     4,640  My Company
+    1,723     4,789  Active
+    1,727       224  JD
+    1,727       566  NP
+    1,732     1,750  Manager
+    1,732     2,086  Work Location
+    1,736     1,874  Sara Khan
+    1,736     2,210  Mumbai
+    1,738       272  Developer
+    1,738       614  Recruiter
+    1,751     4,055  Working Schedule
+    1,755     5,021  Monday
+    1,755     5,696  8h
+    1,756     5,215  9:00 AM
+    1,756     5,375  6:00 PM
+    1,756     5,535  1h
+    1,757     5,935  Ã—
+    1,772     1,750  Working Schedule
+    1,772     2,086  Status
+    1,772       216  Engineering
+    1,772       558  HR
+    1,773     2,614  Working Schedule
+    1,776     1,874  40 Hours / Week
+    1,776     2,210  Active
+    1,790       216  â— Active
+    1,790       558  â— Active
+    1,795     4,140  Retail Weekend
+    1,795     4,455  5
+    1,795     4,549  40h
+    1,795     4,640  My Company
+    1,795     4,789  Active
+    1,808     2,614  - Working Schedules need List and Form views. Clicking a row should open that schedule.
+    1,809     5,021  Tuesday
+    1,809     5,696  8h
+    1,810     5,215  9:00 AM
+    1,810     5,375  6:00 PM
+    1,810     5,535  1h
+    1,811     5,935  Ã—
+    1,812     1,750  Company
+    1,812     2,086  Work Email
+    1,816     1,874  OXP Pvt Ltd
+    1,816     2,210  aarav@oxp.com
+    1,843     2,614  - List should surface name, calendar type, days/week, hours/week, company and status.
+    1,863     5,021  Wednesday
+    1,863     5,696  8h
+    1,864     5,215  9:00 AM
+    1,864     5,375  6:00 PM
+    1,864     5,535  1h
+    1,865     5,935  Ã—
+    1,867     4,140  Flexible Hybrid
+    1,867     4,455  5
+    1,867     4,549  37.5h
+    1,867     4,640  My Company
+    1,867     4,789  Active
+    1,878     2,614  - Form defines the weekly pattern: day, start/end time, optional break and hours. Weekly
+    1,885       202  Useful note: Kanban is good for browsing; clicking a card should open the same Employee Form used everywhere else.
+    1,885       976  Useful note: the list view is the main entry point for opening a specific employee record quickly.
+    1,893     1,733  Useful note: smart buttons should open related Contracts, Attendance and Time Off records filtered for the current employee.
+    1,913     2,614  hours should be derived from the schedule.
+    1,917     5,021  Thursday
+    1,917     5,696  8h
+    1,918     5,215  9:00 AM
+    1,918     5,375  6:00 PM
+    1,918     5,535  1h
+    1,919     5,935  Ã—
+    1,939     4,140  Part-time 20h
+    1,939     4,455  4
+    1,939     4,549  20h
+    1,939     4,640  My Company
+    1,939     4,789  Inactive
+    1,948     2,614  - A schedule can be assigned to an Employee/Contract and used by Attendance and Payroll.
+    1,971     5,021  Friday
+    1,971     5,696  8h
+    1,972     5,215  9:00 AM
+    1,972     5,375  6:00 PM
+    1,972     5,535  1h
+    1,973     5,935  Ã—
+    1,974     1,202  Open related contracts
+    1,983     2,614  Shift, flexible-time and other rules are open to the participant.
+    2,019     1,008  Employees â–¼
+    2,019     1,116  Contracts â–¼
+    2,019     1,224  Attendance
+    2,019     1,324  Time Off â–¼
+    2,019     1,424  Payroll
+    2,019     1,782  Employees â–¼
+    2,019     1,890  Contracts â–¼
+    2,019     1,998  Attendance
+    2,019     2,098  Time Off â–¼
+    2,019     2,198  Payroll
+    2,020       972  HR
+    2,020     1,746  HR
+    2,029     5,691  Total Weekly Hours:
+    2,030     5,886  40h
+    2,072       976  Contracts
+    2,072     1,750  Contract / CON/2026/0042
+    2,095       976  List view of employee contracts
+    2,095     1,750  Form view of one contract
+    2,108     4,971  Use this schedule as the employee/contract working pattern.
+    2,109     4,125  Select a schedule to open its Form view
+    2,135       997  NEW
+    2,137     1,063  Search contractsâ€¦
+    2,172     1,750  Employee
+    2,172     2,086  Department
+    2,176     1,874  Aarav Mehta
+    2,176     2,210  Finance
+    2,190       984  Contract
+    2,190     1,114  Employee
+    2,190     1,259  Start
+    2,190     1,344  End
+    2,190     1,429  Wage / Month
+    2,190     1,541  Status
+    2,198     4,124  WORKING SCHEDULE NOTE
+    2,212     1,750  Start Date
+    2,212     2,086  Job Position
+    2,216     1,874  01-Jan-2026
+    2,216     2,210  Payroll Specialist
+    2,217     4,124  â€¢ Required views: List and Form. The List is for finding/opening schedules; the Form defines one schedule.
+    2,230       984  CON/2026/0042
+    2,230     1,114  Aarav Mehta
+    2,230     1,259  01-Jan-26
+    2,230     1,344  â€”
+    2,230     1,429  â‚¹85,000
+    2,230     1,541  Running
+    2,235     4,124  â€¢ A schedule should capture the weekly working pattern (days, working time and total weekly hours). Breaks or variable shifts can be handled in your own way.
+    2,252     1,750  End Date
+    2,252     2,086  Wage / Month
+    2,254     4,124  â€¢ Employee/Contract can reference a Working Schedule. Attendance and Payroll may use it as the expected working time.
+    2,256     1,874  â€”
+    2,256     2,210  â‚¹85,000
+    2,278       984  CON/2025/0018
+    2,278     1,114  Aarav Mehta
+    2,278     1,259  01-Jul-25
+    2,278     1,344  31-Dec-25
+    2,278     1,429  â‚¹78,000
+    2,278     1,541  Expired
+    2,292     1,750  Status
+    2,292     2,086  Working Schedule
+    2,296     1,874  Running
+    2,296     2,210  40 Hours / Week
+    2,326       984  CON/2026/0031
+    2,326     1,114  Sara Khan
+    2,326     1,259  01-Jan-26
+    2,326     1,344  â€”
+    2,326     1,429  â‚¹95,000
+    2,326     1,541  Running
+    2,360     1,762  Salary Structure / Notes
+    2,386     1,762  Structure Type: Employee Salary
+    2,400     1,762  This running contract is the source for payroll calculation in the active period.
+    2,473       976  Useful note: retain contract history, but make the active Running contract obvious because payroll depends on it.
+    2,473     1,750  Useful note: for the problem statement, one employee should not have multiple Running contracts for the same period.
+    2,856       475  2) Attendance Flow
+    2,871       475  Attendance records can be opened from the Attendance menu or from the Employee Form smart button.
+    2,948     2,557  Attendance Widget
+    2,948     3,035  â±
+    2,953       526  Employees â–¼
+    2,953       634  Contracts â–¼
+    2,953       742  Attendance
+    2,953       842  Time Off â–¼
+    2,953       942  Payroll
+    2,953     1,460  Employees â–¼
+    2,953     1,568  Contracts â–¼
+    2,953     1,676  Attendance
+    2,953     1,776  Time Off â–¼
+    2,953     1,876  Payroll
+    2,954       490  HR
+    2,954     1,424  HR
+    3,004     2,567  Welcome back
+    3,005       494  Attendance
+    3,005     1,428  Attendance / Aarav Mehta / 02-Sep-2026
+    3,029       494  List view of employee attendance records
+    3,029     1,428  Form view of one attendance record
+    3,047     2,567  User Name!
+    3,069       515  NEW
+    3,069       576  Search attendanceâ€¦
+    3,069       870  Today
+    3,069       962  Employee: Aarav
+    3,069     1,445  EDIT
+    3,070     3,156  i
+    3,075     3,160  Clicking the attendance icon
+    3,095     3,160  opens the Check In / Check Out
+    3,105     1,428  Employee
+    3,105     1,824  Department
+    3,109     1,552  Aarav Mehta
+    3,109     1,948  Finance
+    3,115     3,160  popup.
+    3,118     3,623  Attendances: 
+    3,123       502  Employee
+    3,123       682  Check In
+    3,123       842  Check Out
+    3,123     1,002  Worked Hours
+    3,123     1,122  Status
+    3,124     2,567  9:48 AM
+    3,124     2,701  â€”  Now
+    3,124     2,971  6h56
+    3,145     1,428  Check In
+    3,145     1,824  Manager
+    3,149     1,552  02-Sep-2026 09:05
+    3,149     1,948  Sara Khan
+    3,161       502  Aarav Mehta
+    3,161       682  09:05
+    3,161       842  18:10
+    3,161     1,002  9.08
+    3,161     1,122  Present
+    3,185     1,428  Check Out
+    3,185     1,824  Status
+    3,186     2,567  Today
+    3,186     2,971  6h56
+    3,188     3,623  - Attendance can be accessed globally or from an individual employee.
+    3,189     1,552  02-Sep-2026 18:10
+    3,189     1,948  Present
+    3,205       502  Sara Khan
+    3,205       682  09:15
+    3,205       842  18:02
+    3,205     1,002  8.78
+    3,205     1,122  Present
+    3,208     1,402  Open selected attendance record
+    3,223     3,623  - Store check-in, check-out, worked hours, and attendance status.
+    3,225     1,428  Worked Hours
+    3,225     1,824  Overtime
+    3,229     1,552  9.08
+    3,229     1,948  0.50 hrs
+    3,249       502  John Dsouza
+    3,249       682  09:32
+    3,249       842  17:58
+    3,249     1,002  8.43
+    3,249     1,122  Present
+    3,249     2,745  Check Out
+    3,258     3,623  - When opened from an employee, only that employeeâ€™s attendance should be shown.
+    3,292     2,567  Employees can mark attendance from the quick widget and review records from the Attendance module.
+    3,293     3,623  - Attendance data should be usable later for reporting/dashboard insights.
+    3,293       502  Neha Patel
+    3,293       682  â€”
+    3,293       842  â€”
+    3,293     1,002  0.00
+    3,293     1,122  Absent
+    3,298     1,440  Notes
+    3,322     1,440  System-generated from check in/out or manually corrected by an authorized user.
+    3,363     2,577  ATTENDANCE QUICK ACTION NOTE
+    3,392       494  Useful note: list view should help users review raw check-in / check-out data and identify missing punches quickly.
+    3,392     1,428  Useful note: worked hours and overtime should be easy to read because they may later influence payroll or reporting.
+    3,396     2,577  â€¢ Clicking the red attendance icon should open a popup.
+    3,412     2,577  â€¢ If there is no active session, show Check In.
+    3,429     2,577  â€¢ If the user is already checked in, show Check Out.
+    3,445     2,577  â€¢ The popup should display elapsed time till now.
+    3,461     2,577  â€¢ After successful Check In, the status indicator changes to green.
+    3,628       473  3) Time Off Flow
+    3,643       473  Requests, Allocations and Time Off Types must be reached from Time Off â–¼ in the navbar. Do not add separate page buttons for them.
+    3,713     1,485  Time Off:
+    3,721       611  Menus under Time Off
+    3,778       655  Dashboard
+    3,783     1,485  - Requests should support a simple approval flow.
+    3,818     1,485  - For leave types that require allocation, approved leave should reduce the
+    3,822       660  Time offs
+    3,853     1,485  employeeâ€™s available balance.
+    3,863       696  Time off Types
+    3,888     1,485  - Time Off Types should define how each leave type behaves. The exact
+    3,907       698  Allocations
+    3,923     1,485  policies and validations are open to interpretation.
+    4,087     1,921  Employees â–¼
+    4,087     2,029  Contracts â–¼
+    4,087     2,137  Attendance
+    4,087     2,237  Time Off â–¼
+    4,087     2,337  Payroll
+    4,089     1,885  HR
+    4,094     1,131  Employees â–¼
+    4,094     1,239  Contracts â–¼
+    4,094     1,347  Attendance
+    4,094     1,447  Time Off â–¼
+    4,094     1,547  Payroll
+    4,095     1,095  HR
+    4,102       296  Employees â–¼
+    4,102       401  Contracts â–¼
+    4,102       506  Attendance
+    4,102       604  Time Off â–¼
+    4,102       701  Payroll
+    4,102     2,733  Employees â–¼
+    4,102     2,841  Contracts â–¼
+    4,102     2,949  Attendance
+    4,102     3,049  Time Off â–¼
+    4,102     3,149  Payroll
+    4,103       261  HR
+    4,103     2,697  HR
+    4,140     1,889  Allocations
+    4,147     1,099  Time Off Request / Aarav Mehta
+    4,153       265  Time Off Requests
+    4,155     2,701  Allocation / Aarav Mehta
+    4,164     1,889  List view opened from Time Off â–¼ â†’ Allocations
+    4,170     1,099  Form view of one request
+    4,176       265  List view opened from Time Off â–¼ â†’ Requests
+    4,178     2,701  Form view of one allocation record
+    4,204     1,910  NEW
+    4,204     1,971  Search allocationsâ€¦
+    4,205     1,114  Approve
+    4,206     1,179  Refuse
+    4,215       286  NEW
+    4,215       345  Search requestsâ€¦
+    4,215       569  My Team
+    4,219     2,718  EDIT
+    4,219     2,715  Approve
+    4,220     2,782  Refuse
+    4,247     1,099  Employee
+    4,247     1,405  Duration
+    4,251     1,223  Aarav Mehta
+    4,251     1,529  3 Days
+    4,255     2,701  Employee
+    4,255     3,007  Taken
+    4,258     1,897  Employee
+    4,258     2,047  Type
+    4,258     2,167  Allocated
+    4,258     2,257  Taken
+    4,258     2,337  Remaining
+    4,258     2,427  Status
+    4,259     2,825  Aarav Mehta
+    4,259     3,131  8 Days
+    4,268       273  Employee
+    4,268       409  Type
+    4,268       516  Start
+    4,268       600  End
+    4,268       683  Duration
+    4,268       771  Status
+    4,287     1,099  Time Off Type
+    4,287     1,405  Status
+    4,291     1,223  Paid Time Off
+    4,291     1,529  Approved
+    4,295     2,701  Time Off Type
+    4,295     3,007  Remaining
+    4,296     1,897  Aarav Mehta
+    4,296     2,047  Paid Time Off
+    4,296     2,167  20 days
+    4,296     2,257  8 days
+    4,296     2,337  12 days
+    4,296     2,427  Approved
+    4,296     2,603  open allocation
+    4,299     2,825  Paid Time Off
+    4,299     3,131  12 Days
+    4,304       851  Approve
+    4,304       885  Refuse
+    4,304       273  Aarav Mehta
+    4,304       409  Paid Time Off
+    4,304       516  12-Sep
+    4,304       600  14-Sep
+    4,304       683  3 Days
+    4,304       771  Approved
+    4,327     1,099  Start Date
+    4,327     1,405  Approver
+    4,331     1,223  12-Sep-2026
+    4,331     1,529  Sara Khan
+    4,335     2,701  Allocated
+    4,335     3,007  Approver
+    4,339     2,825  20 Days
+    4,339     3,131  Sara Khan
+    4,340     1,897  Sara Khan
+    4,340     2,047  Paid Time Off
+    4,340     2,167  18 days
+    4,340     2,257  4 days
+    4,340     2,337  14 days
+    4,340     2,427  Approved
+    4,345       851  Approve
+    4,346       887  Refuse
+    4,347       273  Sara Khan
+    4,347       409  Sick Leave
+    4,347       516  18-Sep
+    4,347       600  18-Sep
+    4,347       683  1 Day
+    4,347       771  Approved
+    4,367     1,099  End Date
+    4,367     1,405  Allocation Used
+    4,371     1,223  14-Sep-2026
+    4,371     1,529  Paid Time Off 2026
+    4,372     1,013  Open time off
+    4,375     2,701  Status
+    4,375     3,007  Validity
+    4,379     2,825  Approved
+    4,379     3,131  2026 Annual Balance
+    4,384     1,897  Neha Patel
+    4,384     2,047  Comp Off
+    4,384     2,167  2 days
+    4,384     2,257  1 day
+    4,384     2,337  1 day
+    4,384     2,427  To Approve
+    4,389       855  Approve
+    4,389       891  Refuse
+    4,390       273  John Dsouza
+    4,390       409  Comp Off
+    4,390       516  27-Sep
+    4,390       600  27-Sep
+    4,390       683  1 Day
+    4,390       771  To Approve
+    4,437     1,111  Reason
+    4,446     2,713  Description
+    4,463     1,111  Family vacation
+    4,472     2,713  Annual leave balance granted at start of policy year.
+    4,491     1,889  Useful note: the list should expose the balance math at a glance â€” Allocated, Taken and Remaining.
+    4,494       265  Useful note: request status should show the approval lifecycle clearly.
+    4,510     1,098  Useful note: if the selected type requires allocation, the request should clearly show which balance was consumed.
+    4,513     2,701  Useful note: approved allocation is what creates available leave balance for the employee.
+    4,543     2,110  Open selected allocation
+    4,667     1,289  Employees â–¼
+    4,667     1,397  Contracts â–¼
+    4,667     1,505  Attendance
+    4,667     1,605  Time Off â–¼
+    4,667     1,705  Payroll
+    4,669     1,253  HR
+    4,675     2,028  Employees â–¼
+    4,675     2,136  Contracts â–¼
+    4,675     2,244  Attendance
+    4,675     2,344  Time Off â–¼
+    4,675     2,444  Payroll
+    4,676     1,992  HR
+    4,720     1,257  Time Off Types
+    4,728     1,996  Time Off Type / Paid Time Off
+    4,744     1,257  List view opened from Time Off â–¼ â†’ Time Off Types
+    4,751     1,996  Form view of one time off type
+    4,784     1,278  NEW
+    4,784     1,339  Search time off typesâ€¦
+    4,791     2,013  EDIT
+    4,828     1,996  Type Name
+    4,828     2,302  Approval
+    4,832     2,120  Paid Time Off
+    4,832     2,426  Manager
+    4,838     1,265  Type
+    4,838     1,435  Unit
+    4,838     1,525  Allocation
+    4,838     1,635  Approval
+    4,838     1,745  Status
+    4,868     1,996  Unit
+    4,868     2,302  Payroll / Work Entry
+    4,871     1,867  Open selected type
+    4,872     2,120  Days
+    4,872     2,426  Leave Work Entry
+    4,876     1,265  Paid Time Off
+    4,876     1,435  Days
+    4,876     1,525  Required
+    4,876     1,635  Manager
+    4,876     1,745  Active
+    4,908     1,996  Requires Allocation
+    4,908     2,302  Display Color
+    4,912     2,120  Yes
+    4,912     2,426  Blue
+    4,920     1,265  Sick Leave
+    4,920     1,435  Days
+    4,920     1,525  No
+    4,920     1,635  Manager
+    4,920     1,745  Active
+    4,948     1,996  Active
+    4,952     2,120  True
+    4,964     1,265  Comp Off
+    4,964     1,435  Hours
+    4,964     1,525  Required
+    4,964     1,635  Officer
+    4,964     1,745  Active
+    5,018     2,008  Configuration Notes
+    5,044     2,008  Standard annual leave. Balance comes from approved allocations.
+    5,071     1,257  Useful note: this list defines policy rules, not employee transactions.
+    5,079     1,996  Useful note: Time Off Type drives approval behavior and whether a request needs an allocation.
+    5,269       495  4) Payroll â€” Payrun & Payslips
+    5,439       944  Menus under Payroll
+    5,480     3,872  Payrun Creation:
+    5,520     1,007  Dashboard
+    5,550     3,872  Creating a Payrun happens in two steps:
+    5,581     1,014  Payruns
+    5,620     3,872  - Select the payroll scope, such as employee type, salary structure, and period.
+    5,636     1,010  Payslips
+    5,655     3,872  - Select the employees to include.
+    5,690     3,872  - Continue only moves to employee selection. A Payrun is created only after clicking â€œCreate
+    5,702     1,004  Structures
+    5,725     3,872  Payrunâ€.
+    5,760     3,872  Only the selected employees should be included in that Payrun.
+    5,764     1,010  Rules
+    5,847     2,027  The Payrun is created only after employee selection.
+    5,865     3,872  Payruns & Payslips:
+    5,906     2,802  Ã—
+    5,906     1,687  Select Employee Records
+    5,935     3,872  A Payrun represents payroll processing for a particular period.
+    5,963     2,080  Search employees...
+    5,965     2,619  1â€“22 / 22
+    5,970     3,872  Each selected employee should have a Payslip linked to the Payrun.
+    6,000       617  New Pay Run
+    6,005     3,872  Computing payroll should use the employeeâ€™s applicable contract and selected salary structure.
+    6,009     1,267  Ã—
+    6,018     1,697  âœ“
+    6,018     1,747  Employee
+    6,018     2,007  Working Hours
+    6,018     2,227  Start Date
+    6,018     2,417  Wage
+    6,040     3,872  Payslips should show understandable components such as Basic, Allowances, Deductions, Gross,
+    6,057       628  Pay Structure
+    6,058     1,697  â˜
+    6,058     1,747  Anita Oliver
+    6,058     2,007  40 hours/week
+    6,058     2,227  Jan 1
+    6,058     2,417  $ 4,500.00
+    6,061       770  United States: Regular Pay
+    6,075     3,872  and Net Salary.
+    6,088       772  Sep 1
+    6,088       988  Sep 30
+    6,090       934  â†’
+    6,092     1,489  on continue
+    6,100     1,697  â˜
+    6,100     1,747  Audrey Peterson
+    6,100     2,007  40 hours/week
+    6,100     2,227  Jan 1
+    6,100     2,417  $ 4,000.00
+    6,110     3,872  Payroll issues, such as missing required information or duplicate payslips, should be visible to the
+    6,119       628  Period
+    6,142     1,697  â˜
+    6,142     1,747  Billy Kyle
+    6,142     2,007  40 hours/week
+    6,142     2,227  Sep 2
+    6,142     2,417  $ 3,100.00
+    6,145     3,872  user.
+    6,184     1,697  â˜
+    6,184     1,747  Eli Lambert
+    6,184     2,007  40 hours/week
+    6,184     2,227  Jan 1
+    6,184     2,417  $ 4,350.00
+    6,184       642  Continue
+    6,186       764  Discard
+    6,226     1,697  â˜
+    6,226     1,747  Paul Williams
+    6,226     2,007  40 hours/week
+    6,226     2,227  Jul 1
+    6,226     2,417  $ 3,950.00
+    6,243     1,688  Create Payrun
+    6,250     3,872  Payroll Workflow:
+    6,279     1,761  Create payrun
+    6,282     1,887  Back
+    6,283       559  Participant note: this popup collects the payrun scope only. Continue should not create the Payrun yet.
+    6,320     3,872  The intended flow is broadly:
+    6,342     1,800  Participant note: user selects one or more eligible employees, then clicks Create Payrun. The created Payrun should contain only the selected employees.
+    6,390     3,872  Draft â†’ Compute â†’ Validate â†’ Mark Paid
+    6,415        66  Employees â–¼
+    6,415       170  Contracts â–¼
+    6,415       274  Attendance
+    6,415       370  Time Off â–¼
+    6,415       466  Payroll
+    6,416        30  HR
+    6,422     1,070  Employees â–¼
+    6,422     1,174  Contracts â–¼
+    6,422     1,278  Attendance
+    6,422     1,374  Time Off â–¼
+    6,422     1,470  Payroll
+    6,423     1,034  HR
+    6,439     3,001  Employees â–¼
+    6,439     3,105  Contracts â–¼
+    6,439     3,209  Attendance
+    6,439     3,305  Time Off â–¼
+    6,439     3,401  Payroll
+    6,440     2,965  HR
+    6,441     1,999  Employees â–¼
+    6,441     2,103  Contracts â–¼
+    6,441     2,207  Attendance
+    6,441     2,303  Time Off â–¼
+    6,441     2,399  Payroll
+    6,442     1,963  HR
+    6,460     3,872  Paid/finalised payroll should remain available as historical data.
+    6,468        34  Payruns
+    6,475     1,038  Payrun / February 2026
+    6,491        34  Payrun view for payroll periods
+    6,491     2,969  Payslip / Aarav Mehta / February 2026
+    6,494     1,967  Payslips
+    6,498     1,038  Open one Payrun to compute and manage its payslips
+    6,515     2,969  Detailed salary computation for one employee
+    6,517     1,967  List view of employee payslips
+    6,531        55  NEW
+    6,531       116  Search payrunsâ€¦
+    6,531       368  2026
+    6,539     1,179  VALIDATE
+    6,539     1,288  MARK PAID
+    6,539     1,566  SEND PAYSLIPS
+    6,540     1,064  COMPUTE
+    6,555     2,995  COMPUTE
+    6,555     3,093  MARK PAID
+    6,556     3,193  PRINT PAYSLIP
+    6,557     1,988  NEW
+    6,557     2,049  Search payslipsâ€¦
+    6,557     2,301  Period: Feb 2026
+    6,565     3,872  Salary Structures & Salary Rules:
+    6,579     1,038  Name
+    6,583     1,162  February 2026
+    6,591       340  42 employees
+    6,591       530  Paid
+    6,593        50  January 2026
+    6,595     2,969  Employee
+    6,595     3,305  Period
+    6,599     3,093  Aarav Mehta
+    6,599     3,429  01-Feb â€” 28-Feb
+    6,610     1,973  Employee
+    6,610     2,098  Warning
+    6,610     2,208  Period
+    6,610     2,318  Basic
+    6,610     2,393  Gross
+    6,610     2,468  Net
+    6,610     2,543  Structure
+    6,610     2,648  Status
+    6,613        50  01-Jan-2026 â€” 31-Jan-2026
+    6,615       684  â†—
+    6,615       530  1 warning
+    6,619     1,038  Salary Structure
+    6,623     1,162  Regular Salary
+    6,635     3,872  A Salary Structure contains the rules used to calculate salary.
+    6,635     2,969  Salary Structure
+    6,635     3,305  Status
+    6,639     3,093  Regular Salary
+    6,639     3,429  Done
+    6,647     1,973  Aarav Mehta
+    6,647     2,098  â€”
+    6,647     2,208  01-Feb â€” 28-Feb
+    6,647     2,318  â‚¹50k
+    6,647     2,393  â‚¹80k
+    6,647     2,468  â‚¹75k
+    6,647     2,543  Regular
+    6,647     2,648  Done
+    6,659     1,038  Period
+    6,663     1,162  01-Feb â€” 28-Feb
+    6,670     3,872  Salary Rules can represent Basic Salary, Allowances, Deductions, Gross, Net, etc.
+    6,675     2,969  Pay Run
+    6,675     3,305  Worked Days
+    6,679     3,093  February 2026
+    6,679     3,429  22
+    6,689     1,973  Sara Khan
+    6,689     2,098  A/C missing
+    6,689     2,208  01-Feb â€” 28-Feb
+    6,689     2,318  â‚¹60k
+    6,689     2,393  â‚¹96k
+    6,689     2,468  â‚¹88k
+    6,689     2,543  Regular
+    6,689     2,648  Done
+    6,693       340  42 employees
+    6,693       530  Validated
+    6,695        50  February 2026
+    6,699     1,038  Status
+    6,703     1,162  Validated
+    6,705     3,872  Rules should be processed according to their sequence.
+    6,715        50  01-Feb-2026 â€” 28-Feb-2026
+    6,717       684  â†—
+    6,717       530  2 warnings
+    6,731     1,973  John Dsouza
+    6,731     2,098  Duplicate
+    6,731     2,208  01-Feb â€” 28-Feb
+    6,731     2,318  â‚¹45k
+    6,731     2,393  â‚¹72k
+    6,731     2,468  â‚¹66k
+    6,731     2,543  Regular
+    6,731     2,648  Draft
+    6,737       885  Open Payrun
+    6,739     2,969  Salary Computation
+    6,740     3,872  Different calculation methods may be supported, such as fixed amounts, percentages, or formulas.
+    6,748     1,038  Payslips in this Payrun
+    6,753     2,811  Open payslip
+    6,773     1,973  Neha Patel
+    6,773     2,098  â€”
+    6,773     2,208  01-Feb â€” 28-Feb
+    6,773     2,318  â‚¹40k
+    6,773     2,393  â‚¹64k
+    6,773     2,468  â‚¹59k
+    6,773     2,543  Regular
+    6,773     2,648  Done
+    6,774     2,977  Rule
+    6,774     3,237  Category
+    6,774     3,367  Amount
+    6,774     3,487  Code
+    6,783     1,044  Employee
+    6,783     1,174  Warning
+    6,783     1,294  Worked
+    6,783     1,364  Basic
+    6,783     1,444  Gross
+    6,783     1,524  Net
+    6,783     1,604  Status
+    6,783     1,684  PDF
+    6,795       340  42 employees
+    6,795       530  Draft
+    6,797        50  March 2026
+    6,803     2,977  Basic Salary
+    6,803     3,237  Basic
+    6,803     3,367  â‚¹50,000
+    6,803     3,487  BASIC
+    6,810     3,872  Participants are free to design the calculation engine as long as salary rules actually drive Payslip
+    6,817        50  01-Mar-2026 â€” 31-Mar-2026
+    6,818     1,044  Aarav Mehta
+    6,818     1,174  â€”
+    6,818     1,294  22
+    6,818     1,364  â‚¹50k
+    6,818     1,444  â‚¹80k
+    6,818     1,524  â‚¹75k
+    6,818     1,604  Done
+    6,818     1,684  PDF
+    6,819       684  â†—
+    6,819       530  No warnings
+    6,822     2,617  Open selected payslip
+    6,827     2,977  House Rent Allowance
+    6,827     3,237  Allowance
+    6,827     3,367  â‚¹20,000
+    6,827     3,487  HRA
+    6,845     3,872  calculations.
+    6,851     2,977  Standard Allowance
+    6,851     3,237  Allowance
+    6,851     3,367  â‚¹10,000
+    6,851     3,487  STD
+    6,856     1,044  Sara Khan
+    6,856     1,174  A/C missing
+    6,856     1,294  22
+    6,856     1,364  â‚¹60k
+    6,856     1,444  â‚¹96k
+    6,856     1,524  â‚¹88k
+    6,856     1,604  Done
+    6,856     1,684  PDF
+    6,875     2,977  Gross Salary
+    6,875     3,237  Gross
+    6,875     3,367  â‚¹80,000
+    6,875     3,487  GROSS
+    6,894     1,044  John Dsouza
+    6,894     1,174  Duplicate
+    6,894     1,294  20
+    6,894     1,364  â‚¹45k
+    6,894     1,444  â‚¹72k
+    6,894     1,524  â‚¹66k
+    6,894     1,604  Draft
+    6,894     1,684  PDF
+    6,899     2,977  Provident Fund
+    6,899     3,237  Deduction
+    6,899     3,367  -â‚¹3,000
+    6,899     3,487  PF
+    6,914        34  Useful note: each Payrun represents one payroll period and groups the payslips generated for that period.
+    6,923     2,977  Professional Tax
+    6,923     3,237  Deduction
+    6,923     3,367  -â‚¹2,000
+    6,923     3,487  PT
+    6,941     1,967  Useful note: selecting any payslip opens the detailed salary computation and PDF action for that employee.
+    6,941     1,023  Useful note: warnings such as missing account data or duplicate payslips should be visible before payroll is finalized.
+    6,947     2,977  Net Salary
+    6,947     3,237  Net
+    6,947     3,367  â‚¹75,000
+    6,947     3,487  NET
+    6,950     3,872  Payslip PDF:
+    6,972     2,969  Useful note: the Print action generates the employee payslip as PDF; that PDF can be sent from the parent Payrun.
+    7,008        10  5) Payroll Configuration â€” Salary Structures & Rules
+    7,020     3,872  Users should be able to generate/print a Payslip showing the employeeâ€™s payroll calculation for
+    7,037     1,404  Configured structure is selected when a Payrun is created
+    7,055     3,872  that period.
+    7,073        66  Employees â–¼
+    7,073       170  Contracts â–¼
+    7,073       274  Attendance
+    7,073       370  Time Off â–¼
+    7,073       466  Payroll
+    7,074        30  HR
+    7,080     1,070  Employees â–¼
+    7,080     1,174  Contracts â–¼
+    7,080     1,278  Attendance
+    7,080     1,374  Time Off â–¼
+    7,080     1,470  Payroll
+    7,081     1,034  HR
+    7,090     3,872  Sending Payslips can also be supported from the Payrun.
+    7,097     3,001  Employees â–¼
+    7,097     3,105  Contracts â–¼
+    7,097     3,209  Attendance
+    7,097     3,305  Time Off â–¼
+    7,097     3,401  Payroll
+    7,098     2,965  HR
+    7,099     1,999  Employees â–¼
+    7,099     2,103  Contracts â–¼
+    7,099     2,207  Attendance
+    7,099     2,303  Time Off â–¼
+    7,099     2,399  Payroll
+    7,100     1,963  HR
+    7,126        34  Salary Structures
+    7,133     1,038  Salary Structure / Regular Salary
+    7,149        34  List view
+    7,149     2,969  Salary Rule / Basic Salary
+    7,152     1,967  Salary Rules
+    7,156     1,038  Form view with its salary rules
+    7,173     2,969  Form view
+    7,175     1,967  List view
+    7,189        55  NEW
+    7,189       116  Search structuresâ€¦
+    7,195     3,872  Payroll Dashboard:
+    7,213     2,986  EDIT
+    7,215     1,988  NEW
+    7,215     2,049  Search salary rulesâ€¦
+    7,215     2,311  Regular Salary
+    7,237     1,038  Structure Name
+    7,237     1,414  Active
+    7,241     1,162  Regular Salary
+    7,241     1,538  True
+    7,243        42  Structure Name
+    7,243       302  Rules
+    7,243       402  Employees
+    7,243       522  Active
+    7,253     2,969  Rule Name
+    7,253     3,315  Salary Structure
+    7,257     3,093  Basic Salary
+    7,257     3,439  Regular Salary
+    7,265     3,872  The dashboard should use actual data created through the HR and Payroll flows rather than
+    7,270     1,975  Rule Name
+    7,270     2,195  Code
+    7,270     2,285  Category
+    7,270     2,415  Structure
+    7,270     2,555  Sequence
+    7,282        42  Regular Salary
+    7,282       302  12 rules
+    7,282       402  42 employees
+    7,282       522  Active
+    7,290     1,038  Salary Rules
+    7,293     2,969  Code
+    7,293     3,315  Computation
+    7,297     3,093  BASIC
+    7,297     3,439  Percentage of Wage
+    7,300     3,872  hardcoded values.
+    7,306     1,975  Basic Salary
+    7,306     2,195  BASIC
+    7,306     2,285  Basic
+    7,306     2,415  Regular Salary
+    7,306     2,555  1
+    7,326     1,046  Rule Name
+    7,326     1,326  Code
+    7,326     1,426  Category
+    7,326     1,556  Sequence
+    7,328        42  Intern Salary
+    7,328       302  8 rules
+    7,328       402  6 employees
+    7,328       522  Active
+    7,333     2,969  Category
+    7,333     3,315  Percentage
+    7,337     3,093  Basic
+    7,337     3,439  50%
+    7,346     1,975  House Rent Allowance
+    7,346     2,195  HRA
+    7,346     2,285  Allowance
+    7,346     2,415  Regular Salary
+    7,346     2,555  10
+    7,352     1,045  Basic Salary
+    7,352     1,325  BASIC
+    7,352     1,425  Basic
+    7,352     1,555  1
+    7,370     3,872  It should provide useful payroll/HR insights such as:
+    7,371     1,045  House Rent Allowance
+    7,371     1,325  HRA
+    7,371     1,425  Allowance
+    7,371     1,555  10
+    7,373     2,969  Sequence
+    7,373     3,315  Quantity
+    7,374        42  Contractor
+    7,374       302  6 rules
+    7,374       402  9 employees
+    7,374       522  Active
+    7,377     3,093  1
+    7,377     3,439  1
+    7,378       885  open structure
+    7,386     1,975  Standard Allowance
+    7,386     2,195  STD
+    7,386     2,285  Allowance
+    7,386     2,415  Regular Salary
+    7,386     2,555  20
+    7,390     1,045  Standard Allowance
+    7,390     1,325  STD
+    7,390     1,425  Allowance
+    7,390     1,555  20
+    7,398     2,811  Open salary rule
+    7,409     1,045  Performance Bonus
+    7,409     1,325  BONUS
+    7,409     1,425  Allowance
+    7,409     1,555  30
+    7,426     1,975  Performance Bonus
+    7,426     2,195  BONUS
+    7,426     2,285  Allowance
+    7,426     2,415  Regular Salary
+    7,426     2,555  30
+    7,428     1,045  Leave Travel Allowance
+    7,428     1,325  LTA
+    7,428     1,425  Allowance
+    7,428     1,555  40
+    7,431     2,969  Computation options from the source
+    7,440     3,872  Salary totals
+    7,447     1,045  Fixed Allowance
+    7,447     1,325  FIX
+    7,447     1,425  Allowance
+    7,447     1,555  50
+    7,466     1,975  Leave Travel Allowance
+    7,466     2,195  LTA
+    7,466     2,285  Allowance
+    7,466     2,415  Regular Salary
+    7,466     2,555  40
+    7,466     1,045  Gross Salary
+    7,466     1,325  GROSS
+    7,466     1,425  Gross
+    7,466     1,555  60
+    7,472     2,985  Fixed Amount
+    7,472     3,165  Percentage of Wage
+    7,472     3,375  Python Code
+    7,475     3,872  Payslip status
+    7,485     1,045  LWF fund
+    7,485     1,325  LWF
+    7,485     1,425  Deduction
+    7,485     1,555  70
+    7,504     1,045  Provident Fund
+    7,504     1,325  PF
+    7,504     1,425  Deduction
+    7,504     1,555  80
+    7,506     1,975  Fixed Allowance
+    7,506     2,195  FIX
+    7,506     2,285  Allowance
+    7,506     2,415  Regular Salary
+    7,506     2,555  50
+    7,510     3,872  Salary by department
+    7,513     2,985  Example expression: result = categories['BASIC']
+    7,523     1,045  ESIC
+    7,523     1,325  ESIC
+    7,523     1,425  Deduction
+    7,523     1,555  90
+    7,540        33  Structures group salary rules; rules define the ordered salary computation used by a payslip. Both require List and Form views.
+    7,542     1,045  Professional Tax
+    7,542     1,325  PT
+    7,542     1,425  Deduction
+    7,542     1,555  100
+    7,545     3,872  Salary trends
+    7,546     1,975  Gross Salary
+    7,546     2,195  GROSS
+    7,546     2,285  Gross
+    7,546     2,415  Regular Salary
+    7,546     2,555  60
+    7,561     1,045  Net Salary
+    7,561     1,325  NET
+    7,561     1,425  Net
+    7,561     1,555  110
+    7,574        31  Useful note: the Salary Structure selected on a Payrun determines which set of salary rules will calculate each payslip.
+    7,580     3,872  Attendance overview
+    7,594     1,038  Useful note: rule order matters. Keep sequence visible so participants understand the calculation order.
+    7,599     1,967  Useful note: List view should expose name, code, category, structure and sequence â€” the fields needed to understand 
+    7,608     1,038  Rules created here is just for reference
+    7,610     2,969  Useful note: a Salary Rule needs a clear computation method and category because these drive the lines displayed 
+    7,613     1,967  a payroll rule quickly.
+    7,615     3,872  Time Off overview
+    7,625     2,969  hon the final payslip.
+    7,650     3,872  Payroll warnings or items requiring attention
+    7,693       807  Continue into dashboard view
+    7,702     2,855  Computation Note:
+    7,720     3,872  Filters such as Period, Department, Employee Type, or Company should affect the relevant
+    7,727     2,855   - Fixed Amount: uses the exact value entered in the rule, e.g. Meal Allowance = 2,000.
+    7,752     2,855   - Percentage: calculates the rule as a percentage of a selected base such as Contract Wage,
+    7,755     3,872  dashboard data.
+    7,763        16  6) Payroll Dashboard
+    7,777     2,855  Basic Salary, or Gross Salary, e.g. HRA = 20% Ã— Basic Salary.
+    7,786        16  Dashboard challenge: combine Payroll with HR data from multiple models and present useful insights with cards, charts, and summaries.
+    7,802     2,855   - Python Code / Formula: is used for advanced calculations where fixed or percentage methods
+    7,827     2,855  are not sufficient, such as attendance-based salary, overtime, unpaid leave deductions, or
+    7,827       102  Employees
+    7,827       242  Attendance
+    7,827       386  Time Off
+    7,827       526  Payroll
+    7,828        44  HR
+    7,852     2,855  calculations using multiple salary-rule values.
+    7,893        40  Payroll Dashboard
+    7,918        40  Dashboard should help payroll/HR users understand payments, staffing impact, leave patterns, and attendance quality for the selected period.
+    8,003        40  Period
+    8,003       300  Department
+    8,003       560  Employee Type
+    8,003       820  Company
+    8,031        50  Sep 2026
+    8,031       310  All Departments
+    8,031       570  All Types
+    8,031       830  OXP Pvt Ltd
+    8,100        58  Total Net Salary Paid
+    8,100       576  Payslips Generated
+    8,100     1,094  Avg Salary / Employee
+    8,100     1,612  Approved Time Off Days
+    8,100     2,130  Attendance Health
+    8,139        58  â‚¹ 18.4L
+    8,139       576  148
+    8,139     1,094  â‚¹ 12,432
+    8,139     1,612  34 Days
+    8,139     2,130  94%
+    8,166        58  +8.5% vs previous month
+    8,166       576  142 paid, 6 pending
+    8,166     1,094  Based on current payrun
+    8,166     1,612  Across selected period
+    8,166     2,130  Present / reviewed records
+    8,253        58  Salary Cost by Department
+    8,253     1,006  Monthly Net Salary Trend
+    8,253     1,794  Payslip Status & Payroll Alerts
+    8,276        58  Source: Payslips + Employee Department
+    8,276     1,006  Source: historical Payslips / Payruns
+    8,276     1,794  Source: Payrun + Payslip validation
+    8,291       730  â‚¹ 170k
+    8,311       316  â‚¹ 150k
+    8,322     1,800  Status split
+    8,322     2,360  Current alerts
+    8,331       592  â‚¹ 130k
+    8,351       178  â‚¹ 110k
+    8,353     2,360  â€¢ 2 employees missing bank account
+    8,371       454  â‚¹ 90k
+    8,385     2,360  â€¢ 1 duplicate payslip warning
+    8,409     1,398  15.0L
+    8,412     1,828  Paid
+    8,417     2,360  â€¢ 4 drafts still not validated
+    8,440     1,828  Done
+    8,449     2,360  â€¢ 3 contracts expiring this month
+    8,468     1,828  Pending
+    8,494       182  HR
+    8,494       320  Sales
+    8,494       458  Support
+    8,494       596  Finance
+    8,494       734  IT
+    8,495     1,080  Apr
+    8,495     1,190  May
+    8,495     1,300  Jun
+    8,495     1,410  Jul
+    8,495     1,520  Aug
+    8,495     1,630  Sep
+    8,496     1,828  Warning
+    8,565     1,180  15.2L
+    8,575     1,070  14.8L
+    8,579        58  Attendance Overview
+    8,579       706  Time Off Overview
+    8,579     1,454  Department Overview
+    8,579     2,102  Models to Aggregate
+    8,595     1,290  14.3L
+    8,602        58  Source: Attendance
+    8,602       706  Source: Time Off Requests + Allocations
+    8,602     1,454  Source: Employee + Contract + Payslip totals
+    8,602     2,102  This is the actual challenge behind the dashboard.
+    8,605     1,620  18.4L
+    8,615     1,510  17.1L
+    8,623        90  94
+    8,629     1,465  Department
+    8,629     1,657  Headcount
+    8,629     1,761  Monthly Salary
+    8,639     2,102  â€¢ Employees / Departments â†’ headcount, ownership, grouping
+    8,645       716  Type
+    8,645       896  Approved Days
+    8,645     1,046  Pending
+    8,645     1,166  Remaining Balance
+    8,647       480  22
+    8,655       460  Missing check-outs: 5
+    8,659     1,465  IT
+    8,659     1,657  18
+    8,659     1,761  â‚¹ 4.2L
+    8,665     2,102  â€¢ Contracts â†’ wage, schedule, active employees
+    8,674       460  Manual attendance edits: 7
+    8,679       716  Paid Time Off
+    8,679       896  24
+    8,679     1,046  3
+    8,679     1,166  118 Days
+    8,687     1,465  Sales
+    8,687     1,657  22
+    8,687     1,761  â‚¹ 5.7L
+    8,691     2,102  â€¢ Payruns / Payslips â†’ salary totals, paid vs pending, trend data
+    8,693       460  Attendance coverage: 94%
+    8,699       220  18
+    8,708       350  9
+    8,713       716  Sick Leave
+    8,713       896  6
+    8,713     1,046  1
+    8,713     1,166  N/A
+    8,715     1,465  HR
+    8,715     1,657  8
+    8,715     1,761  â‚¹ 1.9L
+    8,717     2,102  â€¢ Attendance â†’ presence, absences, late entries, overtime
+    8,743     1,465  Support
+    8,743     1,657  14
+    8,743     1,761  â‚¹ 3.1L
+    8,743     2,102  â€¢ Time Off Requests / Allocations â†’ leave taken and leave balances
+    8,745        84  Present
+    8,745       214  Late
+    8,745       344  Absent
+    8,745       474  Overtime
+    8,747       716  Comp Off
+    8,747       896  4
+    8,747     1,046  2
+    8,747     1,166  11 Days
