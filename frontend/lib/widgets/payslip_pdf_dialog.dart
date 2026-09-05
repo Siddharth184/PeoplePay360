@@ -1,18 +1,16 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/models.dart';
-import '../theme/app_theme.dart';
 
 class PayslipPdfDialog extends StatelessWidget {
   final PayslipModel payslip;
 
   const PayslipPdfDialog({super.key, required this.payslip});
 
-  Future<PdfPageFormat> _buildFormat() async => PdfPageFormat.a4;
-
-  Future<List<int>> _generatePdf(PdfPageFormat format) async {
+  Future<Uint8List> _generatePdf(PdfPageFormat format) async {
     final doc = pw.Document();
 
     doc.addPage(
@@ -20,13 +18,13 @@ class PayslipPdfDialog extends StatelessWidget {
         pageFormat: format,
         build: (pw.Context context) {
           return pw.Column(
-            cross: pw.CrossAxisAlignment.start,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Row(
-                main: pw.MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Column(
-                    cross: pw.CrossAxisAlignment.start,
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text('PeoplePay360 Enterprise', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                       pw.Text('Official Salary Slip • ${payslip.refCode}', style: const pw.TextStyle(fontSize: 12)),
@@ -39,7 +37,7 @@ class PayslipPdfDialog extends StatelessWidget {
               pw.Divider(),
               pw.SizedBox(height: 10),
               pw.Row(
-                main: pw.MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text('Employee Name: ${payslip.employeeName}'),
                   pw.Text('Pay Period: ${payslip.periodStart} to ${payslip.periodEnd}'),
@@ -69,7 +67,7 @@ class PayslipPdfDialog extends StatelessWidget {
               pw.SizedBox(height: 20),
               pw.Divider(),
               pw.Row(
-                main: pw.MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text('Gross Salary: ₹${payslip.grossAmount.toStringAsFixed(2)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                   pw.Text('NET SALARY: ₹${payslip.netAmount.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: PdfColors.green800)),
@@ -77,7 +75,7 @@ class PayslipPdfDialog extends StatelessWidget {
               ),
               pw.Spacer(),
               pw.Center(
-                pw.Text('Generated securely by PeoplePay360 System • Tamper-evident Audit Verified', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                child: pw.Text('Generated securely by PeoplePay360 System • Tamper-evident Audit Verified', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
               ),
             ],
           );

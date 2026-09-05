@@ -132,7 +132,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   return Align(
                     alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                     child: Container(
-                      maxConstraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
+                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
                       margin: const EdgeInsets.only(bottom: 16),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -237,8 +237,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton.filled(
-                    backgroundColor: AppTheme.odooAubergine,
-                    icon: const Icon(Icons.send),
+                    style: IconButton.styleFrom(backgroundColor: AppTheme.odooAubergine),
+                    icon: const Icon(Icons.send, color: Colors.white),
                     onPressed: () => _sendQuery(_textController.text),
                   ),
                 ],
