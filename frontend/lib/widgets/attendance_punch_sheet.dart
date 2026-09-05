@@ -241,15 +241,19 @@ class _AttendancePunchSheetState extends State<AttendancePunchSheet> with Single
                         const SizedBox(width: 6),
                         Text(
                           'Requested Time:',
-                          style: GoogleFonts.plusJakartaSans(color: const Color(0xFFDAE2FD), fontSize: 12),
+                          style: GoogleFonts.plusJakartaSans(color: const Color(0xFFDAE2FD), fontSize: 11.5),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          DateFormat('hh:mm a, dd-MMM-yyyy').format(_currentTime),
-                          style: GoogleFonts.jetBrainsMono(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                        Expanded(
+                          child: Text(
+                            DateFormat('hh:mm a, dd-MMM-yyyy').format(_currentTime),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.jetBrainsMono(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                            ),
                           ),
                         ),
                       ],
@@ -274,7 +278,7 @@ class _AttendancePunchSheetState extends State<AttendancePunchSheet> with Single
                         dropdownColor: const Color(0xFF1E2433),
                         icon: const Icon(Icons.expand_more, color: Colors.white70),
                         style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 12),
-                        items: _locations.map((loc) => DropdownMenuItem(value: loc, child: Text(loc, maxLines: 1, overflow: TextOverflow.ellipsis))).toList(),
+                        items: _locations.map((loc) => DropdownMenuItem(value: loc, child: Text(loc, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 12)))).toList(),
                         onChanged: (val) {
                           if (val != null) {
                             setDialogState(() => _selectedLocation = val);
@@ -302,7 +306,7 @@ class _AttendancePunchSheetState extends State<AttendancePunchSheet> with Single
                         dropdownColor: const Color(0xFF1E2433),
                         icon: const Icon(Icons.expand_more, color: Colors.white70),
                         style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 12),
-                        items: _workModes.map((wm) => DropdownMenuItem(value: wm, child: Text(wm))).toList(),
+                        items: _workModes.map((wm) => DropdownMenuItem(value: wm, child: Text(wm, style: const TextStyle(color: Colors.white, fontSize: 12)))).toList(),
                         onChanged: (val) {
                           if (val != null) {
                             setDialogState(() => _selectedWorkMode = val);

@@ -259,11 +259,13 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
                   child: DropdownButton<String>(
                     value: selectedType,
                     isExpanded: true,
+                    dropdownColor: Colors.white,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                     items: const [
-                      DropdownMenuItem(value: 'Paid Time Off (PTO)', child: Text('Paid Time Off (PTO) — 15d Balance')),
-                      DropdownMenuItem(value: 'Sick Leave', child: Text('Sick Leave — 8d Balance')),
-                      DropdownMenuItem(value: 'Comp Off', child: Text('Compensatory Off — 2d Available')),
-                      DropdownMenuItem(value: 'Unpaid Leave', child: Text('Unpaid Leave (Loss of Pay)')),
+                      DropdownMenuItem(value: 'Paid Time Off (PTO)', child: Text('Paid Time Off (PTO) — 15d Balance', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: 'Sick Leave', child: Text('Sick Leave — 8d Balance', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: 'Comp Off', child: Text('Compensatory Off — 2d Available', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: 'Unpaid Leave', child: Text('Unpaid Leave (Loss of Pay)', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
                     ],
                     onChanged: (val) {
                       if (val != null) setModalState(() => selectedType = val);
@@ -554,31 +556,33 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
               Expanded(
                 child: Row(
                   children: [
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        final route = ModalRoute.of(context);
-                        if (route != null && !route.isFirst) {
-                          Navigator.pop(context);
-                        } else if (widget.onNavigateTab != null) {
-                          widget.onNavigateTab!(-1);
-                        } else if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFE2E7FF),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.arrow_back, color: Color(0xFF714B67), size: 18),
+                    if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          final route = ModalRoute.of(context);
+                          if (route != null && !route.isFirst) {
+                            Navigator.pop(context);
+                          } else if (widget.onNavigateTab != null) {
+                            widget.onNavigateTab!(-1);
+                          } else if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE2E7FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.arrow_back, color: Color(0xFF714B67), size: 18),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
+                      const SizedBox(width: 10),
+                    ],
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

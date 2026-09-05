@@ -133,37 +133,58 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: nameCtrl,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                   decoration: InputDecoration(
-                    labelText: 'Full Name',
+                    labelText: 'Full Name *',
+                    labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontWeight: FontWeight.w600),
                     hintText: 'e.g. Aarav Mehta',
-                    prefixIcon: const Icon(Icons.person_outline, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8)),
+                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF714B67), size: 20),
+                    filled: true,
+                    fillColor: const Color(0xFFF2F3FF),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
                   ),
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
                   controller: titleCtrl,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                   decoration: InputDecoration(
-                    labelText: 'Job Title',
+                    labelText: 'Job Title *',
+                    labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontWeight: FontWeight.w600),
                     hintText: 'e.g. Payroll Specialist',
-                    prefixIcon: const Icon(Icons.badge_outlined, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8)),
+                    prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFF714B67), size: 20),
+                    filled: true,
+                    fillColor: const Color(0xFFF2F3FF),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
                   ),
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   initialValue: dept,
+                  dropdownColor: Colors.white,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                   decoration: InputDecoration(
-                    labelText: 'Department',
-                    prefixIcon: const Icon(Icons.business_outlined, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    labelText: 'Department *',
+                    labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontWeight: FontWeight.w600),
+                    prefixIcon: const Icon(Icons.business_outlined, color: Color(0xFF714B67), size: 20),
+                    filled: true,
+                    fillColor: const Color(0xFFF2F3FF),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'Engineering', child: Text('Engineering')),
-                    DropdownMenuItem(value: 'Finance', child: Text('Finance')),
-                    DropdownMenuItem(value: 'Human Resources', child: Text('Human Resources')),
-                    DropdownMenuItem(value: 'Sales', child: Text('Sales')),
-                    DropdownMenuItem(value: 'Marketing', child: Text('Marketing')),
+                    DropdownMenuItem(value: 'Engineering', child: Text('Engineering', style: TextStyle(color: Color(0xFF131B2E)))),
+                    DropdownMenuItem(value: 'Finance', child: Text('Finance', style: TextStyle(color: Color(0xFF131B2E)))),
+                    DropdownMenuItem(value: 'Human Resources', child: Text('Human Resources', style: TextStyle(color: Color(0xFF131B2E)))),
+                    DropdownMenuItem(value: 'Sales', child: Text('Sales', style: TextStyle(color: Color(0xFF131B2E)))),
+                    DropdownMenuItem(value: 'Marketing', child: Text('Marketing', style: TextStyle(color: Color(0xFF131B2E)))),
                   ],
                   onChanged: (val) {
                     if (val != null) dept = val;
@@ -173,11 +194,18 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                 TextFormField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                   decoration: InputDecoration(
-                    labelText: 'Work Email',
+                    labelText: 'Work Email *',
+                    labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontWeight: FontWeight.w600),
                     hintText: 'e.g. employee@oxp.com',
-                    prefixIcon: const Icon(Icons.email_outlined, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8)),
+                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF714B67), size: 20),
+                    filled: true,
+                    fillColor: const Color(0xFFF2F3FF),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
                   ),
                 ),
                 const SizedBox(height: 22),
@@ -362,7 +390,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (Navigator.canPop(context) || widget.onNavigateTab != null) ...[
+                                    if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
                                       IconButton(
                                         icon: const Icon(Icons.arrow_back, color: Color(0xFF131B2E), size: 20),
                                         padding: EdgeInsets.zero,
@@ -378,7 +406,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                           }
                                         },
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 4),
                                     ],
                                     Flexible(
                                       child: Text(
@@ -386,16 +414,16 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.outfit(
-                                          fontSize: 20,
+                                          fontSize: 19,
                                           fontWeight: FontWeight.w700,
                                           color: const Color(0xFF131B2E),
                                           letterSpacing: -0.5,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
+                                    const SizedBox(width: 4),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFF714B67).withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(20),
@@ -403,7 +431,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                       child: Text(
                                         '$totalCount',
                                         style: GoogleFonts.jetBrainsMono(
-                                          fontSize: 11,
+                                          fontSize: 10.5,
                                           fontWeight: FontWeight.w700,
                                           color: const Color(0xFF57344F),
                                         ),
@@ -413,11 +441,11 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                 ),
                               ),
 
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 4),
 
                               // Segmented View Switcher Pill
                               Container(
-                                padding: const EdgeInsets.all(3),
+                                padding: const EdgeInsets.all(2),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFE2E7FF).withValues(alpha: 0.8),
                                   borderRadius: BorderRadius.circular(30),
@@ -434,7 +462,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                       },
                                       child: AnimatedContainer(
                                         duration: const Duration(milliseconds: 200),
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                                         decoration: BoxDecoration(
                                           color: _isKanbanView ? const Color(0xFF714B67) : Colors.transparent,
                                           borderRadius: BorderRadius.circular(20),
@@ -452,14 +480,14 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                           children: [
                                             Icon(
                                               Icons.grid_view_rounded,
-                                              size: 14,
+                                              size: 13,
                                               color: _isKanbanView ? Colors.white : const Color(0xFF4E444A),
                                             ),
-                                            const SizedBox(width: 4),
+                                            const SizedBox(width: 3),
                                             Text(
                                               'Kanban',
                                               style: GoogleFonts.plusJakartaSans(
-                                                fontSize: 11,
+                                                fontSize: 10.5,
                                                 fontWeight: FontWeight.w600,
                                                 color: _isKanbanView ? Colors.white : const Color(0xFF4E444A),
                                               ),
@@ -477,7 +505,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                       },
                                       child: AnimatedContainer(
                                         duration: const Duration(milliseconds: 200),
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                                         decoration: BoxDecoration(
                                           color: !_isKanbanView ? const Color(0xFF714B67) : Colors.transparent,
                                           borderRadius: BorderRadius.circular(20),
@@ -495,14 +523,14 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                           children: [
                                             Icon(
                                               Icons.format_list_bulleted_rounded,
-                                              size: 14,
+                                              size: 13,
                                               color: !_isKanbanView ? Colors.white : const Color(0xFF4E444A),
                                             ),
-                                            const SizedBox(width: 4),
+                                            const SizedBox(width: 3),
                                             Text(
                                               'List',
                                               style: GoogleFonts.plusJakartaSans(
-                                                fontSize: 11,
+                                                fontSize: 10.5,
                                                 fontWeight: FontWeight.w600,
                                                 color: !_isKanbanView ? Colors.white : const Color(0xFF4E444A),
                                               ),

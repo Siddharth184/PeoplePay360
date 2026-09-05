@@ -433,10 +433,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
           right: 20,
           bottom: MediaQuery.of(context).viewInsets.bottom + 24,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Center(
               child: Container(
                 width: 40,
@@ -497,8 +498,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _openManagerProfileDialog() {
     final manager = emp.managerName.isNotEmpty ? emp.managerName : 'Sara Khan';
@@ -636,31 +638,33 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
           Expanded(
             child: Row(
               children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    final route = ModalRoute.of(context);
-                    if (route != null && !route.isFirst) {
-                      Navigator.pop(context);
-                    } else if (widget.onNavigateTab != null) {
-                      widget.onNavigateTab!(-1);
-                    } else if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF2F3FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      final route = ModalRoute.of(context);
+                      if (route != null && !route.isFirst) {
+                        Navigator.pop(context);
+                      } else if (widget.onNavigateTab != null) {
+                        widget.onNavigateTab!(-1);
+                      } else if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF2F3FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1587,6 +1591,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                   child: DropdownButton<String>(
                     value: _selectedPayMonth,
                     isExpanded: true,
+                    dropdownColor: Colors.white,
                     icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF714B67)),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
@@ -1600,7 +1605,13 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                           children: [
                             const Icon(Icons.receipt_long_outlined, size: 16, color: Color(0xFF714B67)),
                             const SizedBox(width: 8),
-                            Text(m, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+                            Text(
+                              m,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF131B2E),
+                              ),
+                            ),
                           ],
                         ),
                       );

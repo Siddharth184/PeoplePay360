@@ -39,9 +39,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
           children: [
             const Icon(Icons.sync_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Text(
-              'Live Analytics synced with OXP Core Ledger',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+            Expanded(
+              child: Text(
+                'Live Analytics synced with OXP Core Ledger',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -60,9 +63,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
           children: [
             const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Text(
-              'Exporting Executive Analytics Board (PDF)...',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+            Expanded(
+              child: Text(
+                'Exporting Executive Analytics Board (PDF)...',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -143,31 +149,33 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              final route = ModalRoute.of(context);
-              if (route != null && !route.isFirst) {
-                Navigator.pop(context);
-              } else if (widget.onNavigateTab != null) {
-                widget.onNavigateTab!(-1);
-              } else if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF2F3FF),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+          if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                final route = ModalRoute.of(context);
+                if (route != null && !route.isFirst) {
+                  Navigator.pop(context);
+                } else if (widget.onNavigateTab != null) {
+                  widget.onNavigateTab!(-1);
+                } else if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF2F3FF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
+            const SizedBox(width: 10),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

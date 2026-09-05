@@ -181,11 +181,13 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                   child: DropdownButton<String>(
                     value: selectedEmp,
                     isExpanded: true,
+                    dropdownColor: Colors.white,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                     items: const [
-                      DropdownMenuItem(value: 'Aarav Mehta (EMP-4092)', child: Text('Aarav Mehta (EMP-4092) — Finance')),
-                      DropdownMenuItem(value: 'Sara Khan (EMP-4091)', child: Text('Sara Khan (EMP-4091) — VP HR')),
-                      DropdownMenuItem(value: 'Neha Patel (EMP-4105)', child: Text('Neha Patel (EMP-4105) — Accounts')),
-                      DropdownMenuItem(value: 'Rohan Patel (EMP-4076)', child: Text('Rohan Patel (EMP-4076) — Eng')),
+                      DropdownMenuItem(value: 'Aarav Mehta (EMP-4092)', child: Text('Aarav Mehta (EMP-4092) — Finance', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: 'Sara Khan (EMP-4091)', child: Text('Sara Khan (EMP-4091) — VP HR', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: 'Neha Patel (EMP-4105)', child: Text('Neha Patel (EMP-4105) — Accounts', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: 'Rohan Patel (EMP-4076)', child: Text('Rohan Patel (EMP-4076) — Eng', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
                     ],
                     onChanged: (val) {
                       if (val != null) setSheetState(() => selectedEmp = val);
@@ -206,10 +208,12 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                   child: DropdownButton<String>(
                     value: selectedPolicy,
                     isExpanded: true,
+                    dropdownColor: Colors.white,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                     items: const [
-                      DropdownMenuItem(value: 'Standard Annual Leave (2026)', child: Text('Standard Annual Leave (2026)')),
-                      DropdownMenuItem(value: 'Compensatory Off Credit', child: Text('Compensatory Off Credit')),
-                      DropdownMenuItem(value: 'Special Medical Quota', child: Text('Special Medical Quota')),
+                      DropdownMenuItem(value: 'Standard Annual Leave (2026)', child: Text('Standard Annual Leave (2026)', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: 'Compensatory Off Credit', child: Text('Compensatory Off Credit', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: 'Special Medical Quota', child: Text('Special Medical Quota', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
                     ],
                     onChanged: (val) {
                       if (val != null) setSheetState(() => selectedPolicy = val);
@@ -331,31 +335,33 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                         Expanded(
                           child: Row(
                             children: [
-                              GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                 onTap: () {
-                                   final route = ModalRoute.of(context);
-                                   if (route != null && !route.isFirst) {
-                                     Navigator.pop(context);
-                                   } else if (widget.onNavigateTab != null) {
-                                     widget.onNavigateTab!(-1);
-                                   } else if (Navigator.canPop(context)) {
-                                     Navigator.pop(context);
-                                   }
-                                 },
-                                child: Container(
-                                  width: 34,
-                                  height: 34,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFF2F3FF),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Center(
-                                    child: Icon(Icons.arrow_back, size: 16, color: Color(0xFF131B2E)),
+                              if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    final route = ModalRoute.of(context);
+                                    if (route != null && !route.isFirst) {
+                                      Navigator.pop(context);
+                                    } else if (widget.onNavigateTab != null) {
+                                      widget.onNavigateTab!(-1);
+                                    } else if (Navigator.canPop(context)) {
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFF2F3FF),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: Icon(Icons.arrow_back, size: 16, color: Color(0xFF131B2E)),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
+                                const SizedBox(width: 8),
+                              ],
                               Expanded(
                                 child: InkWell(
                                   onTap: () {

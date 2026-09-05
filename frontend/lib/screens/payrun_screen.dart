@@ -238,29 +238,31 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
           Expanded(
             child: Row(
               children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    final route = ModalRoute.of(context);
-                    if (route != null && !route.isFirst) {
-                      Navigator.pop(context);
-                    } else if (widget.onNavigateTab != null) {
-                      widget.onNavigateTab!(-1);
-                    } else if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF2F3FF),
-                      shape: BoxShape.circle,
+                if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      final route = ModalRoute.of(context);
+                      if (route != null && !route.isFirst) {
+                        Navigator.pop(context);
+                      } else if (widget.onNavigateTab != null) {
+                        widget.onNavigateTab!(-1);
+                      } else if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF2F3FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF131B2E)),
                     ),
-                    child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF131B2E)),
                   ),
-                ),
-                const SizedBox(width: 10),
+                  const SizedBox(width: 10),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

@@ -252,31 +252,33 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
         children: [
           Row(
             children: [
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  final route = ModalRoute.of(context);
-                  if (route != null && !route.isFirst) {
-                    Navigator.pop(context);
-                  } else if (widget.onNavigateTab != null) {
-                    widget.onNavigateTab!(-1);
-                  } else if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                },
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE2E7FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+              if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    final route = ModalRoute.of(context);
+                    if (route != null && !route.isFirst) {
+                      Navigator.pop(context);
+                    } else if (widget.onNavigateTab != null) {
+                      widget.onNavigateTab!(-1);
+                    } else if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE2E7FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -845,13 +847,14 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                         child: DropdownButton<int>(
                           value: shift.breakMinutes,
                           isExpanded: true,
+                          dropdownColor: Colors.white,
                           icon: const Icon(Icons.expand_more, size: 16, color: Color(0xFF80747A)),
                           style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                           items: const [
-                            DropdownMenuItem(value: 0, child: Text('0m')),
-                            DropdownMenuItem(value: 30, child: Text('30m')),
-                            DropdownMenuItem(value: 45, child: Text('45m')),
-                            DropdownMenuItem(value: 60, child: Text('1h 00m')),
+                            DropdownMenuItem(value: 0, child: Text('0m', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                            DropdownMenuItem(value: 30, child: Text('30m', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                            DropdownMenuItem(value: 45, child: Text('45m', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                            DropdownMenuItem(value: 60, child: Text('1h 00m', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
                           ],
                           onChanged: (val) {
                             if (val != null) {

@@ -11,6 +11,7 @@ class PayslipPdfDialog extends StatelessWidget {
   const PayslipPdfDialog({super.key, required this.payslip});
 
   Future<Uint8List> _generatePdf(PdfPageFormat format) async {
+    pw.Document.debug = false;
     final doc = pw.Document();
 
     doc.addPage(
@@ -52,7 +53,7 @@ class PayslipPdfDialog extends StatelessWidget {
                   l.ruleCode,
                   l.ruleName,
                   l.category,
-                  '₹${l.amount.toStringAsFixed(2)}',
+                  'INR ${l.amount.toStringAsFixed(2)}',
                 ]).toList(),
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
                 headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF714B67)),
@@ -69,8 +70,8 @@ class PayslipPdfDialog extends StatelessWidget {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Gross Salary: ₹${payslip.grossAmount.toStringAsFixed(2)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                  pw.Text('NET SALARY: ₹${payslip.netAmount.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: PdfColors.green800)),
+                  pw.Text('Gross Salary: INR ${payslip.grossAmount.toStringAsFixed(2)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text('NET SALARY: INR ${payslip.netAmount.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: PdfColors.green800)),
                 ],
               ),
               pw.Spacer(),
@@ -88,39 +89,33 @@ class PayslipPdfDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        height: MediaQuery.of(context).size.height * 0.8,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Payslip Preview (${payslip.refCode})',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const Divider(),
-            Expanded(
-              child: PdfPreview(
-                build: (format) => _generatePdf(format),
-                allowPrinting: true,
-                allowSharing: true,
-                canChangeOrientation: false,
-                canChangePageFormat: false,
-              ),
-            ),
-          ],
+    return Dialog.fullscreen(
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF714B67),
+          foregroundColor: Colors.white,
+          title: Text(
+            'Payslip Preview (${payslip.refCode})',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: InteractiveViewer(
+          minScale: 0.8,
+          maxScale: 4.0,
+          child: PdfPreview(
+            build: (format) => _generatePdf(format),
+            allowPrinting: true,
+            allowSharing: true,
+            canChangeOrientation: false,
+            canChangePageFormat: false,
+            canDebug: false,
+            dynamicLayout: false,
+          ),
         ),
       ),
     );

@@ -78,19 +78,85 @@ class _ContractsScreenState extends State<ContractsScreen> {
     if (mounted && res.isSuccess && res.data != null && res.data!.isNotEmpty) {
       _allContracts = res.data!;
       final matching = _allContracts.firstWhere(
-        (c) => _matchesEmployeeName(c.employeeName, _emp.name),
-        orElse: () => _buildFallbackContract(_emp),
+        (c) => _matchesEmployeeName(c.employeeName, _emp.name) && (c.status == 'RUNNING' || c.status == 'Running'),
+        orElse: () => _allContracts.firstWhere(
+          (c) => _matchesEmployeeName(c.employeeName, _emp.name),
+          orElse: () => _buildFallbackContract(_emp),
+        ),
       );
       _applyContractData(matching);
     } else {
       // Fallback from MockDataService
       _allContracts = MockDataService.contracts;
       final matching = _allContracts.firstWhere(
-        (c) => _matchesEmployeeName(c.employeeName, _emp.name),
-        orElse: () => _buildFallbackContract(_emp),
+        (c) => _matchesEmployeeName(c.employeeName, _emp.name) && (c.status == 'RUNNING' || c.status == 'Running'),
+        orElse: () => _allContracts.firstWhere(
+          (c) => _matchesEmployeeName(c.employeeName, _emp.name),
+          orElse: () => _buildFallbackContract(_emp),
+        ),
       );
       _applyContractData(matching);
     }
+  }
+
+  void _updateContractStage(String newStage) {
+    if (_selectedStage == newStage) return;
+
+    final apiStatus = newStage == 'Running'
+        ? 'RUNNING'
+        : (newStage == 'Expired'
+            ? 'EXPIRED'
+            : (newStage == 'Cancelled' ? 'CANCELLED' : 'DRAFT'));
+
+    setState(() {
+      _selectedStage = newStage;
+
+      // Update in local _allContracts
+      final idxInAll = _allContracts.indexWhere((c) => c.id == _contractId || c.refCode == _contractRef);
+      if (idxInAll != -1) {
+        final old = _allContracts[idxInAll];
+        _allContracts[idxInAll] = ContractModel(
+          id: old.id,
+          refCode: old.refCode,
+          employeeName: old.employeeName,
+          department: old.department,
+          startDate: old.startDate,
+          endDate: old.endDate,
+          wageMonthly: old.wageMonthly,
+          status: apiStatus,
+          structureName: old.structureName,
+        );
+      }
+
+      // Update in MockDataService.contracts
+      final idxInMock = MockDataService.contracts.indexWhere((c) => c.id == _contractId || c.refCode == _contractRef);
+      if (idxInMock != -1) {
+        final old = MockDataService.contracts[idxInMock];
+        MockDataService.contracts[idxInMock] = ContractModel(
+          id: old.id,
+          refCode: old.refCode,
+          employeeName: old.employeeName,
+          department: old.department,
+          startDate: old.startDate,
+          endDate: old.endDate,
+          wageMonthly: old.wageMonthly,
+          status: apiStatus,
+          structureName: old.structureName,
+        );
+      }
+    });
+
+    if (_contractId != null) {
+      ContractService.updateContract(_contractId!, {'status': apiStatus});
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('⚡ Contract stage updated to $newStage'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   bool _matchesEmployeeName(String contractEmpName, String targetEmpName) {
@@ -503,8 +569,16 @@ class _ContractsScreenState extends State<ContractsScreen> {
                         child: DropdownButton<String>(
                           value: departmentsList.contains(editDept) ? editDept : departmentsList.first,
                           isExpanded: true,
+                          dropdownColor: Colors.white,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                           items: departmentsList.map((d) {
-                            return DropdownMenuItem(value: d, child: Text(d));
+                            return DropdownMenuItem(
+                              value: d,
+                              child: Text(
+                                d,
+                                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                              ),
+                            );
                           }).toList(),
                           onChanged: (val) {
                             if (val != null) setSheetState(() => editDept = val);
@@ -570,8 +644,16 @@ class _ContractsScreenState extends State<ContractsScreen> {
                         child: DropdownButton<String>(
                           value: structuresList.contains(editStruct) ? editStruct : structuresList.first,
                           isExpanded: true,
+                          dropdownColor: Colors.white,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                           items: structuresList.map((s) {
-                            return DropdownMenuItem(value: s, child: Text(s));
+                            return DropdownMenuItem(
+                              value: s,
+                              child: Text(
+                                s,
+                                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                              ),
+                            );
                           }).toList(),
                           onChanged: (val) {
                             if (val != null) setSheetState(() => editStruct = val);
@@ -594,10 +676,21 @@ class _ContractsScreenState extends State<ContractsScreen> {
                         child: DropdownButton<String>(
                           value: editSchedule,
                           isExpanded: true,
+                          dropdownColor: Colors.white,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                           items: const [
-                            DropdownMenuItem(value: '40 Hours / Week (Standard)', child: Text('40 Hours / Week (Standard)')),
-                            DropdownMenuItem(value: '35 Hours / Week (Flexible)', child: Text('35 Hours / Week (Flexible)')),
-                            DropdownMenuItem(value: '48 Hours / Week (Extended)', child: Text('48 Hours / Week (Extended)')),
+                            DropdownMenuItem(
+                              value: '40 Hours / Week (Standard)',
+                              child: Text('40 Hours / Week (Standard)', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600)),
+                            ),
+                            DropdownMenuItem(
+                              value: '35 Hours / Week (Flexible)',
+                              child: Text('35 Hours / Week (Flexible)', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600)),
+                            ),
+                            DropdownMenuItem(
+                              value: '48 Hours / Week (Extended)',
+                              child: Text('48 Hours / Week (Extended)', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600)),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) setSheetState(() => editSchedule = val);
@@ -620,10 +713,21 @@ class _ContractsScreenState extends State<ContractsScreen> {
                         child: DropdownButton<String>(
                           value: editType,
                           isExpanded: true,
+                          dropdownColor: Colors.white,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                           items: const [
-                            DropdownMenuItem(value: 'Permanent / Full-Time', child: Text('Permanent / Full-Time')),
-                            DropdownMenuItem(value: 'Fixed-Term Contract', child: Text('Fixed-Term Contract')),
-                            DropdownMenuItem(value: 'Consultant / Retainer', child: Text('Consultant / Retainer')),
+                            DropdownMenuItem(
+                              value: 'Permanent / Full-Time',
+                              child: Text('Permanent / Full-Time', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600)),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Fixed-Term Contract',
+                              child: Text('Fixed-Term Contract', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600)),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Consultant / Retainer',
+                              child: Text('Consultant / Retainer', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600)),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) setSheetState(() => editType = val);
@@ -690,12 +794,13 @@ class _ContractsScreenState extends State<ContractsScreen> {
                               }
 
                               // 3. Perform update via API if possible
+                              final apiStatus = editStage == 'Running'
+                                  ? 'RUNNING'
+                                  : (editStage == 'Expired'
+                                      ? 'EXPIRED'
+                                      : (editStage == 'Cancelled' ? 'CANCELLED' : 'DRAFT'));
+
                               if (_contractId != null) {
-                                final apiStatus = editStage == 'Running'
-                                    ? 'RUNNING'
-                                    : (editStage == 'Expired'
-                                        ? 'EXPIRED'
-                                        : (editStage == 'Cancelled' ? 'CANCELLED' : 'DRAFT'));
                                 final payload = {
                                   'start_date': _formatYMD(editStartDate),
                                   'end_date': editEndDate != null ? _formatYMD(editEndDate!) : null,
@@ -706,6 +811,37 @@ class _ContractsScreenState extends State<ContractsScreen> {
                                   'status': apiStatus,
                                 };
                                 ContractService.updateContract(_contractId!, payload);
+                              }
+
+                              // Update in _allContracts & MockDataService.contracts
+                              final idxInAll = _allContracts.indexWhere((c) => c.id == _contractId || c.refCode == _contractRef);
+                              if (idxInAll != -1) {
+                                _allContracts[idxInAll] = ContractModel(
+                                  id: _contractId ?? 'con-${_emp.id}',
+                                  refCode: _contractRef,
+                                  employeeName: _emp.name,
+                                  department: editDept,
+                                  startDate: _formatYMD(editStartDate),
+                                  endDate: editEndDate != null ? _formatYMD(editEndDate!) : null,
+                                  wageMonthly: newWage,
+                                  status: apiStatus,
+                                  structureName: editStruct,
+                                );
+                              }
+
+                              final idxInMock = MockDataService.contracts.indexWhere((c) => c.id == _contractId || c.refCode == _contractRef);
+                              if (idxInMock != -1) {
+                                MockDataService.contracts[idxInMock] = ContractModel(
+                                  id: _contractId ?? 'con-${_emp.id}',
+                                  refCode: _contractRef,
+                                  employeeName: _emp.name,
+                                  department: editDept,
+                                  startDate: _formatYMD(editStartDate),
+                                  endDate: editEndDate != null ? _formatYMD(editEndDate!) : null,
+                                  wageMonthly: newWage,
+                                  status: apiStatus,
+                                  structureName: editStruct,
+                                );
                               }
 
                               // Update parent screen state
@@ -822,6 +958,8 @@ class _ContractsScreenState extends State<ContractsScreen> {
   }
 
   Widget _buildHeaderBar() {
+    final empContracts = _allContracts.where((c) => _matchesEmployeeName(c.employeeName, _emp.name)).toList();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.9),
@@ -837,31 +975,33 @@ class _ContractsScreenState extends State<ContractsScreen> {
           Expanded(
             child: Row(
               children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    final route = ModalRoute.of(context);
-                    if (route != null && !route.isFirst) {
-                      Navigator.pop(context);
-                    } else if (widget.onNavigateTab != null) {
-                      widget.onNavigateTab!(-1);
-                    } else if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF2F3FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      final route = ModalRoute.of(context);
+                      if (route != null && !route.isFirst) {
+                        Navigator.pop(context);
+                      } else if (widget.onNavigateTab != null) {
+                        widget.onNavigateTab!(-1);
+                      } else if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF2F3FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
+                  const SizedBox(width: 10),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -878,14 +1018,41 @@ class _ContractsScreenState extends State<ContractsScreen> {
                       ),
                       Row(
                         children: [
-                          Text(
-                            _contractRef,
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4E444A),
+                          if (empContracts.length > 1) ...[
+                            DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: empContracts.any((c) => c.id == _contractId) ? _contractId : empContracts.first.id,
+                                isDense: true,
+                                dropdownColor: Colors.white,
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF4E444A),
+                                ),
+                                items: empContracts.map((c) {
+                                  return DropdownMenuItem<String>(
+                                    value: c.id,
+                                    child: Text('${c.refCode} (${c.status})'),
+                                  );
+                                }).toList(),
+                                onChanged: (selId) {
+                                  if (selId != null) {
+                                    final selected = empContracts.firstWhere((c) => c.id == selId);
+                                    _applyContractData(selected);
+                                  }
+                                },
+                              ),
                             ),
-                          ),
+                          ] else ...[
+                            Text(
+                              _contractRef,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF4E444A),
+                              ),
+                            ),
+                          ],
                           const SizedBox(width: 5),
                           Container(
                             width: 5,
@@ -898,13 +1065,15 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           const SizedBox(width: 5),
                           Flexible(
                             child: Text(
-                              'PeoplePay360',
+                              _selectedStage.toUpperCase(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF00696E),
+                                fontWeight: FontWeight.w700,
+                                color: _selectedStage == 'Cancelled'
+                                    ? Colors.red[700]
+                                    : const Color(0xFF00696E),
                               ),
                             ),
                           ),
@@ -1001,82 +1170,89 @@ class _ContractsScreenState extends State<ContractsScreen> {
               final isActive = idx == currentIdx;
               final isDone = idx < currentIdx && _selectedStage != 'Cancelled';
 
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isActive)
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: (name == 'Cancelled' ? Colors.red : const Color(0xFF4EDEA3)).withValues(alpha: 0.35),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
+              return InkWell(
+                onTap: () => _updateContractStage(name),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isActive)
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: (name == 'Cancelled' ? Colors.red : const Color(0xFF4EDEA3)).withValues(alpha: 0.35),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: name == 'Cancelled' ? Colors.red[700] : const Color(0xFF006443),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  name == 'Cancelled' ? Icons.cancel : Icons.verified,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else if (isDone)
                         Container(
                           width: 28,
                           height: 28,
-                          decoration: BoxDecoration(
-                            color: name == 'Cancelled' ? Colors.red[700] : const Color(0xFF006443),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFDAE2FD),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.check, color: Color(0xFF131B2E), size: 16),
+                          ),
+                        )
+                      else
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF2F3FF),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
-                            child: Icon(
-                              name == 'Cancelled' ? Icons.cancel : Icons.verified,
-                              color: Colors.white,
-                              size: 16,
+                            child: Container(
+                              width: 7,
+                              height: 7,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFD1C3CA),
+                                shape: BoxShape.circle,
+                              ),
                             ),
                           ),
                         ),
-                      ],
-                    )
-                  else if (isDone)
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFDAE2FD),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.check, color: Color(0xFF131B2E), size: 16),
-                      ),
-                    )
-                  else
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF2F3FF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 7,
-                          height: 7,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFD1C3CA),
-                            shape: BoxShape.circle,
-                          ),
+
+                      const SizedBox(height: 6),
+                      Text(
+                        name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                          color: isActive
+                              ? (name == 'Cancelled' ? Colors.red[800]! : const Color(0xFF006443))
+                              : (isDone ? const Color(0xFF4E444A) : const Color(0xFF80747A)),
                         ),
                       ),
-                    ),
-
-                  const SizedBox(height: 6),
-                  Text(
-                    name,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5,
-                      fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                      color: isActive
-                          ? (name == 'Cancelled' ? Colors.red[800]! : const Color(0xFF006443))
-                          : (isDone ? const Color(0xFF4E444A) : const Color(0xFF80747A)),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               );
             }).toList(),
           ),

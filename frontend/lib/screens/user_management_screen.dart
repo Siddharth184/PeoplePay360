@@ -348,9 +348,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
@@ -488,7 +494,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               ),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }
@@ -510,66 +517,68 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           right: 20,
           bottom: MediaQuery.of(context).viewInsets.bottom + 28,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Quick Invite User',
-              style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Dispatches an instant invitation token with pre-configured Odoo RBAC policies.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF4E444A)),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              height: 46,
-              decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(12)),
-              child: TextField(
-                controller: inviteEmailCtrl,
-                decoration: const InputDecoration(
-                  hintText: 'teammate@company.com',
-                  prefixIcon: Icon(Icons.forward_to_inbox, color: Color(0xFF00696E), size: 18),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF714B67),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  elevation: 0,
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      backgroundColor: Color(0xFF004A31),
-                      behavior: SnackBarBehavior.floating,
-                      content: Text('✉️ Quick Invite invitation link dispatched successfully!'),
-                    ),
-                  );
-                },
-                child: const Text('Send Invitation Link'),
+              const SizedBox(height: 16),
+              Text(
+                'Quick Invite User',
+                style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                'Dispatches an instant invitation token with pre-configured Odoo RBAC policies.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF4E444A)),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                height: 46,
+                decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(12)),
+                child: TextField(
+                  controller: inviteEmailCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'teammate@company.com',
+                    prefixIcon: Icon(Icons.forward_to_inbox, color: Color(0xFF00696E), size: 18),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF714B67),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: Color(0xFF004A31),
+                        behavior: SnackBarBehavior.floating,
+                        content: Text('✉️ Quick Invite invitation link dispatched successfully!'),
+                      ),
+                    );
+                  },
+                  child: const Text('Send Invitation Link'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -585,52 +594,59 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(Icons.security, color: Color(0xFF00696E)),
-                const SizedBox(width: 8),
-                Text(
-                  'RBAC Matrix & Multi-Company',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Odoo 18 Multi-Company Isolation is enforced. All database record rules verify res_company_id per session token.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A), height: 1.4),
-            ),
-            const SizedBox(height: 16),
-            _buildMatrixRow('Admin (SysAdmin)', 'Full root read/write, audit trails, user mgmt', true),
-            _buildMatrixRow('Payroll Admin', 'Salary rules, payrun computation, payslip approval', true),
-            _buildMatrixRow('Payroll User', 'Payslip viewing, payment execution', true),
-            _buildMatrixRow('Time Off Admin', 'Leave allocations, manager approvals, carryovers', true),
-            _buildMatrixRow('Employee', 'Self-service portal, own payslips, attendance clock', false),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF714B67),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  elevation: 0,
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close RBAC Matrix'),
+        padding: EdgeInsets.only(
+          top: 20,
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.security, color: Color(0xFF00696E)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'RBAC Matrix & Multi-Company',
+                    style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Odoo 18 Multi-Company Isolation is enforced. All database record rules verify res_company_id per session token.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A), height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              _buildMatrixRow('Admin (SysAdmin)', 'Full root read/write, audit trails, user mgmt', true),
+              _buildMatrixRow('Payroll Admin', 'Salary rules, payrun computation, payslip approval', true),
+              _buildMatrixRow('Payroll User', 'Payslip viewing, payment execution', true),
+              _buildMatrixRow('Time Off Admin', 'Leave allocations, manager approvals, carryovers', true),
+              _buildMatrixRow('Employee', 'Self-service portal, own payslips, attendance clock', false),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF714B67),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close RBAC Matrix'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -773,31 +789,33 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 child: Row(
                   children: [
                     // Back Button
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        final route = ModalRoute.of(context);
-                        if (route != null && !route.isFirst) {
-                          Navigator.pop(context);
-                        } else if (widget.onNavigateTab != null) {
-                          widget.onNavigateTab!(-1);
-                        } else if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF2F3FF),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF131B2E)),
+                    if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          final route = ModalRoute.of(context);
+                          if (route != null && !route.isFirst) {
+                            Navigator.pop(context);
+                          } else if (widget.onNavigateTab != null) {
+                            widget.onNavigateTab!(-1);
+                          } else if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF2F3FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF131B2E)),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
+                      const SizedBox(width: 10),
+                    ],
                     // Logo + Title Column
                     Expanded(
                       child: Column(

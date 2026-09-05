@@ -35,6 +35,37 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
   final List<int> _tabHistory = [0];
   DateTime? _lastBackPressTime;
 
+  String _getTabTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'My Profile';
+      case 1:
+        return 'Attendance Ledger';
+      case 2:
+        return 'Time Off & Allocations';
+      case 3:
+        return 'Contracts & AST Rules';
+      case 4:
+        return '2-Step Payrun Wizard';
+      case 5:
+        return 'HR Cost Analytics';
+      case 6:
+        return 'AI HR Copilot';
+      case 7:
+        return 'Workforce Directory';
+      case 8:
+        return 'Working Schedules';
+      case 9:
+        return 'Time Off Setup & Rules';
+      case 10:
+        return 'Payroll Rules & Structure';
+      case 11:
+        return 'User Management & RBAC';
+      default:
+        return 'PeoplePay 360';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -258,40 +289,12 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                   onPressed: _handleBack,
                 )
               : null,
-          title: Row(
-            children: [
-              if (_currentIndex == 0) ...[
-                const Icon(Icons.hub_rounded, color: Colors.white, size: 24),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Text(
-                  'PeoplePay 360 (${widget.userRole})',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          title: Text(
+            _getTabTitle(_currentIndex),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
           ),
           actions: [
-            if (hasHr)
-              IconButton(
-                icon: const Icon(Icons.search_rounded),
-                tooltip: 'Staff Directory Search',
-                onPressed: () {
-                  StaffSearchDialog.show(
-                    context,
-                    onSelectEmployee: (emp) {
-                      MockDataService.switchActiveUser(emp);
-                      EmployeeService.currentEmployeeNotifier.value = emp;
-                      _onTabSelected(0);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Switched Active Profile: ${emp.name} (${emp.jobTitle})')),
-                      );
-                    },
-                  );
-                },
-              ),
             IconButton(
               icon: Stack(
                 clipBehavior: Clip.none,
@@ -318,11 +321,6 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
               onPressed: () {
                 NotificationsDrawer.show(context, onNavigateTab: _onTabSelected);
               },
-            ),
-            IconButton(
-              icon: const Icon(Icons.smart_toy_outlined, color: AppTheme.odooTeal),
-              tooltip: 'AI Copilot RAG Assistant',
-              onPressed: () => _onTabSelected(6),
             ),
           ],
         ),

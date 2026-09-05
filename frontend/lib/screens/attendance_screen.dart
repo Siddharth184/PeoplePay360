@@ -169,10 +169,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
           right: 20,
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Center(
               child: Container(
                 width: 40,
@@ -357,8 +358,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _openInspector(Map<String, dynamic> record) {
     showModalBottomSheet(
@@ -373,11 +375,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
             BoxShadow(color: Color(0x33000000), blurRadius: 20, offset: Offset(0, -4)),
           ],
         ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        padding: EdgeInsets.only(
+          top: 12,
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 28,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Drag handle
             Center(
               child: Container(
@@ -587,8 +595,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildBentoRow(String label, String value, {bool isValueBold = false, Color? valueColor}) {
     return Row(
@@ -653,31 +662,33 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                         Expanded(
                           child: Row(
                             children: [
-                              GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () {
-                                  final route = ModalRoute.of(context);
-                                  if (route != null && !route.isFirst) {
-                                    Navigator.pop(context);
-                                  } else if (widget.onNavigateTab != null) {
-                                    widget.onNavigateTab!(-1);
-                                  } else if (Navigator.canPop(context)) {
-                                    Navigator.pop(context);
-                                  }
-                                },
-                                child: Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFF2F3FF),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Center(
-                                    child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                              if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    final route = ModalRoute.of(context);
+                                    if (route != null && !route.isFirst) {
+                                      Navigator.pop(context);
+                                    } else if (widget.onNavigateTab != null) {
+                                      widget.onNavigateTab!(-1);
+                                    } else if (Navigator.canPop(context)) {
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFF2F3FF),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
+                                const SizedBox(width: 10),
+                              ],
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -44,53 +44,57 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> with SingleTi
             top: 20, left: 20, right: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('New Salary Structure', style: Theme.of(context).textTheme.headlineMedium),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Structure Name', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Reference Code', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Country', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'India', child: Text('India')),
-                  DropdownMenuItem(value: 'USA', child: Text('USA')),
-                ],
-                onChanged: (_) {},
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooAubergine, foregroundColor: Colors.white),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('✅ Salary Structure Created')),
-                    );
-                  },
-                  child: const Text('Save Structure', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('New Salary Structure', style: Theme.of(context).textTheme.headlineMedium),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Structure Name', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Reference Code', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  dropdownColor: Colors.white,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                  decoration: const InputDecoration(labelText: 'Country', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'India', child: Text('India', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                    DropdownMenuItem(value: 'USA', child: Text('USA', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                  ],
+                  onChanged: (_) {},
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooAubergine, foregroundColor: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('✅ Salary Structure Created')),
+                      );
+                    },
+                    child: const Text('Save Structure', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -108,38 +112,41 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> with SingleTi
             top: 20, left: 20, right: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('New Salary Rule', style: Theme.of(context).textTheme.headlineMedium),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Rule Name', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Rule Code', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'BASIC', child: Text('BASIC')),
-                  DropdownMenuItem(value: 'ALLOWANCE', child: Text('ALLOWANCE')),
-                  DropdownMenuItem(value: 'DEDUCTION', child: Text('DEDUCTION')),
-                ],
-                onChanged: (_) {},
-              ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('New Salary Rule', style: Theme.of(context).textTheme.headlineMedium),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Rule Name', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Rule Code', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  dropdownColor: Colors.white,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                  decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'BASIC', child: Text('BASIC', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                    DropdownMenuItem(value: 'ALLOWANCE', child: Text('ALLOWANCE', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                    DropdownMenuItem(value: 'DEDUCTION', child: Text('DEDUCTION', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                  ],
+                  onChanged: (_) {},
+                ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -157,8 +164,9 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> with SingleTi
               ),
             ],
           ),
-        );
-      },
+        ),
+      );
+    },
     );
   }
 
@@ -362,21 +370,60 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> with SingleTi
 
   @override
   Widget build(BuildContext context) {
+    final bodyContent = Column(
+      children: [
+        Material(
+          color: Colors.white,
+          elevation: 1,
+          child: TabBar(
+            controller: _tabController,
+            labelColor: AppTheme.odooAubergine,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppTheme.odooAubergine,
+            tabs: const [
+              Tab(text: 'Salary Structures'),
+              Tab(text: 'Salary Rules'),
+            ],
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildStructuresTab(),
+              _buildRulesTab(),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final fab = FloatingActionButton(
+      backgroundColor: AppTheme.odooAubergine,
+      foregroundColor: Colors.white,
+      onPressed: () {
+        if (_tabController.index == 0) {
+          _openCreateStructureSheet();
+        } else {
+          _openCreateRuleSheet();
+        }
+      },
+      child: const Icon(Icons.add),
+    );
+
+    if (widget.onNavigateTab != null) {
+      return Scaffold(
+        body: bodyContent,
+        floatingActionButton: fab,
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        leading: (Navigator.canPop(context) || widget.onNavigateTab != null)
+        leading: Navigator.canPop(context)
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  final route = ModalRoute.of(context);
-                  if (route != null && !route.isFirst) {
-                    Navigator.pop(context);
-                  } else if (widget.onNavigateTab != null) {
-                    widget.onNavigateTab!(-1);
-                  } else if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                },
+                onPressed: () => Navigator.pop(context),
               )
             : null,
         title: const Text('Payroll Configuration', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -398,18 +445,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> with SingleTi
           _buildRulesTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.odooAubergine,
-        foregroundColor: Colors.white,
-        onPressed: () {
-          if (_tabController.index == 0) {
-            _openCreateStructureSheet();
-          } else {
-            _openCreateRuleSheet();
-          }
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: fab,
     );
   }
 }
