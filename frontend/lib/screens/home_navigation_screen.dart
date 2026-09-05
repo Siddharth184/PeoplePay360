@@ -30,6 +30,10 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
   DateTime? _lastBackPressTime;
 
   void _onTabSelected(int index) {
+    if (index == -1) {
+      _handleBack();
+      return;
+    }
     if (_currentIndex != index) {
       setState(() {
         _tabHistory.add(index);

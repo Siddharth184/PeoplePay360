@@ -143,15 +143,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          InkWell(
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () {
               if (Navigator.canPop(context)) {
                 Navigator.pop(context);
               } else if (widget.onNavigateTab != null) {
-                widget.onNavigateTab!(0);
+                widget.onNavigateTab!(-1);
               }
             },
-            borderRadius: BorderRadius.circular(20),
             child: Container(
               width: 38,
               height: 38,

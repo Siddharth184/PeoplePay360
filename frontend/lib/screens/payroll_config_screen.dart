@@ -371,7 +371,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> with SingleTi
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
                   } else if (widget.onNavigateTab != null) {
-                    widget.onNavigateTab!(0);
+                    widget.onNavigateTab!(-1);
                   }
                 },
               )

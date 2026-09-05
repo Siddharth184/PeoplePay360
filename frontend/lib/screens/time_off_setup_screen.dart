@@ -331,15 +331,15 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                         Expanded(
                           child: Row(
                             children: [
-                              InkWell(
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
                                 onTap: () {
                                   if (Navigator.canPop(context)) {
                                     Navigator.pop(context);
                                   } else if (widget.onNavigateTab != null) {
-                                    widget.onNavigateTab!(0);
+                                    widget.onNavigateTab!(-1);
                                   }
                                 },
-                                borderRadius: BorderRadius.circular(20),
                                 child: Container(
                                   width: 34,
                                   height: 34,

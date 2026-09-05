@@ -238,15 +238,15 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
           Expanded(
             child: Row(
               children: [
-                InkWell(
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () {
                     if (Navigator.canPop(context)) {
                       Navigator.pop(context);
                     } else if (widget.onNavigateTab != null) {
-                      widget.onNavigateTab!(0);
+                      widget.onNavigateTab!(-1);
                     }
                   },
-                  borderRadius: BorderRadius.circular(20),
                   child: Container(
                     width: 38,
                     height: 38,
@@ -856,63 +856,102 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  if (slip['avatar'] != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
-                      child: Image.network(
-                        slip['avatar'],
-                        width: 44,
-                        height: 44,
-                        fit: BoxFit.cover,
-                        errorBuilder: (ctx, err, stack) => Container(
+              Expanded(
+                child: Row(
+                  children: [
+                    if (slip['avatar'] != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: Image.network(
+                          slip['avatar'],
                           width: 44,
                           height: 44,
-                          decoration: const BoxDecoration(color: Color(0xFFFFD7F1), shape: BoxShape.circle),
-                          child: Center(child: Text((slip['name'] as String)[0], style: const TextStyle(fontWeight: FontWeight.bold))),
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, stack) => Container(
+                            width: 44,
+                            height: 44,
+                            decoration: const BoxDecoration(color: Color(0xFFFFD7F1), shape: BoxShape.circle),
+                            child: Center(child: Text((slip['name'] as String)[0], style: const TextStyle(fontWeight: FontWeight.bold))),
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(color: Color(0xFFDAE2FD), shape: BoxShape.circle),
+                        child: Center(
+                          child: Text(
+                            slip['initials'] ?? 'RP',
+                            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                          ),
                         ),
                       ),
-                    )
-                  else
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(color: Color(0xFFDAE2FD), shape: BoxShape.circle),
-                      child: Center(
-                        child: Text(
-                          slip['initials'] ?? 'RP',
-                          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(slip['name'], style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
-                          const SizedBox(width: 5),
-                          Text(slip['empCode'], style: GoogleFonts.jetBrainsMono(fontSize: 10, color: const Color(0xFF4E444A))),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  slip['name'],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF131B2E),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                slip['empCode'],
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 10,
+                                  color: const Color(0xFF4E444A),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            slip['role'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: const Color(0xFF4E444A),
+                            ),
+                          ),
                         ],
                       ),
-                      Text(slip['role'], style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A))),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 6),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (slip['warningTag'] != null) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: const Color(0xFFFFDAD6), borderRadius: BorderRadius.circular(10)),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.warning, size: 11, color: Color(0xFFBA1A1A)),
                           const SizedBox(width: 3),
-                          Text(slip['warningTag'], style: GoogleFonts.jetBrainsMono(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFF93000A))),
+                          Text(
+                            slip['warningTag'],
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF93000A),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1003,17 +1042,25 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(slip['footerIcon'], size: 14, color: slip['footerIconColor']),
-                  const SizedBox(width: 4),
-                  Text(
-                    slip['footerNote'],
-                    style: GoogleFonts.jetBrainsMono(fontSize: 10, color: slip['footerIconColor']),
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(slip['footerIcon'], size: 14, color: slip['footerIconColor']),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        slip['footerNote'],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.jetBrainsMono(fontSize: 10, color: slip['footerIconColor']),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (slip['actionBtn'] != null) ...[
                     InkWell(

@@ -165,7 +165,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
                   } else if (widget.onNavigateTab != null) {
-                    widget.onNavigateTab!(0);
+                    widget.onNavigateTab!(-1);
                   }
                 },
               )
