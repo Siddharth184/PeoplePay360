@@ -1110,16 +1110,23 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.pie_chart_outline, size: 16, color: Color(0xFF00696E)),
-                          const SizedBox(width: 6),
-                          Text(
-                            r['leaveQuota'] as String,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                          ),
-                        ],
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Icon(Icons.pie_chart_outline, size: 16, color: Color(0xFF00696E)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                r['leaveQuota'] as String,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '${r['remainingDays']} days left',
                         style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF4E444A)),
@@ -1191,10 +1198,15 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    r['approvalNote'] as String,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
+                  Expanded(
+                    child: Text(
+                      r['approvalNote'] as String,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
                     r['approver'] ?? '',
                     style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF006443)),
@@ -1210,29 +1222,36 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF714B67),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          r['managerInitials'] ?? 'M',
-                          style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF714B67),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            r['managerInitials'] ?? 'M',
+                            style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Direct Manager: ${r['manager']}',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Direct Manager: ${r['manager']}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   r['time'] as String,
                   style: GoogleFonts.jetBrainsMono(fontSize: 10.5, color: const Color(0xFF80747A)),
