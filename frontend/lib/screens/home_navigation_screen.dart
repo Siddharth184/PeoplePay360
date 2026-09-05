@@ -367,107 +367,167 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                         );
                       },
                     ),
-                    ListTile(
-                      leading: const Icon(Icons.person_outline, color: AppTheme.odooAubergine),
-                      title: Text(isEmployee ? 'My Profile & Info' : 'My Profile & Dashboard'),
-                      selected: _currentIndex == 0,
-                      onTap: () { Navigator.pop(context); _onTabSelected(0); },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.fingerprint, color: AppTheme.odooAubergine),
-                      title: Text(isEmployee ? 'My Attendance' : 'Attendance Ledger'),
-                      selected: _currentIndex == 1,
-                      onTap: () { Navigator.pop(context); _onTabSelected(1); },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.flight_takeoff, color: AppTheme.odooAubergine),
-                      title: Text(isEmployee ? 'My Time Off' : 'Time Off & Allocations'),
-                      selected: _currentIndex == 2,
-                      onTap: () { Navigator.pop(context); _onTabSelected(2); },
-                    ),
-                    if (hasHr)
-                      ListTile(
-                        leading: const Icon(Icons.description_outlined, color: AppTheme.odooAubergine),
-                        title: const Text('Contracts & AST Rules'),
-                        selected: _currentIndex == 3,
-                        onTap: () { Navigator.pop(context); _onTabSelected(3); },
-                      ),
-                    if (hasPayroll)
-                      ListTile(
-                        leading: const Icon(Icons.payments_outlined, color: AppTheme.odooAubergine),
-                        title: const Text('2-Step Payrun Wizard'),
-                        selected: _currentIndex == 4,
-                        onTap: () { Navigator.pop(context); _onTabSelected(4); },
-                      ),
-                    if (hasHr || hasPayroll)
-                      ListTile(
-                        leading: const Icon(Icons.bar_chart_rounded, color: AppTheme.odooAubergine),
-                        title: const Text('HR Cost Analytics'),
-                        selected: _currentIndex == 5,
-                        onTap: () { Navigator.pop(context); _onTabSelected(5); },
-                      ),
-                    ListTile(
-                      leading: const Icon(Icons.smart_toy, color: AppTheme.odooTeal),
-                      title: const Text('AI HR Copilot (RAG)'),
-                      selected: _currentIndex == 6,
-                      onTap: () { Navigator.pop(context); _onTabSelected(6); },
-                    ),
+                    // Helper to check if an index is already pinned to the Bottom Navigation Bar
+                    ...(() {
+                      bool isPinned(int idx) => bottomNavIndices.contains(idx);
 
-                    // Configuration Section (Only for HR, Payroll, Admin)
-                    if (hasHr || hasPayroll || isAdmin) ...[
-                      const Divider(),
-                      const Padding(
-                        padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
-                        child: Text('CONFIGURATION & SETUP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      ),
-                      if (hasHr)
-                        ListTile(
-                          leading: const Icon(Icons.people_alt_outlined, color: AppTheme.odooAubergine),
-                          title: const Text('Employee Master Data'),
-                          selected: _currentIndex == 7,
-                          onTap: () { Navigator.pop(context); _onTabSelected(7); },
-                        ),
-                      if (hasHr)
-                        ListTile(
-                          leading: const Icon(Icons.schedule_rounded, color: AppTheme.odooAubergine),
-                          title: const Text('Working Schedules'),
-                          selected: _currentIndex == 8,
-                          onTap: () { Navigator.pop(context); _onTabSelected(8); },
-                        ),
-                      if (hasHr)
-                        ListTile(
-                          leading: const Icon(Icons.beach_access_rounded, color: AppTheme.odooAubergine),
-                          title: const Text('Time Off Types & Alloc'),
-                          selected: _currentIndex == 9,
-                          onTap: () { Navigator.pop(context); _onTabSelected(9); },
-                        ),
-                      if (hasPayroll)
-                        ListTile(
-                          leading: const Icon(Icons.settings_suggest_outlined, color: AppTheme.odooAubergine),
-                          title: Row(
-                            children: [
-                              const Text('Payroll Rules & Structure'),
-                              if (ApiClient.activeRole == 'HR_PAYROLL_USER') ...[
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                  decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(4)),
-                                  child: Text('Read-Only', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
-                                ),
-                              ],
-                            ],
+                      final modules = <Widget>[];
+
+                      if (!isPinned(0)) {
+                        modules.add(
+                          ListTile(
+                            leading: const Icon(Icons.person_outline, color: AppTheme.odooAubergine),
+                            title: Text(isEmployee ? 'My Profile & Info' : 'My Profile & Dashboard'),
+                            selected: _currentIndex == 0,
+                            onTap: () { Navigator.pop(context); _onTabSelected(0); },
                           ),
-                          selected: _currentIndex == 10,
-                          onTap: () { Navigator.pop(context); _onTabSelected(10); },
-                        ),
-                      if (isAdmin)
-                        ListTile(
-                          leading: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.odooAubergine),
-                          title: const Text('User Management (RBAC)'),
-                          selected: _currentIndex == 11,
-                          onTap: () { Navigator.pop(context); _onTabSelected(11); },
-                        ),
-                    ],
+                        );
+                      }
+                      if (!isPinned(1)) {
+                        modules.add(
+                          ListTile(
+                            leading: const Icon(Icons.fingerprint, color: AppTheme.odooAubergine),
+                            title: Text(isEmployee ? 'My Attendance' : 'Attendance Ledger'),
+                            selected: _currentIndex == 1,
+                            onTap: () { Navigator.pop(context); _onTabSelected(1); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(2)) {
+                        modules.add(
+                          ListTile(
+                            leading: const Icon(Icons.flight_takeoff, color: AppTheme.odooAubergine),
+                            title: Text(isEmployee ? 'My Time Off' : 'Time Off & Allocations'),
+                            selected: _currentIndex == 2,
+                            onTap: () { Navigator.pop(context); _onTabSelected(2); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(3) && hasHr) {
+                        modules.add(
+                          ListTile(
+                            leading: const Icon(Icons.description_outlined, color: AppTheme.odooAubergine),
+                            title: const Text('Contracts & AST Rules'),
+                            selected: _currentIndex == 3,
+                            onTap: () { Navigator.pop(context); _onTabSelected(3); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(4) && hasPayroll) {
+                        modules.add(
+                          ListTile(
+                            leading: const Icon(Icons.payments_outlined, color: AppTheme.odooAubergine),
+                            title: const Text('2-Step Payrun Wizard'),
+                            selected: _currentIndex == 4,
+                            onTap: () { Navigator.pop(context); _onTabSelected(4); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(5) && (hasHr || hasPayroll)) {
+                        modules.add(
+                          ListTile(
+                            leading: const Icon(Icons.bar_chart_rounded, color: AppTheme.odooAubergine),
+                            title: const Text('HR Cost Analytics'),
+                            selected: _currentIndex == 5,
+                            onTap: () { Navigator.pop(context); _onTabSelected(5); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(6)) {
+                        modules.add(
+                          ListTile(
+                            leading: const Icon(Icons.smart_toy, color: AppTheme.odooTeal),
+                            title: const Text('AI HR Copilot (RAG)'),
+                            selected: _currentIndex == 6,
+                            onTap: () { Navigator.pop(context); _onTabSelected(6); },
+                          ),
+                        );
+                      }
+
+                      final configs = <Widget>[];
+
+                      if (!isPinned(7) && hasHr) {
+                        configs.add(
+                          ListTile(
+                            leading: const Icon(Icons.people_alt_outlined, color: AppTheme.odooAubergine),
+                            title: const Text('Employee Master Data'),
+                            selected: _currentIndex == 7,
+                            onTap: () { Navigator.pop(context); _onTabSelected(7); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(8) && hasHr) {
+                        configs.add(
+                          ListTile(
+                            leading: const Icon(Icons.schedule_rounded, color: AppTheme.odooAubergine),
+                            title: const Text('Working Schedules'),
+                            selected: _currentIndex == 8,
+                            onTap: () { Navigator.pop(context); _onTabSelected(8); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(9) && hasHr) {
+                        configs.add(
+                          ListTile(
+                            leading: const Icon(Icons.beach_access_rounded, color: AppTheme.odooAubergine),
+                            title: const Text('Time Off Types & Alloc'),
+                            selected: _currentIndex == 9,
+                            onTap: () { Navigator.pop(context); _onTabSelected(9); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(10) && hasPayroll) {
+                        configs.add(
+                          ListTile(
+                            leading: const Icon(Icons.settings_suggest_outlined, color: AppTheme.odooAubergine),
+                            title: Row(
+                              children: [
+                                const Text('Payroll Rules & Structure'),
+                                if (ApiClient.activeRole == 'HR_PAYROLL_USER') ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                    decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(4)),
+                                    child: Text('Read-Only', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            selected: _currentIndex == 10,
+                            onTap: () { Navigator.pop(context); _onTabSelected(10); },
+                          ),
+                        );
+                      }
+                      if (!isPinned(11) && isAdmin) {
+                        configs.add(
+                          ListTile(
+                            leading: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.odooAubergine),
+                            title: const Text('User Management (RBAC)'),
+                            selected: _currentIndex == 11,
+                            onTap: () { Navigator.pop(context); _onTabSelected(11); },
+                          ),
+                        );
+                      }
+
+                      final resultList = <Widget>[];
+
+                      if (modules.isNotEmpty) {
+                        resultList.addAll(modules);
+                      }
+
+                      if (configs.isNotEmpty) {
+                        resultList.add(const Divider());
+                        resultList.add(
+                          const Padding(
+                            padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                            child: Text('CONFIGURATION & SETUP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                          ),
+                        );
+                        resultList.addAll(configs);
+                      }
+
+                      return resultList;
+                    })(),
 
                     if (hasHr) ...[
                       const Divider(),

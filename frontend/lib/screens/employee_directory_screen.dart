@@ -358,53 +358,62 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               // Title & Count Pill
-                              Row(
-                                children: [
-                                  if (Navigator.canPop(context) || widget.onNavigateTab != null) ...[
-                                    IconButton(
-                                      icon: const Icon(Icons.arrow_back, color: Color(0xFF131B2E), size: 22),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      onPressed: () {
-                                        final route = ModalRoute.of(context);
-                                        if (route != null && !route.isFirst) {
-                                          Navigator.pop(context);
-                                        } else if (widget.onNavigateTab != null) {
-                                          widget.onNavigateTab!(-1);
-                                        } else if (Navigator.canPop(context)) {
-                                          Navigator.pop(context);
-                                        }
-                                      },
-                                    ),
-                                    const SizedBox(width: 8),
-                                  ],
-                                  Text(
-                                    'Employees',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF131B2E),
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF714B67).withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      '$totalCount',
-                                      style: GoogleFonts.jetBrainsMono(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF57344F),
+                              Expanded(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (Navigator.canPop(context) || widget.onNavigateTab != null) ...[
+                                      IconButton(
+                                        icon: const Icon(Icons.arrow_back, color: Color(0xFF131B2E), size: 20),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () {
+                                          final route = ModalRoute.of(context);
+                                          if (route != null && !route.isFirst) {
+                                            Navigator.pop(context);
+                                          } else if (widget.onNavigateTab != null) {
+                                            widget.onNavigateTab!(-1);
+                                          } else if (Navigator.canPop(context)) {
+                                            Navigator.pop(context);
+                                          }
+                                        },
+                                      ),
+                                      const SizedBox(width: 6),
+                                    ],
+                                    Flexible(
+                                      child: Text(
+                                        'Employees',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF131B2E),
+                                          letterSpacing: -0.5,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF714B67).withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        '$totalCount',
+                                        style: GoogleFonts.jetBrainsMono(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF57344F),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+
+                              const SizedBox(width: 8),
 
                               // Segmented View Switcher Pill
                               Container(
@@ -425,7 +434,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                       },
                                       child: AnimatedContainer(
                                         duration: const Duration(milliseconds: 200),
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                                         decoration: BoxDecoration(
                                           color: _isKanbanView ? const Color(0xFF714B67) : Colors.transparent,
                                           borderRadius: BorderRadius.circular(20),
@@ -443,7 +452,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                           children: [
                                             Icon(
                                               Icons.grid_view_rounded,
-                                              size: 15,
+                                              size: 14,
                                               color: _isKanbanView ? Colors.white : const Color(0xFF4E444A),
                                             ),
                                             const SizedBox(width: 4),
@@ -468,7 +477,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                       },
                                       child: AnimatedContainer(
                                         duration: const Duration(milliseconds: 200),
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                                         decoration: BoxDecoration(
                                           color: !_isKanbanView ? const Color(0xFF714B67) : Colors.transparent,
                                           borderRadius: BorderRadius.circular(20),
@@ -486,7 +495,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                           children: [
                                             Icon(
                                               Icons.format_list_bulleted_rounded,
-                                              size: 15,
+                                              size: 14,
                                               color: !_isKanbanView ? Colors.white : const Color(0xFF4E444A),
                                             ),
                                             const SizedBox(width: 4),
