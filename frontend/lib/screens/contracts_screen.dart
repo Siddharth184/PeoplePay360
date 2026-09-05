@@ -786,31 +786,36 @@ class _ContractsScreenState extends State<ContractsScreen> {
           _buildDetailRow(
             icon: Icons.calendar_month,
             label: 'Contract Period',
-            valueWidget: Row(
-              children: [
-                Text(
-                  '01-Jan-2026',
-                  style: GoogleFonts.jetBrainsMono(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 5),
-                  child: Text('→', style: TextStyle(color: Color(0xFF80747A))),
-                ),
-                Text(
-                  'Ongoing (—)',
-                  style: GoogleFonts.jetBrainsMono(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF00696E)),
-                ),
-              ],
+            valueWidget: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '01-Jan-2026',
+                    style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('→', style: TextStyle(color: Color(0xFF80747A))),
+                  ),
+                  Text(
+                    'Ongoing (—)',
+                    style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF00696E)),
+                  ),
+                ],
+              ),
             ),
             trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
               decoration: BoxDecoration(
                 color: const Color(0xFFCCF7FA),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 'Indefinite',
-                style: GoogleFonts.jetBrainsMono(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFF006E73)),
+                style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006E73)),
               ),
             ),
           ),
@@ -823,7 +828,9 @@ class _ContractsScreenState extends State<ContractsScreen> {
             label: 'Working Schedule',
             valueWidget: Text(
               _schedule,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
             ),
             trailing: InkWell(
               onTap: () {
@@ -854,7 +861,9 @@ class _ContractsScreenState extends State<ContractsScreen> {
             label: 'Contract Type',
             valueWidget: Text(
               _contractType,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
             ),
             trailing: const Icon(Icons.lock_outline, size: 17, color: Color(0xFF80747A)),
           ),
@@ -978,13 +987,18 @@ class _ContractsScreenState extends State<ContractsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Cost to Company (CTC)',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A)),
+                      Expanded(
+                        child: Text(
+                          'Cost to Company (CTC)',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF4E444A)),
+                        ),
                       ),
+                      const SizedBox(width: 6),
                       Text(
                         '₹ 11,20,000.00 / yr',
-                        style: GoogleFonts.jetBrainsMono(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                        style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
                       ),
                     ],
                   ),
@@ -1008,25 +1022,34 @@ class _ContractsScreenState extends State<ContractsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.account_tree_outlined, size: 18, color: Color(0xFF714B67)),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Regular Salary Structure',
-                              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.account_tree_outlined, size: 18, color: Color(0xFF714B67)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Regular Salary Structure',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                                ),
+                                Text(
+                                  '12 Active Rules Configured',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
+                                ),
+                              ],
                             ),
-                            Text(
-                              '12 Active Rules Configured',
-                              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 6),
                     InkWell(
                       onTap: () => setState(() => _rulesExpanded = !_rulesExpanded),
                       borderRadius: BorderRadius.circular(8),
@@ -1200,33 +1223,40 @@ class _ContractsScreenState extends State<ContractsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Icon(icon, size: 17, color: const Color(0xFF714B67)),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(height: 1),
-                  valueWidget,
-                ],
-              ),
-            ],
+                  child: Center(
+                    child: Icon(icon, size: 17, color: const Color(0xFF714B67)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
+                      ),
+                      const SizedBox(height: 1),
+                      valueWidget,
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           trailing,
         ],
       ),
