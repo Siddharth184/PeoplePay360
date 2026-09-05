@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/api_client.dart';
 import '../services/contract_service.dart';
 import '../services/employee_service.dart';
 import '../services/mock_data_service.dart';
@@ -1187,32 +1188,34 @@ class _ContractsScreenState extends State<ContractsScreen> {
   }
 
   Widget _buildActionButtons() {
+    final bool canEdit = ApiClient.hasContractsAccess;
     return Column(
       children: [
-        // Update Terms Button
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF714B67),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              elevation: 2,
-            ),
-            onPressed: _openEditContractSheet,
-            icon: const Icon(Icons.edit_note, size: 19),
-            label: Text(
-              'Update Contract Terms',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+        if (canEdit) ...[
+          // Update Terms Button
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF714B67),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                elevation: 2,
+              ),
+              onPressed: _openEditContractSheet,
+              icon: const Icon(Icons.edit_note, size: 19),
+              label: Text(
+                'Update Contract Terms',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-        ),
-
-        const SizedBox(height: 10),
+          const SizedBox(height: 10),
+        ],
 
         // Print Contract Summary Button
         SizedBox(

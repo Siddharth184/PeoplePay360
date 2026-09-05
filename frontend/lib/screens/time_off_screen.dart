@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/time_off_service.dart';
+import '../services/api_client.dart';
+import '../services/mock_data_service.dart';
 
 class TimeOffScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
@@ -393,16 +395,25 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    final pendingList = _requests.where((r) => !r['isApproved']).toList();
-    final approvedList = _requests.where((r) => r['isApproved']).toList();
+    final bool isHrView = ApiClient.hasTimeOffApprovalAccess;
+    final bool isEmployeeView = ApiClient.isEmployee;
+    final currentEmpName = ApiClient.currentEmployeeName ?? MockDataService.currentEmployee.name;
+
+    // RBAC: Employee sees only own requests; HR+ sees all
+    final roleFilteredRequests = isEmployeeView
+        ? _requests.where((r) => (r['name'] as String?)?.toLowerCase() == currentEmpName.toLowerCase()).toList()
+        : _requests;
+
+    final pendingList = roleFilteredRequests.where((r) => !r['isApproved']).toList();
+    final approvedList = roleFilteredRequests.where((r) => r['isApproved']).toList();
 
     List<Map<String, dynamic>> displayedRequests;
-    if (_selectedTab == 'To Approve') {
+    if (_selectedTab == 'To Approve' || _selectedTab == 'My Pending') {
       displayedRequests = pendingList;
-    } else if (_selectedTab == 'Approved') {
+    } else if (_selectedTab == 'Approved' || _selectedTab == 'My Approved') {
       displayedRequests = approvedList;
     } else {
-      displayedRequests = _requests;
+      displayedRequests = roleFilteredRequests;
     }
 
     return Scaffold(
@@ -421,8 +432,8 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
                   // Sticky Filter Bar
                   _buildFilterBar(pendingList.length),
 
-                  // Fast Bulk Action Banner
-                  if (pendingList.isNotEmpty) _buildBulkBanner(pendingList.length),
+                  // Fast Bulk Action Banner (HR+ only)
+                  if (isHrView && pendingList.isNotEmpty) _buildBulkBanner(pendingList.length),
 
                   // Request Cards Stream
                   Padding(
@@ -430,7 +441,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
                     child: displayedRequests.isEmpty && _selectedTab == 'To Approve'
                         ? _buildEmptyState()
                         : Column(
-                            children: displayedRequests.map((r) => _buildRequestCard(r)).toList(),
+                            children: displayedRequests.map((r) => _buildRequestCard(r, showApprovalActions: isHrView)).toList(),
                           ),
                   ),
                 ],
@@ -531,6 +542,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
   }
 
   Widget _buildHeaderSection() {
+    final bool isEmployeeView = ApiClient.isEmployee;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
       child: Column(
@@ -568,7 +580,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Time Off Requests',
+                            isEmployeeView ? 'My Time Off' : 'Time Off Requests',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.outfit(
@@ -771,12 +783,18 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
   }
 
   Widget _buildFilterBar(int pendingCount) {
-    final tabs = [
-      {'name': 'To Approve', 'badge': pendingCount > 0 ? '$pendingCount' : null},
-      {'name': 'Approved', 'badge': null},
-      {'name': 'My Team', 'badge': null},
-      {'name': 'All Requests', 'badge': null},
-    ];
+    final bool isEmployeeView = ApiClient.isEmployee;
+    final tabs = isEmployeeView
+        ? [
+            {'name': 'My Pending', 'badge': pendingCount > 0 ? '$pendingCount' : null},
+            {'name': 'My Approved', 'badge': null},
+            {'name': 'All Mine', 'badge': null},
+          ]
+        : [
+            {'name': 'To Approve', 'badge': pendingCount > 0 ? '$pendingCount' : null},
+            {'name': 'Approved', 'badge': null},
+            {'name': 'All Requests', 'badge': null},
+          ];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -893,7 +911,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildRequestCard(Map<String, dynamic> r) {
+  Widget _buildRequestCard(Map<String, dynamic> r, {bool showApprovalActions = true}) {
     final id = r['id'] as String;
     final name = r['name'] as String;
     final isApproved = r['isApproved'] as bool;
@@ -1271,8 +1289,8 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
             ),
           ],
 
-          // Action Buttons: Refuse & Approve
-          if (!isApproved) ...[
+          // Action Buttons: Refuse & Approve (HR+ only)
+          if (!isApproved && showApprovalActions) ...[
             const SizedBox(height: 14),
             Row(
               children: [

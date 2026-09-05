@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/attendance_punch_sheet.dart';
 import '../services/attendance_service.dart';
 import '../services/mock_data_service.dart';
+import '../services/api_client.dart';
 
 class AttendanceScreen extends StatefulWidget {
   final void Function(int index)? onNavigateTab;
@@ -618,7 +619,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final filteredRecords = _records.where((record) {
+    final bool isHrView = ApiClient.hasAttendanceLedgerAccess;
+    final bool isEmployeeView = ApiClient.isEmployee;
+    final currentEmpName = ApiClient.currentEmployeeName ?? MockDataService.currentEmployee.name;
+
+    // RBAC: Employee sees only own records; HR+ sees full ledger
+    final roleFilteredRecords = isEmployeeView
+        ? _records.where((r) => (r['name'] as String).toLowerCase() == currentEmpName.toLowerCase()).toList()
+        : _records;
+
+    final filteredRecords = roleFilteredRecords.where((record) {
       if (_selectedFilter == 'Missing Out') return record['statusType'] == 'absent';
       if (_selectedFilter == 'Late (18)') return record['statusType'] == 'late';
       if (_selectedFilter == 'Overtime (>8h)') return (record['subTag'] as String).contains('OT');
@@ -670,7 +680,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Attendance Records',
+                                      isEmployeeView ? 'My Attendance' : 'Attendance Ledger',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: GoogleFonts.outfit(
@@ -788,8 +798,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
 
                     const SizedBox(height: 12),
 
-                    // Quick Summary Metric Glass Ribbon
-                    Container(
+                    // Quick Summary Metric Glass Ribbon (HR+ only)
+                    if (isHrView) Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFFF2F3FF).withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(16),
@@ -965,29 +975,30 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                 ),
               ),
 
-              // HR Punch Approval Desk (Real-Time Reactive)
-              _buildHrPunchApprovalDesk(),
+              // HR Punch Approval Desk (Real-Time Reactive) - HR+ only
+              if (isHrView) _buildHrPunchApprovalDesk(),
 
               const SizedBox(height: 8),
 
-              // Horizontal Scroll Filter Chips
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    _buildFilterChip('Today (Sep 2)', isSelected: _selectedFilter == 'Today (Sep 2)', hasCheck: _selectedFilter == 'Today (Sep 2)'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('My Team (12)', isSelected: _selectedFilter == 'My Team (12)'),
-                    const SizedBox(width: 8),
-                    _buildMissingOutChip('Missing Out', 5, isSelected: _selectedFilter == 'Missing Out'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Late (18)', isSelected: _selectedFilter == 'Late (18)'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Overtime (>8h)', isSelected: _selectedFilter == 'Overtime (>8h)'),
-                  ],
+              // Horizontal Scroll Filter Chips (HR+ gets org-wide filters, Employee gets personal)
+              if (isHrView)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      _buildFilterChip('Today (Sep 2)', isSelected: _selectedFilter == 'Today (Sep 2)', hasCheck: _selectedFilter == 'Today (Sep 2)'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('My Team (12)', isSelected: _selectedFilter == 'My Team (12)'),
+                      const SizedBox(width: 8),
+                      _buildMissingOutChip('Missing Out', 5, isSelected: _selectedFilter == 'Missing Out'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Late (18)', isSelected: _selectedFilter == 'Late (18)'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Overtime (>8h)', isSelected: _selectedFilter == 'Overtime (>8h)'),
+                    ],
+                  ),
                 ),
-              ),
 
               // Real-time Status Micro-bar
               Padding(
@@ -996,7 +1007,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Live Ledger Feed',
+                      isEmployeeView ? 'My Recent Punches' : 'Live Ledger Feed',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,

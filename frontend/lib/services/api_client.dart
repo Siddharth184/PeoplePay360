@@ -43,8 +43,14 @@ class ApiClient {
   factory ApiClient() => _instance;
   ApiClient._internal();
 
-  // Configurable base URL: Android emulator uses 10.0.2.2 to reach host PC
+  // Configurable base URL: Supports custom IP via --dart-define=SERVER_IP=192.168.x.x
   static String get defaultBaseUrl {
+    const envUrl = String.fromEnvironment('SERVER_URL');
+    if (envUrl.isNotEmpty) return envUrl;
+
+    const envIp = String.fromEnvironment('SERVER_IP');
+    if (envIp.isNotEmpty) return 'http://$envIp:8000/api/v1';
+
     if (kIsWeb) return 'http://127.0.0.1:8000/api/v1';
     try {
       if (Platform.isAndroid) return 'http://10.0.2.2:8000/api/v1';
@@ -53,6 +59,14 @@ class ApiClient {
   }
 
   static String baseUrl = defaultBaseUrl;
+
+  static void setServerHost(String hostOrIp, {int port = 8000}) {
+    if (hostOrIp.startsWith('http://') || hostOrIp.startsWith('https://')) {
+      baseUrl = hostOrIp.endsWith('/api/v1') ? hostOrIp : '$hostOrIp/api/v1';
+    } else {
+      baseUrl = 'http://$hostOrIp:$port/api/v1';
+    }
+  }
 
   // Active Session Data
   static String? token;
@@ -96,6 +110,55 @@ class ApiClient {
   }
 
   static bool get isAuthenticated => token != null && token!.isNotEmpty;
+
+  // Role-Based Access Control (RBAC) Matrix (Odoo Hackathon Specification Page 3)
+  static String get activeRole => (currentUserRole ?? 'EMPLOYEE').toUpperCase().trim();
+
+  // ── Exact Role Identity Checks ──
+  // These return true ONLY when the user IS exactly that role.
+  static bool get isAdmin => activeRole == 'ADMIN';
+  static bool get isRoleHrManager => activeRole == 'HR_MANAGER';
+  static bool get isRoleHrPayrollUser => activeRole == 'HR_PAYROLL_USER';
+  static bool get isRoleHrPayrollManager => activeRole == 'HR_PAYROLL_MANAGER';
+  static bool get isEmployee => activeRole == 'EMPLOYEE';
+
+  // ── Capability Guards (OR-based, non-hierarchical) ──
+  // Each guard explicitly lists the roles that have the capability.
+
+  /// Payroll operations (Payrun Wizard, Payslip computation): HR Payroll User, HR Payroll Manager, Admin.
+  /// (HR Manager has NO access to payroll features per spec Page 3).
+  static bool get hasPayrollAccess => isRoleHrPayrollUser || isRoleHrPayrollManager || isAdmin;
+
+  /// Full CRUD on Salary Structures and Rules: HR Payroll Manager and Admin.
+  /// (HR Payroll User has READ-ONLY access per spec Page 3).
+  static bool get hasPayrollConfigWriteAccess => isRoleHrPayrollManager || isAdmin;
+
+  /// Read-only access to Salary Structures: HR Payroll User.
+  static bool get hasPayrollConfigReadAccess => hasPayrollAccess;
+
+  /// HR Modules (Employees, Attendance Ledger, Contracts, Schedules, Time Off): HR Manager, HR Payroll User, HR Payroll Manager, Admin.
+  static bool get hasHrAccess => isRoleHrManager || isRoleHrPayrollUser || isRoleHrPayrollManager || isAdmin;
+
+  /// Approve/Refuse Time Off requests: HR Manager, HR Payroll User, HR Payroll Manager, Admin.
+  /// (Employee cannot approve).
+  static bool get hasTimeOffApprovalAccess => hasHrAccess;
+
+  /// Organization-wide Attendance Ledger & Manual Corrections: HR Manager, HR Payroll User, HR Payroll Manager, Admin.
+  /// (Employee sees own records only).
+  static bool get hasAttendanceLedgerAccess => hasHrAccess;
+
+  /// Contract Management: HR Manager, HR Payroll User, HR Payroll Manager, Admin.
+  /// (Employee has no contracts access).
+  static bool get hasContractsAccess => hasHrAccess;
+
+  /// User Management (RBAC role assignments, credentials): Admin only.
+  static bool get hasUserManagementAccess => isAdmin;
+
+  /// Check if the logged-in user is viewing their own profile
+  static bool isOwnProfile(String? employeeId) {
+    if (employeeId == null || currentEmployeeId == null) return false;
+    return employeeId == currentEmployeeId;
+  }
 
   static Map<String, String> _buildHeaders({Map<String, String>? extraHeaders}) {
     final headers = <String, String>{

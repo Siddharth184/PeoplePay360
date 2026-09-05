@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
+import '../services/api_client.dart';
 import '../services/employee_service.dart';
 import '../services/mock_data_service.dart';
 import '../widgets/payslip_pdf_dialog.dart';
@@ -639,12 +640,15 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
               ),
               onSelected: _onProfileAction,
-              itemBuilder: (context) => [
-                _menuItem('edit', Icons.edit_outlined, 'Edit Profile', iconColor: const Color(0xFF714B67)),
-                _menuItem('copy_email', Icons.alternate_email_rounded, 'Copy Work Email', iconColor: const Color(0xFF00696E)),
-                _menuItem('copy_id', Icons.badge_outlined, 'Copy Employee ID', iconColor: const Color(0xFF714B67)),
-                _menuItem('print_payslip', Icons.receipt_long_rounded, 'Print Latest Payslip', iconColor: const Color(0xFF00696E)),
-              ],
+              itemBuilder: (context) {
+                final bool canEdit = ApiClient.hasHrAccess || ApiClient.isOwnProfile(emp.id);
+                return [
+                  if (canEdit) _menuItem('edit', Icons.edit_outlined, 'Edit Profile', iconColor: const Color(0xFF714B67)),
+                  _menuItem('copy_email', Icons.alternate_email_rounded, 'Copy Work Email', iconColor: const Color(0xFF00696E)),
+                  _menuItem('copy_id', Icons.badge_outlined, 'Copy Employee ID', iconColor: const Color(0xFF714B67)),
+                  _menuItem('print_payslip', Icons.receipt_long_rounded, 'Print Latest Payslip', iconColor: const Color(0xFF00696E)),
+                ];
+              },
             ),
           ),
         ],
