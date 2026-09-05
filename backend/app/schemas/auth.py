@@ -82,6 +82,8 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
+    # The user must prove ownership by supplying their existing password.
+    current_password: str = Field(min_length=1, max_length=256)
     new_password: str = Field(min_length=8, max_length=256)
 
 

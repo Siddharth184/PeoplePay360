@@ -755,39 +755,44 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF00696E),
-                                    shape: BoxShape.circle,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF00696E),
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Provident Fund (PF)',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF131B2E),
-                                      ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Provident Fund (PF)',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF131B2E),
+                                          ),
+                                        ),
+                                        Text(
+                                          '12% of Basic Salary statutory match',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11,
+                                            color: const Color(0xFF4E444A),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      '12% of Basic Salary statutory match',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 11,
-                                        color: const Color(0xFF4E444A),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               '₹3,000.00',
                               style: GoogleFonts.jetBrainsMono(
@@ -806,39 +811,44 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF714B67),
-                                    shape: BoxShape.circle,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF714B67),
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Professional Tax (PT)',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF131B2E),
-                                      ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Professional Tax (PT)',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF131B2E),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Standard state statutory slab',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11,
+                                            color: const Color(0xFF4E444A),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      'Standard state statutory slab',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 11,
-                                        color: const Color(0xFF4E444A),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               '₹2,000.00',
                               style: GoogleFonts.jetBrainsMono(
@@ -908,36 +918,32 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.check_circle_rounded, size: 15, color: Color(0xFF00696E)),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Human verified • Previously answered by HR (',
+                          const Icon(Icons.check_circle_rounded, size: 15, color: Color(0xFF00696E)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'Human verified • Previously answered by HR (',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  color: const Color(0xFF131B2E),
-                                ),
-                              ),
-                              Text(
-                                'ESC/2026/0007',
-                                style: GoogleFonts.jetBrainsMono(
                                   fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
                                   color: const Color(0xFF131B2E),
                                 ),
+                                children: [
+                                  TextSpan(
+                                    text: 'ESC/2026/0007',
+                                    style: GoogleFonts.jetBrainsMono(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF131B2E),
+                                    ),
+                                  ),
+                                  const TextSpan(text: ')'),
+                                ],
                               ),
-                              Text(
-                                ')',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  color: const Color(0xFF131B2E),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                             decoration: BoxDecoration(

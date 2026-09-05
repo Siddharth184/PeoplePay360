@@ -179,7 +179,7 @@ def forgot_password(
 @router.post(
     "/reset-password",
     response_model=MessageResponse,
-    summary="Reset password directly with verified identity",
+    summary="Reset password by proving ownership with the current password",
 )
 def reset_password(
     payload: ResetPasswordRequest, db: DbSession
@@ -198,6 +198,15 @@ def reset_password(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This account has been deactivated.",
         )
+
+    # Ownership check: the previous password must match before we allow a reset.
+    if not verify_password(payload.current_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
+    if payload.current_password == payload.new_password:
+        raise ValidationError("The new password must differ from the current one.")
 
     user.hashed_password = hash_password(payload.new_password)
     db.flush()
