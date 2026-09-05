@@ -5,7 +5,8 @@ import '../services/ai_copilot_service.dart';
 import 'escalation_ticket_screen.dart';
 
 class AiCopilotScreen extends StatefulWidget {
-  const AiCopilotScreen({super.key});
+  final Function(int)? onNavigateTab;
+  const AiCopilotScreen({super.key, this.onNavigateTab});
 
   @override
   State<AiCopilotScreen> createState() => _AiCopilotScreenState();
@@ -299,57 +300,87 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF57344F).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      color: Color(0xFF57344F),
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PeoplePay360 Copilot',
-                        style: GoogleFonts.outfit(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF131B2E),
+              Expanded(
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else if (widget.onNavigateTab != null) {
+                          widget.onNavigateTab!(0);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF2F3FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Color(0xFF131B2E),
+                          size: 16,
                         ),
                       ),
-                      Row(
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF57344F).withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: Color(0xFF57344F),
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF004A31),
-                              shape: BoxShape.circle,
+                          Text(
+                            'PeoplePay360 Copilot',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF131B2E),
                             ),
                           ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'Grounded in verified HR knowledge base',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              color: const Color(0xFF4E444A),
-                              fontWeight: FontWeight.w500,
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF004A31),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Grounded in verified HR knowledge base',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  color: const Color(0xFF4E444A),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
               Row(
                 children: [

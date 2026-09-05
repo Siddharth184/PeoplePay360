@@ -5,7 +5,8 @@ import '../theme/app_theme.dart';
 import 'salary_rule_editor_screen.dart';
 
 class PayrollConfigScreen extends StatefulWidget {
-  const PayrollConfigScreen({super.key});
+  final Function(int)? onNavigateTab;
+  const PayrollConfigScreen({super.key, this.onNavigateTab});
 
   @override
   State<PayrollConfigScreen> createState() => _PayrollConfigScreenState();
@@ -363,6 +364,18 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> with SingleTi
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: (Navigator.canPop(context) || widget.onNavigateTab != null)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else if (widget.onNavigateTab != null) {
+                    widget.onNavigateTab!(0);
+                  }
+                },
+              )
+            : null,
         title: const Text('Payroll Configuration', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tabController,

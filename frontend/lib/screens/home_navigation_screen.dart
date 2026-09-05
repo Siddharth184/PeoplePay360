@@ -115,15 +115,15 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
     final screens = [
       EmployeeProfileScreen(onNavigateTab: _onTabSelected),
       AttendanceScreen(onNavigateTab: _onTabSelected),
-      const TimeOffScreen(),
+      TimeOffScreen(onNavigateTab: _onTabSelected),
       ContractsScreen(onNavigateTab: _onTabSelected),
-      const PayrunScreen(),
-      const AnalyticsScreen(),
-      const AiCopilotScreen(),
+      PayrunScreen(onNavigateTab: _onTabSelected),
+      AnalyticsScreen(onNavigateTab: _onTabSelected),
+      AiCopilotScreen(onNavigateTab: _onTabSelected),
       EmployeeDirectoryScreen(onNavigateTab: _onTabSelected),
       WorkingSchedulesScreen(onNavigateTab: _onTabSelected),
-      const TimeOffSetupScreen(),
-      const PayrollConfigScreen(),
+      TimeOffSetupScreen(onNavigateTab: _onTabSelected),
+      PayrollConfigScreen(onNavigateTab: _onTabSelected),
       UserManagementScreen(onNavigateTab: _onTabSelected),
     ];
 

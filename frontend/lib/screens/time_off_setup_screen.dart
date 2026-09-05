@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class TimeOffSetupScreen extends StatefulWidget {
-  const TimeOffSetupScreen({super.key});
+  final Function(int)? onNavigateTab;
+  const TimeOffSetupScreen({super.key, this.onNavigateTab});
 
   @override
   State<TimeOffSetupScreen> createState() => _TimeOffSetupScreenState();
@@ -328,45 +329,74 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Flexible(
-                          child: InkWell(
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('📅 Selected: Annual Fiscal Cycle (Jan 1 – Dec 31, 2026)')),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
+                                  } else if (widget.onNavigateTab != null) {
+                                    widget.onNavigateTab!(0);
+                                  }
+                                },
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                                boxShadow: const [
-                                  BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1)),
-                                ],
+                                child: Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF2F3FF),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.arrow_back, size: 16, color: Color(0xFF131B2E)),
+                                  ),
+                                ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.event_repeat, size: 16, color: Color(0xFF714B67)),
-                                  const SizedBox(width: 5),
-                                  Flexible(
-                                    child: Text(
-                                      'Cycle: FY 2026',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF131B2E),
-                                      ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: InkWell(
+                                  onTap: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('📅 Selected: Annual Fiscal Cycle (Jan 1 – Dec 31, 2026)')),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      boxShadow: const [
+                                        BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1)),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.event_repeat, size: 16, color: Color(0xFF714B67)),
+                                        const SizedBox(width: 5),
+                                        Flexible(
+                                          child: Text(
+                                            'Cycle: FY 2026',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFF131B2E),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(Icons.expand_more, size: 16, color: Color(0xFF4E444A)),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.expand_more, size: 16, color: Color(0xFF4E444A)),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 6),

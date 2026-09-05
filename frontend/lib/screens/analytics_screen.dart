@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AnalyticsScreen extends StatefulWidget {
-  const AnalyticsScreen({super.key});
+  final Function(int)? onNavigateTab;
+  const AnalyticsScreen({super.key, this.onNavigateTab});
 
   @override
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
@@ -142,6 +143,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          InkWell(
+            onTap: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else if (widget.onNavigateTab != null) {
+                widget.onNavigateTab!(0);
+              }
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF2F3FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +195,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                 Text(
                   'Executive Analytics',
                   style: GoogleFonts.outfit(
-                    fontSize: 26,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF131B2E),
                     letterSpacing: -0.4,

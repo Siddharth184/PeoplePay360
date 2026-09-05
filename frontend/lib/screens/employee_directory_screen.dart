@@ -158,6 +158,18 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: (Navigator.canPop(context) || widget.onNavigateTab != null)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else if (widget.onNavigateTab != null) {
+                    widget.onNavigateTab!(0);
+                  }
+                },
+              )
+            : null,
         title: const Text('Employee Master Directory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(

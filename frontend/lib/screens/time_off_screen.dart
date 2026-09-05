@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/time_off_service.dart';
 
 class TimeOffScreen extends StatefulWidget {
-  const TimeOffScreen({super.key});
+  final Function(int)? onNavigateTab;
+  const TimeOffScreen({super.key, this.onNavigateTab});
 
   @override
   State<TimeOffScreen> createState() => _TimeOffScreenState();
@@ -540,15 +541,25 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
               Expanded(
                 child: Row(
                   children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE2E7FF),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.event_available, color: Color(0xFF714B67), size: 22),
+                    InkWell(
+                      onTap: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else if (widget.onNavigateTab != null) {
+                          widget.onNavigateTab!(0);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE2E7FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.arrow_back, color: Color(0xFF714B67), size: 18),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
