@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../services/ai_copilot_service.dart';
@@ -16,19 +18,21 @@ class _AiMessageItem {
   final bool isUser;
   final String text;
   final String time;
-  final bool isRichDeductionResponse;
   final bool hasEscalation;
   final EscalationTicketModel? escalationTicket;
   final List<String> citations;
+  final double? confidence;
+  final String? intent;
 
   _AiMessageItem({
     required this.isUser,
     required this.text,
     required this.time,
-    this.isRichDeductionResponse = false,
     this.hasEscalation = false,
     this.escalationTicket,
     this.citations = const [],
+    this.confidence,
+    this.intent,
   });
 }
 
@@ -36,8 +40,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
-  bool _isLiked = false;
-  bool _isDisliked = false;
+  String? _conversationId;
+  String? _lastUserPrompt;
+
+  final Set<int> _likedMessages = {};
+  final Set<int> _dislikedMessages = {};
 
   late List<_AiMessageItem> _messages;
 
@@ -63,45 +70,34 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       ),
       _AiMessageItem(
         isUser: false,
-        text:
-            'Hello Aarav! Based on your February 2026 Payslip (SLIP/2026/0001), your total deductions were ₹5,000.00 broken down as follows:',
+        text: "### February 2026 Payslip Statutory Breakdown\n\n"
+            "Based on your **February 2026 Payslip (SLIP-2026-0042)**, your gross earnings were **₹80,000.00** and total deductions were **₹5,000.00**:\n\n"
+            "- **Provident Fund (PF - 12%)**: **-₹3,000.00** *(Mandatory statutory match on Basic)*\n"
+            "- **Professional Tax (PT)**: **-₹2,000.00** *(State tax slab)*\n\n"
+            "**Net Payout Disbursed: ₹75,000.00**\n\n"
+            "> *No unpaid leave penalties or loss of pay (LOP) deductions were applied to your record.*",
         time: '10:14 AM',
-        isRichDeductionResponse: true,
-        hasEscalation: false,
+        confidence: 1.0,
+        intent: 'PAYSLIP_BREAKDOWN',
         citations: [
-          'Verified with Regular Salary Rule Engine & Indian Statutory Tax Slabs',
-          'Human verified • Previously answered by HR (ESC/2026/0007)',
+          'Payslip Computation Ledger (PS-2026-02-0042)',
+          'Employees Provident Fund & MP Act (12% Statutory Rate)',
         ],
-      ),
-      _AiMessageItem(
-        isUser: false,
-        text:
-            "I don't have a verified answer for that specific custom contract adjustment, so I've sent it directly to Priya from HR Payroll. You'll receive a push notification as soon as she answers.",
-        time: '10:15 AM',
-        hasEscalation: true,
-        escalationTicket: EscalationTicketModel(
-          id: 'esc_1',
-          ticketNo: 'ESC/2026/0001',
-          questionText: 'Custom Contract adjustment policy and remote allowance calculation',
-          category: 'Leave & Deductions Policy',
-          status: 'OPEN',
-          priority: 'HIGH',
-          slaDueAt: 'Expected reply within 8 hours',
-          answeredBy: 'Priya (HR Payroll)',
-          retrievalConfidence: 0.94,
-        ),
       ),
     ];
   }
 
   void _clearChat() {
     setState(() {
+      _conversationId = null;
       _messages = [
         _AiMessageItem(
           isUser: false,
           text:
-              'Hello Aarav! I am your PeoplePay360 Copilot. Grounded in verified company policies & statutory rules. Ask me anything about HR policy, salary, or leave balances.',
+              'Hello! I am your **PeoplePay360 Copilot**, grounded in verified company policies, Odoo 18 statutory salary rules, and your live HR records.\n\n'
+              'Ask me anything about your **leave balances**, **payslip deductions**, **medical leave**, **company policies**, or **public holidays**.',
           time: 'Just now',
+          citations: ['PeoplePay360 Verified Policy Vault 2026'],
         ),
       ];
       _textController.clear();
@@ -109,7 +105,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Chat history cleared',
+          'Chat history reset',
           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
         ),
         duration: const Duration(milliseconds: 1500),
@@ -124,9 +120,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     _sendQuery(prompt);
   }
 
-  void _sendQuery(String queryText) async {
+  void _sendQuery(String queryText, {bool forceEscalate = false}) async {
     final text = queryText.trim();
     if (text.isEmpty) return;
+
+    _lastUserPrompt = text;
 
     final now = DateTime.now();
     final hr = now.hour % 12 == 0 ? 12 : now.hour % 12;
@@ -145,39 +143,50 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
 
     _scrollToBottom();
 
-    final res = await AiCopilotService.ask(prompt: text);
+    final res = await AiCopilotService.ask(
+      prompt: text,
+      conversationId: _conversationId,
+      forceEscalate: forceEscalate,
+    );
 
     if (mounted) {
       setState(() {
         _isLoading = false;
         if (res.isSuccess && res.data != null) {
           final data = res.data!;
+          if (data['conversation_id'] != null) {
+            _conversationId = data['conversation_id']?.toString();
+          }
+
           final answer = data['answer']?.toString() ??
-              "I've verified this with the latest internal payroll circular: Annual adjustments and statutory allocations will be reflected on your next consolidated statement.";
+              "I have verified this against the official PeoplePay360 policy repository.";
+
           final citationsList = (data['citations'] as List?)
                   ?.map((c) => c is Map ? (c['title']?.toString() ?? '') : c.toString())
                   .where((s) => s.isNotEmpty)
                   .toList() ??
-              ['Verified with PeoplePay360 Rule Engine & OXP Policies'];
+              ['PeoplePay360 Verified Policy Vault'];
 
-          final isEscalated = data['escalation_id'] != null || data['mode'] == 'ESCALATED' || text.toLowerCase().contains('custom');
+          final isEscalated = data['escalation_id'] != null || data['mode'] == 'ESCALATED';
 
           _messages.add(_AiMessageItem(
             isUser: false,
             text: answer,
             time: timeStr,
-            isRichDeductionResponse: text.toLowerCase().contains('deduct') || text.toLowerCase().contains('payslip'),
             hasEscalation: isEscalated,
+            confidence: (data['confidence'] as num?)?.toDouble(),
+            intent: data['intent']?.toString(),
             escalationTicket: isEscalated
                 ? EscalationTicketModel(
                     id: data['escalation_id']?.toString() ?? 'esc_${DateTime.now().millisecondsSinceEpoch}',
-                    ticketNo: data['ticket_no']?.toString() ?? 'ESC/2026/0042',
+                    ticketNo: data['ticket_no']?.toString() ?? 'ESC-2026-0042',
                     questionText: text,
-                    category: data['category']?.toString() ?? 'Leave & Deductions Policy',
+                    category: data['category']?.toString() ?? 'HR Policy & Benefits',
                     status: 'OPEN',
                     priority: 'NORMAL',
-                    slaDueAt: 'Expected reply within 8 hours',
-                    answeredBy: 'Priya (HR Payroll)',
+                    slaDueAt: data['sla_due_at']?.toString() ?? 'Expected reply within 8 hours',
+                    answeredBy: 'Sara Khan (HR Manager)',
+                    retrievalConfidence: (data['confidence'] as num?)?.toDouble() ?? 0.85,
                   )
                 : null,
             citations: citationsList,
@@ -186,9 +195,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           _messages.add(_AiMessageItem(
             isUser: false,
             text:
-                "I've checked the verified HR policy repository: Your standard allowances and statutory match are active. If you need special approvals, I can forward this to HR.",
+                "I couldn't complete the live verification request. Please check your connectivity or ask your HR team directly.",
             time: timeStr,
-            citations: ['Synchronized with PeoplePay360 Rule Vault'],
+            citations: ['PeoplePay360 Offline Fallback'],
           ));
         }
       });
@@ -200,7 +209,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent + 120,
+          _scrollController.position.maxScrollExtent + 140,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -219,6 +228,28 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     );
   }
 
+  void _copyToClipboard(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check, color: Color(0xFF6FFBBE), size: 18),
+            const SizedBox(width: 8),
+            Text(
+              'Copied answer to clipboard',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+          ],
+        ),
+        duration: const Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF131B2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -226,10 +257,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Modal Chrome & Tactile Handle
+            // Top Modal Chrome
             _buildTopChrome(),
 
-            // Quick Starters Horizontal Shelf
+            // Quick Starters Shelf
             _buildQuickStartersShelf(),
 
             // Chat Message Stream Canvas
@@ -238,19 +269,20 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 physics: const BouncingScrollPhysics(),
-                itemCount: _messages.length + 1, // +1 for date divider at start
+                itemCount: _messages.length + 1,
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return _buildDateDivider();
                   }
 
-                  final msg = _messages[index - 1];
+                  final msgIndex = index - 1;
+                  final msg = _messages[msgIndex];
                   if (msg.isUser) {
                     return _buildUserMessage(msg);
                   } else if (msg.hasEscalation && msg.escalationTicket != null) {
                     return _buildEscalationCard(msg.escalationTicket!, msg.text);
                   } else {
-                    return _buildCopilotMessage(msg);
+                    return _buildCopilotMessage(msg, msgIndex);
                   }
                 },
               ),
@@ -270,10 +302,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   Widget _buildTopChrome() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: const [
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
           BoxShadow(
             color: Color(0x0A000000),
             blurRadius: 8,
@@ -283,11 +315,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       ),
       child: Column(
         children: [
-          // Drag grab handle
           Center(
             child: Container(
               width: 40,
-              height: 5,
+              height: 4,
               decoration: BoxDecoration(
                 color: const Color(0xFFD1C3CA),
                 borderRadius: BorderRadius.circular(10),
@@ -295,8 +326,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             ),
           ),
           const SizedBox(height: 10),
-
-          // Title Bar & Live Knowledge Indicator
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -313,8 +342,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         }
                       },
                       child: Container(
-                        width: 32,
-                        height: 32,
+                        width: 34,
+                        height: 34,
                         decoration: const BoxDecoration(
                           color: Color(0xFFF2F3FF),
                           shape: BoxShape.circle,
@@ -322,25 +351,25 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         child: const Icon(
                           Icons.arrow_back,
                           color: Color(0xFF131B2E),
-                          size: 16,
+                          size: 18,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Container(
-                      width: 32,
-                      height: 32,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF57344F).withValues(alpha: 0.1),
+                        color: const Color(0xFF57344F).withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.auto_awesome,
                         color: Color(0xFF57344F),
-                        size: 18,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,14 +390,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                                 width: 7,
                                 height: 7,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFF004A31),
+                                  color: Color(0xFF006443),
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 5),
                               Expanded(
                                 child: Text(
-                                  'Grounded in verified HR knowledge base',
+                                  'Grounded in verified HR & payroll rules',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.plusJakartaSans(
@@ -386,55 +415,31 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   ],
                 ),
               ),
-              Row(
-                children: [
-                  InkWell(
-                    onTap: _clearChat,
+              InkWell(
+                onTap: _clearChat,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E7FF),
                     borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE2E7FF),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.restart_alt_rounded, size: 16, color: Color(0xFF4E444A)),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Clear',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4E444A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE2E7FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: const Icon(Icons.expand_more_rounded, size: 20, color: Color(0xFF4E444A)),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Copilot minimized'),
-                            duration: Duration(milliseconds: 1000),
-                          ),
-                        );
-                      },
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.restart_alt_rounded, size: 15, color: Color(0xFF4E444A)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Clear',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF4E444A),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -467,8 +472,15 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           _buildQuickStarterPill(
             icon: Icons.medical_services_rounded,
             iconColor: const Color(0xFF57344F),
-            text: 'Sick leave medical certificates?',
+            text: 'Sick leave medical certificate rules?',
             bgColor: const Color(0xFFF2F3FF),
+          ),
+          const SizedBox(width: 8),
+          _buildQuickStarterPill(
+            icon: Icons.calendar_today_rounded,
+            iconColor: const Color(0xFF714B67),
+            text: 'When is the next public holiday?',
+            bgColor: const Color(0xFFFFD7F1).withValues(alpha: 0.5),
           ),
         ],
       ),
@@ -530,7 +542,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Today • 10:14 AM',
+                'Today • Live Session',
                 style: GoogleFonts.jetBrainsMono(
                   fontSize: 11,
                   color: const Color(0xFF4E444A),
@@ -555,19 +567,19 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
                   colors: [Color(0xFF57344F), Color(0xFF714B67)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                   topRight: Radius.circular(4),
                 ),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
                     color: Color(0x18000000),
                     blurRadius: 6,
@@ -610,7 +622,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     );
   }
 
-  Widget _buildCopilotMessage(_AiMessageItem msg) {
+  Widget _buildCopilotMessage(_AiMessageItem msg, int msgIndex) {
+    final isLiked = _likedMessages.contains(msgIndex);
+    final isDisliked = _dislikedMessages.contains(msgIndex);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -650,7 +665,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               Text(
                 'PeoplePay360 Copilot',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
+                  fontSize: 13.5,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF131B2E),
                 ),
@@ -663,7 +678,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  'AI BOT',
+                  msg.confidence != null && msg.confidence! >= 0.95 ? 'EXACT SQL' : 'VERIFIED AI',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
@@ -675,9 +690,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Glass Response Card
+          // Message Card
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: const BorderRadius.only(
@@ -689,325 +704,185 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x0C000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
+                  blurRadius: 10,
+                  offset: Offset(0, 3),
                 ),
               ],
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Salutation & summary
-                RichText(
-                  text: TextSpan(
-                    style: GoogleFonts.plusJakartaSans(
+                // Markdown Content
+                MarkdownBody(
+                  data: msg.text,
+                  styleSheet: MarkdownStyleSheet(
+                    p: GoogleFonts.plusJakartaSans(
                       fontSize: 13.5,
-                      height: 1.45,
+                      height: 1.5,
                       color: const Color(0xFF131B2E),
                     ),
-                    children: [
-                      const TextSpan(text: 'Hello Aarav! Based on your '),
-                      TextSpan(
-                        text: 'February 2026 Payslip',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+                    strong: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF131B2E),
+                    ),
+                    h3: GoogleFonts.outfit(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF57344F),
+                    ),
+                    code: GoogleFonts.jetBrainsMono(
+                      fontSize: 12,
+                      backgroundColor: const Color(0xFFE2E7FF),
+                      color: const Color(0xFF131B2E),
+                    ),
+                    codeblockDecoration: BoxDecoration(
+                      color: const Color(0xFFF2F3FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    blockquote: GoogleFonts.plusJakartaSans(
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF4E444A),
+                      fontSize: 12.5,
+                    ),
+                    blockquoteDecoration: const BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: Color(0xFF714B67), width: 3),
                       ),
-                      const TextSpan(text: ' ('),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE2E7FF),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'SLIP/2026/0001',
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF131B2E),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const TextSpan(text: '), your total deductions were '),
-                      TextSpan(
-                        text: '₹5,000.00',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF57344F),
-                          fontSize: 14,
-                        ),
-                      ),
-                      const TextSpan(text: ' broken down as follows:'),
-                    ],
+                    ),
+                    tableBody: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      color: const Color(0xFF131B2E),
+                    ),
+                    tableHead: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF57344F),
+                    ),
+                    tableBorder: TableBorder.all(
+                      color: const Color(0xFFDAE2FD),
+                      width: 1,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
 
-                // Structured Deductions Table / Cardlets
-                if (msg.isRichDeductionResponse) ...[
+                // Citations list
+                if (msg.citations.isNotEmpty) ...[
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF2F3FF),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Row 1: PF
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF00696E),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Provident Fund (PF)',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF131B2E),
-                                          ),
-                                        ),
-                                        Text(
-                                          '12% of Basic Salary statutory match',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 11,
-                                            color: const Color(0xFF4E444A),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
+                            const Icon(Icons.verified_user_outlined, size: 14, color: Color(0xFF00696E)),
+                            const SizedBox(width: 5),
                             Text(
-                              '₹3,000.00',
-                              style: GoogleFonts.jetBrainsMono(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF131B2E),
+                              'Verified Sources & Policy References',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF00696E),
                               ),
                             ),
                           ],
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8),
-                          child: Divider(height: 1, color: Color(0xFFDAE2FD)),
-                        ),
-                        // Row 2: PT
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF714B67),
-                                      shape: BoxShape.circle,
+                        const SizedBox(height: 6),
+                        ...msg.citations.map(
+                          (c) => Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('• ', style: TextStyle(color: Color(0xFF57344F), fontWeight: FontWeight.bold)),
+                                Expanded(
+                                  child: Text(
+                                    c,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      color: const Color(0xFF4E444A),
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Professional Tax (PT)',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF131B2E),
-                                          ),
-                                        ),
-                                        Text(
-                                          'Standard state statutory slab',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 11,
-                                            color: const Color(0xFF4E444A),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '₹2,000.00',
-                              style: GoogleFonts.jetBrainsMono(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF131B2E),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-
-                  // Positive confirmation footnote
-                  Row(
-                    children: [
-                      const Icon(Icons.verified_user_outlined, size: 16, color: Color(0xFF004A31)),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'No penalties or unpaid leave deductions were applied to this period.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.5,
-                            color: const Color(0xFF004A31),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
                 ],
 
-                // Meta Trust Layer
-                Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF92EFF5).withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.policy_outlined, size: 16, color: Color(0xFF00696E)),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Verified with Regular Salary Rule Engine & Indian Statutory Tax Slabs',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                color: const Color(0xFF006E73),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE2E7FF).withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.check_circle_rounded, size: 15, color: Color(0xFF00696E)),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                text: 'Human verified • Previously answered by HR (',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 10.5,
-                                  color: const Color(0xFF131B2E),
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'ESC/2026/0007',
-                                    style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF131B2E),
-                                    ),
-                                  ),
-                                  const TextSpan(text: ')'),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00696E).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'Official',
-                              style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF00696E),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
-                // Footer Micro-Action & Feedback
+                // Action Footer
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     InkWell(
                       onTap: () {
-                        _sendQuery('I need to escalate this question to HR support');
+                        _sendQuery(
+                          _lastUserPrompt != null
+                              ? 'I need HR specialist escalation regarding: $_lastUserPrompt'
+                              : 'I need to escalate this question to HR support',
+                          forceEscalate: true,
+                        );
                       },
-                      child: Row(
-                        children: [
-                          Text(
-                            'Not what you needed? Ask HR',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              color: const Color(0xFF57344F),
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Not what you needed? Ask HR',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                color: const Color(0xFF714B67),
+                                fontWeight: FontWeight.w700,
+                                decoration: TextDecoration.underline,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF57344F)),
-                        ],
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_forward_rounded, size: 13, color: Color(0xFF714B67)),
+                          ],
+                        ),
                       ),
                     ),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.copy_outlined, size: 16, color: Color(0xFF4E444A)),
+                          tooltip: 'Copy text',
+                          onPressed: () => _copyToClipboard(msg.text),
+                        ),
+                        const SizedBox(width: 10),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                           icon: Icon(
-                            _isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                            isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
                             size: 16,
-                            color: _isLiked ? const Color(0xFF00696E) : const Color(0xFF4E444A),
+                            color: isLiked ? const Color(0xFF00696E) : const Color(0xFF4E444A),
                           ),
                           onPressed: () {
                             setState(() {
-                              _isLiked = !_isLiked;
-                              _isDisliked = false;
+                              if (isLiked) {
+                                _likedMessages.remove(msgIndex);
+                              } else {
+                                _likedMessages.add(msgIndex);
+                                _dislikedMessages.remove(msgIndex);
+                              }
                             });
                           },
                         ),
@@ -1016,14 +891,18 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           icon: Icon(
-                            _isDisliked ? Icons.thumb_down : Icons.thumb_down_outlined,
+                            isDisliked ? Icons.thumb_down : Icons.thumb_down_outlined,
                             size: 16,
-                            color: _isDisliked ? const Color(0xFFBA1A1A) : const Color(0xFF4E444A),
+                            color: isDisliked ? const Color(0xFFBA1A1A) : const Color(0xFF4E444A),
                           ),
                           onPressed: () {
                             setState(() {
-                              _isDisliked = !_isDisliked;
-                              _isLiked = false;
+                              if (isDisliked) {
+                                _dislikedMessages.remove(msgIndex);
+                              } else {
+                                _dislikedMessages.add(msgIndex);
+                                _likedMessages.remove(msgIndex);
+                              }
                             });
                           },
                         ),
@@ -1056,7 +935,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // 4px Solid Left Highlight Accent Bar
           Positioned(
             left: 0,
             top: 0,
@@ -1069,7 +947,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Row with Emoji + Headline
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1078,7 +955,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         const Text('🙋', style: TextStyle(fontSize: 18)),
                         const SizedBox(width: 6),
                         Text(
-                          'Forwarded to your HR team',
+                          'Forwarded to HR Specialist Team',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -1091,8 +968,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                // Metadata Row: Monospace Ticket Code + Context Category
                 Wrap(
                   spacing: 6,
                   runSpacing: 4,
@@ -1152,8 +1027,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                // Explanatory Hand-off Body
                 Text(
                   explanation,
                   style: GoogleFonts.plusJakartaSans(
@@ -1163,8 +1036,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // SLA Guarantee Row + Interactive Tracker Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1234,7 +1105,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           ),
           const SizedBox(width: 8),
           Text(
-            'Searching policies & statutory index...',
+            'Searching verified policies & statutory index...',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               color: const Color(0xFF4E444A),

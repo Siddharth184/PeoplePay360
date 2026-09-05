@@ -68,7 +68,9 @@ class EmployeeModel {
       'name': name,
       'work_email': email,
       'job_position': jobTitle,
+      'job_position_name': jobTitle,
       'department': department,
+      'department_name': department,
       'phone': workPhone,
       'manager_name': managerName,
       'avatar_url': avatarUrl,
@@ -76,6 +78,48 @@ class EmployeeModel {
       'employee_type': employeeType,
       'status': status,
     };
+  }
+
+  EmployeeModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? jobTitle,
+    String? department,
+    String? workPhone,
+    String? managerName,
+    String? avatarUrl,
+    int? timeOffBalance,
+    int? activeContractsCount,
+    int? attendancesCount,
+    int? payslipsCount,
+    String? badgeId,
+    String? employeeType,
+    String? status,
+    String? dateOfJoining,
+    String? bankName,
+    String? bankAccountNumber,
+  }) {
+    return EmployeeModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      jobTitle: jobTitle ?? this.jobTitle,
+      department: department ?? this.department,
+      workPhone: workPhone ?? this.workPhone,
+      managerName: managerName ?? this.managerName,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      timeOffBalance: timeOffBalance ?? this.timeOffBalance,
+      activeContractsCount: activeContractsCount ?? this.activeContractsCount,
+      attendancesCount: attendancesCount ?? this.attendancesCount,
+      payslipsCount: payslipsCount ?? this.payslipsCount,
+      badgeId: badgeId ?? this.badgeId,
+      employeeType: employeeType ?? this.employeeType,
+      status: status ?? this.status,
+      dateOfJoining: dateOfJoining ?? this.dateOfJoining,
+      bankName: bankName ?? this.bankName,
+      bankAccountNumber: bankAccountNumber ?? this.bankAccountNumber,
+    );
   }
 }
 

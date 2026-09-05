@@ -532,7 +532,12 @@ def get_employee(
 @router.patch(
     "/employees/{employee_id}",
     response_model=EmployeeOut,
-    summary="Update an employee record",
+    summary="Update an employee record (PATCH)",
+)
+@router.put(
+    "/employees/{employee_id}",
+    response_model=EmployeeOut,
+    summary="Update an employee record (PUT)",
 )
 def update_employee(
     employee_id: uuid.UUID,
@@ -551,6 +556,26 @@ def update_employee(
         )
     if "manager_id" in updates and updates["manager_id"] == employee.id:
         raise ValidationError("An employee cannot be their own manager.")
+
+    if "job_position_name" in updates and updates["job_position_name"]:
+        pos_name = str(updates.pop("job_position_name")).strip()
+        if pos_name:
+            pos = db.execute(select(JobPosition).where(func.lower(JobPosition.name) == pos_name.lower())).scalars().first()
+            if not pos:
+                pos = JobPosition(name=pos_name, department_id=employee.department_id)
+                db.add(pos)
+                db.flush()
+            employee.job_position_id = pos.id
+
+    if "department_name" in updates and updates["department_name"]:
+        dept_name = str(updates.pop("department_name")).strip()
+        if dept_name:
+            dept = db.execute(select(Department).where(func.lower(Department.name) == dept_name.lower())).scalars().first()
+            if not dept:
+                dept = Department(name=dept_name)
+                db.add(dept)
+                db.flush()
+            employee.department_id = dept.id
 
     for field, value in updates.items():
         setattr(employee, field, value.value if hasattr(value, "value") else value)

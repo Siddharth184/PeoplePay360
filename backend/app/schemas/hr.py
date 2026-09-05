@@ -206,7 +206,9 @@ class EmployeeUpdate(BaseModel):
     work_email: Optional[EmailStr] = None
     phone: Optional[str] = Field(default=None, max_length=25)
     department_id: Optional[uuid.UUID] = None
+    department_name: Optional[str] = None
     job_position_id: Optional[uuid.UUID] = None
+    job_position_name: Optional[str] = None
     manager_id: Optional[uuid.UUID] = None
     working_schedule_id: Optional[uuid.UUID] = None
     work_location: Optional[str] = Field(default=None, max_length=100)

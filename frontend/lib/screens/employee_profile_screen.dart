@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/models.dart';
+import '../services/employee_service.dart';
 import '../services/mock_data_service.dart';
 import '../widgets/payslip_pdf_dialog.dart';
 
 class EmployeeProfileScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
-  const EmployeeProfileScreen({super.key, this.onNavigateTab});
+  final EmployeeModel? initialEmployee;
+  const EmployeeProfileScreen({super.key, this.onNavigateTab, this.initialEmployee});
 
   @override
   State<EmployeeProfileScreen> createState() => _EmployeeProfileScreenState();
@@ -14,14 +17,67 @@ class EmployeeProfileScreen extends StatefulWidget {
 
 class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   int _selectedTabIndex = 0;
-  final emp = MockDataService.currentEmployee;
+  late EmployeeModel emp;
 
-  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+  @override
+  void initState() {
+    super.initState();
+    emp = widget.initialEmployee ?? MockDataService.currentEmployee;
+    EmployeeService.currentEmployeeNotifier.addListener(_onEmployeeNotifierChanged);
+    _refreshProfile();
+  }
+
+  @override
+  void didUpdateWidget(EmployeeProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialEmployee != null && widget.initialEmployee != oldWidget.initialEmployee) {
+      setState(() {
+        emp = widget.initialEmployee!;
+      });
+    }
+  }
+
+  void _onEmployeeNotifierChanged() {
+    if (mounted) {
+      final updated = EmployeeService.currentEmployeeNotifier.value;
+      if (updated.id == emp.id || widget.initialEmployee == null) {
+        setState(() {
+          emp = updated;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    EmployeeService.currentEmployeeNotifier.removeListener(_onEmployeeNotifierChanged);
+    super.dispose();
+  }
+
+  Future<void> _refreshProfile() async {
+    final res = await EmployeeService.getEmployee(emp.id);
+    if (mounted && res.isSuccess && res.data != null) {
+      setState(() {
+        emp = res.data!;
+      });
+    }
+  }
+
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color iconColor = const Color(0xFF714B67)}) {
     return PopupMenuItem<String>(
       value: value,
+      height: 44,
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF57344F)),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F2FA),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 17, color: iconColor),
+          ),
           const SizedBox(width: 12),
           Text(
             label,
@@ -79,127 +135,180 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     final deptCtrl = TextEditingController(text: emp.department);
     final emailCtrl = TextEditingController(text: emp.email);
     final phoneCtrl = TextEditingController(text: emp.workPhone);
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: EdgeInsets.only(
-            top: 20,
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              padding: EdgeInsets.only(
+                top: 20,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFD7F1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.edit_note, color: Color(0xFF714B67), size: 22),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Edit Employee Profile',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.outfit(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF131B2E),
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFD7F1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.edit_note, color: Color(0xFF714B67), size: 22),
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Edit Employee Profile',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF131B2E),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildFormField('Full Name', nameCtrl),
-                const SizedBox(height: 12),
-                _buildFormField('Job Title', titleCtrl),
-                const SizedBox(height: 12),
-                _buildFormField('Department', deptCtrl),
-                const SizedBox(height: 12),
-                _buildFormField('Work Email', emailCtrl),
-                const SizedBox(height: 12),
-                _buildFormField('Work Phone', phoneCtrl),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF714B67),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
+                          onPressed: () => Navigator.pop(sheetContext),
                         ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              backgroundColor: Color(0xFF004A31),
-                              behavior: SnackBarBehavior.floating,
-                              content: Text('✓ Employee profile updated in Odoo Master Data'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFormField('Full Name', nameCtrl),
+                    const SizedBox(height: 12),
+                    _buildFormField('Job Position / Title', titleCtrl),
+                    const SizedBox(height: 12),
+                    _buildFormField('Department', deptCtrl),
+                    const SizedBox(height: 12),
+                    _buildFormField('Work Email', emailCtrl),
+                    const SizedBox(height: 12),
+                    _buildFormField('Work Phone', phoneCtrl),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
-                          );
-                        },
-                        child: const Text('Save Changes'),
-                      ),
+                            onPressed: () => Navigator.pop(sheetContext),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF714B67),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 0,
+                            ),
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    setSheetState(() => isSaving = true);
+                                    final updatedName = nameCtrl.text.trim();
+                                    final updatedTitle = titleCtrl.text.trim();
+                                    final updatedDept = deptCtrl.text.trim();
+                                    final updatedEmail = emailCtrl.text.trim();
+                                    final updatedPhone = phoneCtrl.text.trim();
+
+                                    final payload = {
+                                      'name': updatedName.isNotEmpty ? updatedName : emp.name,
+                                      'job_position_name': updatedTitle.isNotEmpty ? updatedTitle : emp.jobTitle,
+                                      'job_position': updatedTitle.isNotEmpty ? updatedTitle : emp.jobTitle,
+                                      'department_name': updatedDept.isNotEmpty ? updatedDept : emp.department,
+                                      'department': updatedDept.isNotEmpty ? updatedDept : emp.department,
+                                      'work_email': updatedEmail.isNotEmpty ? updatedEmail : emp.email,
+                                      'phone': updatedPhone.isNotEmpty ? updatedPhone : emp.workPhone,
+                                    };
+
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    final res = await EmployeeService.updateEmployee(emp.id, payload);
+                                    if (mounted) {
+                                      setState(() {
+                                        emp = res.data ?? emp.copyWith(
+                                          name: payload['name'],
+                                          jobTitle: payload['job_position_name'],
+                                          department: payload['department_name'],
+                                          email: payload['work_email'],
+                                          workPhone: payload['phone'],
+                                        );
+                                      });
+                                    }
+
+                                    if (sheetContext.mounted) {
+                                      Navigator.pop(sheetContext);
+                                    }
+
+                                    if (mounted) {
+                                      messenger.showSnackBar(
+                                        SnackBar(
+                                          backgroundColor: const Color(0xFF004A31),
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          content: Text(
+                                            '✓ Employee position updated to "${emp.jobTitle}" in Odoo Master Data',
+                                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            child: isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Text('Save Changes'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -371,41 +480,47 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 // Top Ambient Glass Header Strip
                 _buildHeaderStrip(),
 
-                // Scrollable Content
+                // Scrollable Content with Pull-to-Refresh
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-                    children: [
-                      // Hero Identity Card
-                      _buildHeroIdentityCard(),
+                  child: RefreshIndicator(
+                    onRefresh: _refreshProfile,
+                    color: const Color(0xFF714B67),
+                    backgroundColor: Colors.white,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                      children: [
+                        // Hero Identity Card
+                        _buildHeroIdentityCard(),
 
-                      const SizedBox(height: 18),
+                        const SizedBox(height: 18),
 
-                      // Linked Operations Ribbon
-                      _buildLinkedOperationsRibbon(),
+                        // Linked Operations Ribbon
+                        _buildLinkedOperationsRibbon(),
 
-                      const SizedBox(height: 18),
+                        const SizedBox(height: 18),
 
-                      // Segmented Navigation Tabs
-                      _buildSegmentedTabs(),
+                        // Segmented Navigation Tabs
+                        _buildSegmentedTabs(),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Active Tab Content
-                      if (_selectedTabIndex == 0)
-                        _buildWorkInfoTab()
-                      else if (_selectedTabIndex == 1)
-                        _buildPrivateInfoTab()
-                      else
-                        _buildPayrollTab(),
+                        // Active Tab Content
+                        if (_selectedTabIndex == 0)
+                          _buildWorkInfoTab()
+                        else if (_selectedTabIndex == 1)
+                          _buildPrivateInfoTab()
+                        else
+                          _buildPayrollTab(),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Weekly Activity Metric Summary Mini-Panel
-                      _buildWeeklyActivityMiniPanel(),
+                        // Weekly Activity Metric Summary Mini-Panel
+                        _buildWeeklyActivityMiniPanel(),
 
-                      const SizedBox(height: 20),
-                    ],
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -504,16 +619,23 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               shape: BoxShape.circle,
             ),
             child: PopupMenuButton<String>(
+              color: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              elevation: 8,
+              shadowColor: Colors.black.withValues(alpha: 0.12),
               icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF4E444A)),
               padding: EdgeInsets.zero,
               tooltip: 'Employee actions',
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+              ),
               onSelected: _onProfileAction,
               itemBuilder: (context) => [
-                _menuItem('edit', Icons.edit_outlined, 'Edit Profile'),
-                _menuItem('copy_email', Icons.alternate_email_rounded, 'Copy Work Email'),
-                _menuItem('copy_id', Icons.badge_outlined, 'Copy Employee ID'),
-                _menuItem('print_payslip', Icons.receipt_long_rounded, 'Print Latest Payslip'),
+                _menuItem('edit', Icons.edit_outlined, 'Edit Profile', iconColor: const Color(0xFF714B67)),
+                _menuItem('copy_email', Icons.alternate_email_rounded, 'Copy Work Email', iconColor: const Color(0xFF00696E)),
+                _menuItem('copy_id', Icons.badge_outlined, 'Copy Employee ID', iconColor: const Color(0xFF714B67)),
+                _menuItem('print_payslip', Icons.receipt_long_rounded, 'Print Latest Payslip', iconColor: const Color(0xFF00696E)),
               ],
             ),
           ),

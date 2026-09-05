@@ -239,8 +239,23 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
           
           Expanded(
             child: filteredStaff.isEmpty
-                ? Center(
-                    child: Text('No employees found matching "$_searchQuery"', style: TextStyle(color: Colors.grey.shade600)),
+                ? RefreshIndicator(
+                    onRefresh: _fetchEmployees,
+                    color: AppTheme.odooAubergine,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: 300,
+                          child: Center(
+                            child: Text(
+                              'No employees found matching "$_searchQuery"',
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 : _isKanbanView
                     ? _buildKanbanView(filteredStaff)
@@ -252,128 +267,138 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
   }
 
   Widget _buildKanbanView(List<EmployeeModel> employees) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: employees.length,
-      itemBuilder: (context, index) {
-        final emp = employees[index];
-        return Card(
-          elevation: 0,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              if (widget.onNavigateTab != null) {
-                // Navigate to Employee profile directly if logic was integrated, 
-                // for now we just show a snackbar or push route.
+    return RefreshIndicator(
+      onRefresh: _fetchEmployees,
+      color: AppTheme.odooAubergine,
+      child: GridView.builder(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: employees.length,
+        itemBuilder: (context, index) {
+          final emp = employees[index];
+          return Card(
+            elevation: 0,
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.grey.shade200),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EmployeeProfileScreen()),
-                );
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: AppTheme.odooAubergine.withValues(alpha: 0.1),
-                    child: Text(
-                      emp.name.split(' ').map((e) => e[0]).take(2).join(),
-                      style: const TextStyle(
-                        color: AppTheme.odooAubergine,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
+                  MaterialPageRoute(
+                    builder: (context) => EmployeeProfileScreen(initialEmployee: emp),
+                  ),
+                ).then((_) => _fetchEmployees());
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: AppTheme.odooAubergine.withValues(alpha: 0.1),
+                      child: Text(
+                        emp.name.split(' ').map((e) => e[0]).take(2).join(),
+                        style: const TextStyle(
+                          color: AppTheme.odooAubergine,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    emp.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    emp.jobTitle,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.odooTeal.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      emp.department,
-                      style: const TextStyle(color: AppTheme.odooTeal, fontSize: 10, fontWeight: FontWeight.bold),
+                    const SizedBox(height: 12),
+                    Text(
+                      emp.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      emp.jobTitle,
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.odooTeal.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        emp.department,
+                        style: const TextStyle(color: AppTheme.odooTeal, fontSize: 10, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   Widget _buildListView(List<EmployeeModel> employees) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: employees.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final emp = employees[index];
-        return Card(
-          elevation: 0,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor: AppTheme.odooAubergine.withValues(alpha: 0.1),
-              child: Text(
-                emp.name.split(' ').map((e) => e[0]).take(2).join(),
-                style: const TextStyle(color: AppTheme.odooAubergine, fontWeight: FontWeight.bold),
-              ),
+    return RefreshIndicator(
+      onRefresh: _fetchEmployees,
+      color: AppTheme.odooAubergine,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: const EdgeInsets.all(16),
+        itemCount: employees.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final emp = employees[index];
+          return Card(
+            elevation: 0,
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.shade200),
             ),
-            title: Text(emp.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('${emp.jobTitle} • ${emp.department}'),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EmployeeProfileScreen()),
-              );
-            },
-          ),
-        );
-      },
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              leading: CircleAvatar(
+                backgroundColor: AppTheme.odooAubergine.withValues(alpha: 0.1),
+                child: Text(
+                  emp.name.split(' ').map((e) => e[0]).take(2).join(),
+                  style: const TextStyle(color: AppTheme.odooAubergine, fontWeight: FontWeight.bold),
+                ),
+              ),
+              title: Text(emp.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('${emp.jobTitle} • ${emp.department}'),
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EmployeeProfileScreen(initialEmployee: emp),
+                  ),
+                ).then((_) => _fetchEmployees());
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }

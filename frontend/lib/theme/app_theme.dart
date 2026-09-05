@@ -85,6 +85,22 @@ class AppTheme {
       elevation: 0,
       centerTitle: false,
     ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: surfaceLight,
+      surfaceTintColor: Colors.transparent,
+      elevation: 6,
+      shadowColor: const Color(0x1F000000),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: borderLight, width: 1),
+      ),
+      textStyle: GoogleFonts.plusJakartaSans(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+        color: textPrimaryLight,
+      ),
+      iconColor: odooAubergine,
+    ),
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -136,6 +152,22 @@ class AppTheme {
       foregroundColor: textPrimaryDark,
       elevation: 0,
       centerTitle: false,
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: surfaceDark,
+      surfaceTintColor: Colors.transparent,
+      elevation: 6,
+      shadowColor: const Color(0x3D000000),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: borderDark, width: 1),
+      ),
+      textStyle: GoogleFonts.plusJakartaSans(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+        color: textPrimaryDark,
+      ),
+      iconColor: const Color(0xFFA27B99),
     ),
   );
 }

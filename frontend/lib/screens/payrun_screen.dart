@@ -317,13 +317,20 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
           ),
           const SizedBox(width: 8),
           PopupMenuButton<String>(
+            color: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            elevation: 8,
+            shadowColor: Colors.black.withValues(alpha: 0.12),
             icon: Container(
               width: 38,
               height: 38,
               decoration: const BoxDecoration(color: Color(0xFFF2F3FF), shape: BoxShape.circle),
               child: const Icon(Icons.more_vert, size: 20, color: Color(0xFF131B2E)),
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            ),
             onSelected: (val) {
               if (val == 'wizard') {
                 PayrunWizardSheet.show(context, onBatchCreated: () {
@@ -344,9 +351,24 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
                 value: 'wizard',
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_fix_high, size: 18, color: Color(0xFF57344F)),
-                    const SizedBox(width: 8),
-                    Text('Payrun Creation Wizard', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold)),
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F2FA),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.auto_fix_high, size: 16, color: Color(0xFF714B67)),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Payrun Creation Wizard',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -354,9 +376,24 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
                 value: 'reset',
                 child: Row(
                   children: [
-                    const Icon(Icons.restart_alt, size: 18, color: Color(0xFFBA1A1A)),
-                    const SizedBox(width: 8),
-                    Text('Reset Anomaly Checks', style: GoogleFonts.plusJakartaSans(fontSize: 13)),
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFEDEC),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.restart_alt, size: 16, color: Color(0xFFBA1A1A)),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Reset Anomaly Checks',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFBA1A1A),
+                      ),
+                    ),
                   ],
                 ),
               ),

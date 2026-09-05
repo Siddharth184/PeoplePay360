@@ -472,12 +472,27 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
               ),
               // Popup dropdown
               PopupMenuButton<String>(
+                color: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                elevation: 8,
+                shadowColor: Colors.black.withValues(alpha: 0.12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                ),
                 icon: const Icon(Icons.unfold_more, color: Color(0xFF4E444A)),
                 onSelected: _onEmployeeChanged,
                 itemBuilder: (context) => _employeeEmails.keys.map((emp) {
                   return PopupMenuItem(
                     value: emp,
-                    child: Text(emp, style: GoogleFonts.plusJakartaSans(fontSize: 13)),
+                    child: Text(
+                      emp,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
                   );
                 }).toList(),
               ),
