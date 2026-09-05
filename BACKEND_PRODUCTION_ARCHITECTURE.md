@@ -16,6 +16,7 @@
    - 3.4 AST-Safe Python Salary Rule Computation Engine
    - 3.5 Payrun 2-Step Workflow & Pre-Flight Anomaly Detection
 4. [Local Vector DB & Hybrid RAG System (24-Hour Hackathon Feasible)](#4-local-vector-db--hybrid-rag-system-24-hour-hackathon-feasible)
+   - 4.2 Pluggable LLM Provider Layer (No GPU, No Vendor Lock-In) — **read this first if you have no GPU**
    - 4.1 Human-in-the-Loop Escalation Loop (RAG → Admin → Employee → Knowledge Base)
 5. [Role-Based Access Control (RBAC) & Security Middleware](#5-role-based-access-control-rbac--security-middleware)
 6. [Complete RESTful API Endpoint Matrix](#6-complete-restful-api-endpoint-matrix)
@@ -430,7 +431,7 @@ CREATE TABLE document_chunks (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}',
-    embedding vector(384), -- 384 dimensions for all-MiniLM-L6-v2 / BAAI bge-small
+    embedding vector(384), -- BAAI/bge-small-en-v1.5, computed LOCALLY on CPU (see 4.2)
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -932,7 +933,7 @@ def create_payrun_batch(db: Session, name: str, structure_id: str, date_start: d
 
 ---
 
-## 4. Local Vector DB & Hybrid RAG System (24-Hour Hackathon Feasible)
+## 4. Local Vector DB & Hybrid RAG System (24-Hour Hackathon Feasible, No GPU Required)
 
 ### The Key Architectural Split: Two Workloads, Only One Is Heavy
 
@@ -957,13 +958,18 @@ The single most important design decision in this subsystem is recognising that 
 
 ```python
 # app/services/rag_service.py
+import os
 from typing import List, Dict
 from fastembed import TextEmbedding
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-# Local embedding model initialized once
-embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+# LOCAL embedding model, initialised once at import and reused for the process
+# lifetime. ~130MB ONNX, CPU-only, no GPU/torch/CUDA, no API key, no network
+# after the first download. This is the part that must never be outsourced.
+embedding_model = TextEmbedding(
+    model_name=os.environ.get("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
+)
 
 def ingest_hr_policy_document(db: Session, collection: str, title: str, text_content: str):
     """
@@ -2066,6 +2072,7 @@ def require_roles(allowed_roles: list):
 | `POST` | `/api/v1/notifications/:id/read` | Owner only | Mark a notification read |
 | `GET` | `/api/v1/ai/escalations/routing-rules` | `ADMIN` | Read category → role → SLA routing configuration |
 | `PUT` | `/api/v1/ai/escalations/routing-rules/:id` | `ADMIN` | Update routing / SLA hours for a category |
+| `GET` | `/api/v1/ai/health` | `ADMIN` | Reports active `LLM_PROVIDER`, whether it is reachable, embedding model + dimension, and indexed chunk count. Use this to confirm the demo path before presenting |
 
 ---
 

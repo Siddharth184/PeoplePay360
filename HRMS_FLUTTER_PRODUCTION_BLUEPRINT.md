@@ -805,7 +805,9 @@ dependencies:
 +-------------------------------------------------------------------------------+
 ```
 
-This phase consumes the backend `POST /api/v1/ai/assistant` endpoint (see `BACKEND_PRODUCTION_ARCHITECTURE.md` §4). The Flutter side is a thin, beautiful conversational client — no model runs on-device. All embedding, retrieval, and generation happen server-side against PostgreSQL + `pgvector`.
+This phase consumes the backend `POST /api/v1/ai/assistant` endpoint (see `BACKEND_PRODUCTION_ARCHITECTURE.md` §4). The Flutter side is a thin, beautiful conversational client — **no model runs on-device and no API key ever ships in the app**. Embedding and retrieval happen locally on the server against PostgreSQL + `pgvector`; answer phrasing is delegated server-side to a pluggable provider (§4.2).
+
+> **Client contract**: the app is completely unaware of which LLM provider is active. It only reads `mode` (`ANSWERED` / `ESCALATED`), `answer`, `confidence`, and `citations`. Switching Groq → Gemini → offline extractive mode requires **zero Flutter changes**.
 
 ### The Escalation Loop (Screens 7.2 – 7.4)
 When the assistant cannot answer confidently it **does not guess**. It opens a ticket, routes it to the right Admin/HR responder, the human replies directly, and the employee is notified in-app. The verified answer is then indexed so the bot answers it itself next time.
@@ -842,7 +844,7 @@ When the assistant cannot answer confidently it **does not guess**. It opens a t
 - **Role Visibility**: All Authenticated (answers are always scoped to the caller's own `employee_id`)
 - **Visual Design & UX**:
   - Persistent gradient Copilot FAB (Aubergine→Teal) bottom-right on every screen with a subtle breathing glow.
-  - Drawer header: **PeoplePay360 AI Assistant**, subtitle *"Powered by Local RAG + PostgreSQL"* with a green active-node dot.
+  - Drawer header: **PeoplePay360 AI Assistant**, subtitle *"Grounded in your HR knowledge base"* with a green active-node dot.
   - **Suggested starter chips** (shown on empty state):
     - `"How many PTO days do I have left?"`
     - `"Explain the deductions on my February payslip"`

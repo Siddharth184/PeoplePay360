@@ -590,7 +590,7 @@ Design an AI HR & Payroll Copilot conversational mobile drawer for PeoplePay360.
 
 Header:
 - Title: "PeoplePay360 AI Assistant"
-- Subtitle: "Powered by Local RAG & PostgreSQL" with a green active node indicator.
+- Subtitle: "Grounded in your HR knowledge base" with a green active node indicator.
 - Action: "Clear Chat" and "Minimize (—)".
 
 Suggested Question Chips (Quick Starters):
