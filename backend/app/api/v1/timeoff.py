@@ -366,6 +366,8 @@ def list_requests(
 
     scoped = scope_employee_filter(user)
     if scoped is not None:
+        if employee_id and str(employee_id) != str(scoped):
+            raise ForbiddenError("You may only view leave requests for yourself.")
         stmt = stmt.where(LeaveRequest.employee_id == scoped)
     elif employee_id:
         stmt = stmt.where(LeaveRequest.employee_id == employee_id)
@@ -413,9 +415,16 @@ def duration_preview(
     start_date: date = Query(...),
     end_date: date = Query(...),
     employee_id: Optional[uuid.UUID] = Query(default=None),
+    day_part: Optional[str] = Query(default="FULL_DAY"),
 ) -> LeaveDurationPreview:
+    if start_date > end_date:
+        from app.core.errors import ValidationError
+        raise ValidationError("Start date cannot be after end date.")
     target = resolve_target_employee(user, employee_id)
     working = timeoff_service.compute_leave_duration(db, target, start_date, end_date)
+    if day_part in ("FIRST_HALF", "SECOND_HALF"):
+        if start_date == end_date and working == Decimal("1.00"):
+            working = Decimal("0.50")
     return LeaveDurationPreview(
         start_date=start_date,
         end_date=end_date,

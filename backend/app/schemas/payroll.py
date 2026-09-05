@@ -60,6 +60,7 @@ class SalaryRuleCreate(BaseModel):
 
 class SalaryRuleUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    code: Optional[str] = Field(default=None, min_length=1, max_length=30, pattern="^[A-Z0-9_]+$")
     sequence: Optional[int] = Field(default=None, ge=0, le=10_000)
     category: Optional[RuleCategory] = None
     computation_type: Optional[ComputationType] = None
@@ -69,6 +70,7 @@ class SalaryRuleUpdate(BaseModel):
     python_code: Optional[str] = Field(default=None, max_length=4000)
     quantity: Optional[Decimal] = Field(default=None, ge=0, max_digits=8, decimal_places=2)
     is_active: Optional[bool] = None
+
 
 
 class SalaryRuleOut(ORMModel):
@@ -269,13 +271,36 @@ class PayslipOut(ORMModel):
     date_start: date
     date_end: date
     worked_days: Decimal
+    worked_hours: Decimal = Decimal("0.00")
+    overtime_hours: Decimal = Decimal("0.00")
+    scheduled_hours: Decimal = Decimal("0.00")
+    overtime_pay: Decimal = Decimal("0.00")
     basic_amount: Decimal
+
     gross_amount: Decimal
     net_amount: Decimal
     status: PayslipStatus
     warning_notes: Optional[str] = None
     emailed_at: Optional[datetime] = None
     created_at: datetime
+
+
+class LeaveImpactOut(BaseModel):
+    """The Time / Leave Impact block on the payslip.
+
+    Every figure is derived from real attendance + approved-leave data for the
+    payslip period; the deduction figure is the amount the configured Loss-of-Pay
+    salary rule produced, so it always ties out to the payslip lines.
+    """
+
+    worked_days: Decimal = Decimal("0.00")
+    expected_days: Decimal = Decimal("0.00")
+    approved_leave_days: Decimal = Decimal("0.00")
+    paid_leave_days: Decimal = Decimal("0.00")
+    unpaid_leave_days: Decimal = Decimal("0.00")
+    absent_days: Decimal = Decimal("0.00")
+    # The loss-of-pay salary-line amount attributable to unpaid leave (>= 0).
+    unpaid_leave_deduction: Decimal = Decimal("0.00")
 
 
 class PayslipDetailOut(PayslipOut):
@@ -290,6 +315,7 @@ class PayslipDetailOut(PayslipOut):
     total_deductions: Decimal = Decimal("0.00")
     lines: List[PayslipLineOut] = Field(default_factory=list)
     grouped_lines: Dict[str, List[PayslipLineOut]] = Field(default_factory=dict)
+    leave_impact: Optional[LeaveImpactOut] = None
 
 
 class PayrunDetailOut(BaseModel):

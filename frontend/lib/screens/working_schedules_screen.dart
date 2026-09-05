@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/models.dart';
+import '../services/working_schedule_service.dart';
+import '../services/employee_service.dart';
 
 class WorkingSchedulesScreen extends StatefulWidget {
   final void Function(int index)? onNavigateTab;
@@ -40,8 +43,8 @@ class _ShiftDay {
       final timeParts = parts[0].split(':');
       int hours = int.parse(timeParts[0]);
       final minutes = int.parse(timeParts[1]);
-      if (parts[1].toUpperCase() == 'PM' && hours != 12) hours += 12;
-      if (parts[1].toUpperCase() == 'AM' && hours == 12) hours = 0;
+      if (parts.length > 1 && parts[1].toUpperCase() == 'PM' && hours != 12) hours += 12;
+      if (parts.length > 1 && parts[1].toUpperCase() == 'AM' && hours == 12) hours = 0;
       return hours * 60 + minutes;
     } catch (_) {
       return 9 * 60;
@@ -50,38 +53,204 @@ class _ShiftDay {
 }
 
 class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
-  final List<_ShiftDay> _shifts = [
-    _ShiftDay(id: 'mon', day: 'Monday'),
-    _ShiftDay(id: 'tue', day: 'Tuesday'),
-    _ShiftDay(id: 'wed', day: 'Wednesday'),
-    _ShiftDay(id: 'thu', day: 'Thursday'),
-    _ShiftDay(id: 'fri', day: 'Friday'),
-  ];
-
-  final List<String> _startTimes = ['08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM'];
-  final List<String> _endTimes = ['05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM'];
-
+  List<WorkingScheduleModel> _schedules = [];
+  List<EmployeeModel> _employees = [];
+  late WorkingScheduleModel _activeSchedule;
+  late List<_ShiftDay> _shifts;
+  bool _isLoading = true;
   bool _isSaving = false;
   bool _isSaved = false;
+
+  // Selected Assigned Employee IDs
+  late Set<String> _assignedEmployeeIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeSchedule = WorkingScheduleModel(
+      id: 'ws-default',
+      name: 'Standard 40 Hours',
+      averageHoursPerWeek: 40,
+      daysPerWeek: 5,
+      timezone: 'Asia/Kolkata',
+    );
+    _shifts = _getShiftsForSchedule(_activeSchedule);
+    _assignedEmployeeIds = {};
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    final schedRes = await WorkingScheduleService.getSchedules();
+    final empRes = await EmployeeService.getEmployees();
+
+    if (mounted) {
+      setState(() {
+        _schedules = schedRes.data ?? [];
+        _employees = empRes.data ?? [];
+        _isLoading = false;
+        if (_schedules.isNotEmpty) {
+          _activeSchedule = _schedules.first;
+          _shifts = _getShiftsForSchedule(_activeSchedule);
+        }
+      });
+    }
+  }
+
+  List<_ShiftDay> _getShiftsForSchedule(WorkingScheduleModel sched) {
+    if (sched.name.toLowerCase().contains('night')) {
+      return [
+        _ShiftDay(id: 'mon', day: 'Monday', tag: 'Night', startTime: '10:00 PM', endTime: '07:00 AM', breakMinutes: 60),
+        _ShiftDay(id: 'tue', day: 'Tuesday', tag: 'Night', startTime: '10:00 PM', endTime: '07:00 AM', breakMinutes: 60),
+        _ShiftDay(id: 'wed', day: 'Wednesday', tag: 'Night', startTime: '10:00 PM', endTime: '07:00 AM', breakMinutes: 60),
+        _ShiftDay(id: 'thu', day: 'Thursday', tag: 'Night', startTime: '10:00 PM', endTime: '07:00 AM', breakMinutes: 60),
+        _ShiftDay(id: 'fri', day: 'Friday', tag: 'Night', startTime: '10:00 PM', endTime: '07:00 AM', breakMinutes: 60),
+      ];
+    } else if (sched.name.toLowerCase().contains('part-time')) {
+      return [
+        _ShiftDay(id: 'mon', day: 'Monday', tag: 'Part-Time', startTime: '09:00 AM', endTime: '03:00 PM', breakMinutes: 30),
+        _ShiftDay(id: 'tue', day: 'Tuesday', tag: 'Part-Time', startTime: '09:00 AM', endTime: '03:00 PM', breakMinutes: 30),
+        _ShiftDay(id: 'wed', day: 'Wednesday', tag: 'Part-Time', startTime: '09:00 AM', endTime: '03:00 PM', breakMinutes: 30),
+        _ShiftDay(id: 'thu', day: 'Thursday', tag: 'Part-Time', startTime: '09:00 AM', endTime: '03:00 PM', breakMinutes: 30),
+      ];
+    } else {
+      return [
+        _ShiftDay(id: 'mon', day: 'Monday', tag: 'Core', startTime: '09:00 AM', endTime: '06:00 PM', breakMinutes: 60),
+        _ShiftDay(id: 'tue', day: 'Tuesday', tag: 'Core', startTime: '09:00 AM', endTime: '06:00 PM', breakMinutes: 60),
+        _ShiftDay(id: 'wed', day: 'Wednesday', tag: 'Core', startTime: '09:00 AM', endTime: '06:00 PM', breakMinutes: 60),
+        _ShiftDay(id: 'thu', day: 'Thursday', tag: 'Core', startTime: '09:00 AM', endTime: '06:00 PM', breakMinutes: 60),
+        _ShiftDay(id: 'fri', day: 'Friday', tag: 'Core', startTime: '09:00 AM', endTime: '06:00 PM', breakMinutes: 60),
+      ];
+    }
+  }
 
   double get _totalWeeklyHours {
     return _shifts.fold(0.0, (sum, item) => sum + item.calculatedHours);
   }
 
-  void _cycleStartTime(_ShiftDay shift) {
-    setState(() {
-      int idx = _startTimes.indexOf(shift.startTime);
-      if (idx == -1) idx = 2;
-      shift.startTime = _startTimes[(idx + 1) % _startTimes.length];
-    });
+  // --- TIME PICKER FUNCTIONS ---
+  Future<void> _pickStartTime(_ShiftDay shift) async {
+    final initial = _parseTimeOfDay(shift.startTime);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF57344F),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF131B2E),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        shift.startTime = _formatTimeOfDay(picked);
+      });
+    }
   }
 
-  void _cycleEndTime(_ShiftDay shift) {
-    setState(() {
-      int idx = _endTimes.indexOf(shift.endTime);
-      if (idx == -1) idx = 2;
-      shift.endTime = _endTimes[(idx + 1) % _endTimes.length];
-    });
+  Future<void> _pickEndTime(_ShiftDay shift) async {
+    final initial = _parseTimeOfDay(shift.endTime);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF57344F),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF131B2E),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        shift.endTime = _formatTimeOfDay(picked);
+      });
+    }
+  }
+
+  void _pickBreakDuration(_ShiftDay shift) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select Break Duration for ${shift.day}',
+              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+            ),
+            const SizedBox(height: 12),
+            ...[
+              {'label': 'No Break (0m)', 'mins': 0},
+              {'label': '30 Minutes (30m)', 'mins': 30},
+              {'label': '45 Minutes (45m)', 'mins': 45},
+              {'label': '1 Hour (1h 00m)', 'mins': 60},
+              {'label': '1.5 Hours (1h 30m)', 'mins': 90},
+              {'label': '2 Hours (2h 00m)', 'mins': 120},
+            ].map((opt) {
+              final isSel = shift.breakMinutes == opt['mins'];
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  opt['label'] as String,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                    color: isSel ? const Color(0xFF714B67) : const Color(0xFF131B2E),
+                  ),
+                ),
+                trailing: isSel ? const Icon(Icons.check_circle_rounded, color: Color(0xFF714B67)) : null,
+                onTap: () {
+                  setState(() {
+                    shift.breakMinutes = opt['mins'] as int;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  TimeOfDay _parseTimeOfDay(String tStr) {
+    try {
+      final parts = tStr.trim().split(' ');
+      final timeParts = parts[0].split(':');
+      int hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+      if (parts.length > 1 && parts[1].toUpperCase() == 'PM' && hour != 12) hour += 12;
+      if (parts.length > 1 && parts[1].toUpperCase() == 'AM' && hour == 12) hour = 0;
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (_) {
+      return const TimeOfDay(hour: 9, minute: 0);
+    }
+  }
+
+  String _formatTimeOfDay(TimeOfDay tod) {
+    final hour = tod.hourOfPeriod == 0 ? 12 : tod.hourOfPeriod;
+    final period = tod.period == DayPeriod.pm ? 'PM' : 'AM';
+    final minuteStr = tod.minute.toString().padLeft(2, '0');
+    final hourStr = hour.toString().padLeft(2, '0');
+    return '$hourStr:$minuteStr $period';
   }
 
   void _copyMonToAll() {
@@ -95,13 +264,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
       }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: Color(0xFF004A31),
-        behavior: SnackBarBehavior.floating,
-        content: Text('✓ Applied Monday schedule (09:00 AM - 06:00 PM, 1h break) to all working days'),
-      ),
-    );
+    _triggerToast('Applied Monday schedule (${mon.startTime} - ${mon.endTime}) to all shift days');
   }
 
   void _addCustomDay() {
@@ -126,13 +289,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
       );
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF00696E),
-        behavior: SnackBarBehavior.floating,
-        content: Text('+ Added $newDay shift to schedule'),
-      ),
-    );
+    _triggerToast('+ Added $newDay shift to schedule');
   }
 
   void _removeDay(int index) {
@@ -140,8 +297,365 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
     setState(() {
       _shifts.removeAt(index);
     });
+    _triggerToast('Removed $removed shift');
+  }
+
+  void _switchSchedule(WorkingScheduleModel sched) {
+    setState(() {
+      _activeSchedule = sched;
+      _shifts = _getShiftsForSchedule(sched);
+    });
+    _triggerToast('Switched active schedule to ${sched.name}');
+  }
+
+  void _openSchedulePickerSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Select Working Schedule',
+                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _openCreateScheduleSheet();
+                  },
+                  icon: const Icon(Icons.add, size: 16, color: Color(0xFF00696E)),
+                  label: const Text('+ New', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00696E))),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._schedules.map((sched) {
+              final isSel = sched.id == _activeSchedule.id;
+              return ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                title: Text(
+                  sched.name,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                    color: isSel ? const Color(0xFF714B67) : const Color(0xFF131B2E),
+                  ),
+                ),
+                subtitle: Text(
+                  '${sched.daysPerWeek} Days/Wk • ${sched.averageHoursPerWeek}h/Wk • ${sched.timezone}',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF4E444A)),
+                ),
+                trailing: isSel ? const Icon(Icons.check_circle_rounded, color: Color(0xFF714B67)) : null,
+                onTap: () {
+                  Navigator.pop(context);
+                  _switchSchedule(sched);
+                },
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openCreateScheduleSheet() {
+    final nameCtrl = TextEditingController();
+    final daysCtrl = TextEditingController(text: '5');
+    final hoursCtrl = TextEditingController(text: '40');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          top: 20,
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Create New Working Schedule',
+                style: GoogleFonts.outfit(fontSize: 19, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: nameCtrl,
+                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  labelText: 'Schedule Name *',
+                  hintText: 'e.g. Flexi Shift 38 Hours',
+                  prefixIcon: const Icon(Icons.schedule_outlined, color: Color(0xFF714B67)),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: daysCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Days/Wk *',
+                        prefixIcon: const Icon(Icons.calendar_month, color: Color(0xFF714B67)),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: hoursCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Hours/Wk *',
+                        prefixIcon: const Icon(Icons.timelapse, color: Color(0xFF714B67)),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00696E),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: () async {
+                    final name = nameCtrl.text.trim();
+                    if (name.isNotEmpty) {
+                      final payload = {
+                        'name': name,
+                        'days_per_week': int.tryParse(daysCtrl.text) ?? 5,
+                        'hours_per_week': int.tryParse(hoursCtrl.text) ?? 40,
+                        'timezone': 'Asia/Kolkata',
+                      };
+                      final nav = Navigator.of(context);
+                      final res = await WorkingScheduleService.createSchedule(payload);
+                      if (!mounted) return;
+                      if (res.isSuccess) {
+                        _triggerToast('Created schedule $name');
+                        _loadData();
+                      }
+                      nav.pop();
+                    }
+                  },
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Save & Apply Schedule', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openAssignEmployeeSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Assign Employees to ${_activeSchedule.name}',
+                      style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                    ),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView(
+                    children: _employees.map((emp) {
+                      final isAssigned = _assignedEmployeeIds.contains(emp.id);
+                      return CheckboxListTile(
+                        value: isAssigned,
+                        activeColor: const Color(0xFF57344F),
+                        title: Text(emp.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Text('${emp.jobTitle} • ${emp.department}', style: GoogleFonts.plusJakartaSans(fontSize: 12)),
+                        onChanged: (val) {
+                          setModalState(() {
+                            if (val == true) {
+                              _assignedEmployeeIds.add(emp.id);
+                            } else {
+                              _assignedEmployeeIds.remove(emp.id);
+                            }
+                          });
+                          setState(() {});
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF57344F),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _triggerToast('✅ Updated mapped workforce (${_assignedEmployeeIds.length} staff assigned)');
+                    },
+                    child: Text('Confirm Assignment (${_assignedEmployeeIds.length} Selected)', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openAuditHistorySheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.history, color: Color(0xFF57344F)),
+                const SizedBox(width: 8),
+                Text(
+                  'Schedule Audit Logs & Version History',
+                  style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ListTile(
+              leading: const Icon(Icons.check_circle, color: Color(0xFF006443)),
+              title: Text('Version 2026.1 (Active)', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+              subtitle: Text('Adjusted Friday core shift & break time • Updated by Sara Khan on Aug 15, 2026'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.history_toggle_off, color: Colors.grey),
+              title: Text('Version 2025.4', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+              subtitle: Text('Initial shift calendar creation • Created by Admin User on Jan 01, 2025'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openActionMenuSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Schedule Options & Actions', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.copy_all, color: Color(0xFF57344F)),
+              title: const Text('Duplicate Working Schedule'),
+              subtitle: const Text('Clone this shift configuration into a new schedule'),
+              onTap: () async {
+                Navigator.pop(context);
+                final res = await WorkingScheduleService.createSchedule({
+                  'name': '${_activeSchedule.name} (Copy)',
+                  'days_per_week': _activeSchedule.daysPerWeek,
+                  'hours_per_week': _activeSchedule.averageHoursPerWeek,
+                  'timezone': _activeSchedule.timezone,
+                });
+                if (res.isSuccess && res.data != null) {
+                  _switchSchedule(res.data!);
+                  _loadData();
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.group_add_outlined, color: Color(0xFF00696E)),
+              title: const Text('Batch Assign to Department'),
+              subtitle: const Text('Assign all staff in Engineering / HR to this schedule'),
+              onTap: () {
+                Navigator.pop(context);
+                _openAssignEmployeeSheet();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf_outlined, color: Color(0xFFB45309)),
+              title: const Text('Export Schedule PDF Report'),
+              subtitle: const Text('Generate printable weekly shift calendar'),
+              onTap: () {
+                Navigator.pop(context);
+                _triggerToast('📄 Exporting ${_activeSchedule.name} PDF report...');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _triggerToast(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Removed $removed shift')),
+      SnackBar(
+        backgroundColor: const Color(0xFF283044),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+      ),
     );
   }
 
@@ -152,7 +666,15 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
       _isSaving = true;
     });
 
-    await Future.delayed(const Duration(milliseconds: 900));
+    final shiftConfigs = _shifts.map((s) => ShiftConfig(
+      day: s.day,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      breakMinutes: s.breakMinutes,
+    )).toList();
+    WorkingScheduleService.setActiveShifts(shiftConfigs);
+
+    await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
 
     setState(() {
@@ -160,13 +682,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
       _isSaved = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF004A31),
-        behavior: SnackBarBehavior.floating,
-        content: Text('✓ Saved Working Schedule (${_totalWeeklyHours.toStringAsFixed(1)}h / Week) to Odoo ERP'),
-      ),
-    );
+    _triggerToast('✓ Saved ${_activeSchedule.name} (${_totalWeeklyHours.toStringAsFixed(1)}h / Week) to Odoo ERP');
 
     await Future.delayed(const Duration(milliseconds: 2000));
     if (!mounted) return;
@@ -194,11 +710,18 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
 
                 // Scrollable Content
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 180),
-                    children: [
-                      // Top Metadata Card
-                      _buildTopMetadataCard(),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 180),
+                          children: [
+                            // Top Metadata Card & Switcher
+                            _buildTopMetadataCard(),
+
+                      const SizedBox(height: 16),
+
+                      // Mapped Workforce Card
+                      _buildMappedWorkforceCard(),
 
                       const SizedBox(height: 16),
 
@@ -293,8 +816,8 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                   Row(
                     children: [
                       Container(
-                        width: 5,
-                        height: 5,
+                        width: 6,
+                        height: 6,
                         decoration: const BoxDecoration(
                           color: Color(0xFF00696E),
                           shape: BoxShape.circle,
@@ -302,7 +825,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        'SCHED/2026/01',
+                        'SCHED/2026/01 • ${_activeSchedule.name}',
                         style: GoogleFonts.jetBrainsMono(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
@@ -318,11 +841,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
           Row(
             children: [
               InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('🕒 Schedule Audit Logs: Version 2026.1 loaded')),
-                  );
-                },
+                onTap: _openAuditHistorySheet,
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   width: 38,
@@ -338,11 +857,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
               ),
               const SizedBox(width: 8),
               InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('⚡ Schedule Actions: Duplicate • Export XML • Archive')),
-                  );
-                },
+                onTap: _openActionMenuSheet,
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   width: 38,
@@ -385,57 +900,66 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'STANDARD MODEL',
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF714B67),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '40 Hours / Week',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF131B2E),
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    'Standard Full-Time Policy',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5,
-                      color: const Color(0xFF4E444A),
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCCF7FA),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.verified, size: 14, color: Color(0xFF006E73)),
-                    const SizedBox(width: 4),
                     Text(
-                      'ERP SYNC',
+                      'ACTIVE CALENDAR POLICY',
                       style: GoogleFonts.jetBrainsMono(
                         fontSize: 10.5,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF006E73),
+                        letterSpacing: 0.8,
+                        color: const Color(0xFF714B67),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _activeSchedule.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${_activeSchedule.daysPerWeek} Working Days • ${_activeSchedule.averageHoursPerWeek}h/Week Base',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: const Color(0xFF4E444A),
                       ),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: _openSchedulePickerSheet,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCCF7FA),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.swap_horiz_rounded, size: 15, color: Color(0xFF006E73)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Switch',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF006E73),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -452,7 +976,6 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
             ),
             child: Row(
               children: [
-                // Company
                 Expanded(
                   child: Row(
                     children: [
@@ -491,7 +1014,6 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                 Container(width: 1, height: 28, color: const Color(0xFFD1C3CA)),
                 const SizedBox(width: 12),
 
-                // Timezone
                 Expanded(
                   child: Row(
                     children: [
@@ -516,7 +1038,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                               style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
                             ),
                             Text(
-                              'Asia/Kolkata (+5:30)',
+                              _activeSchedule.timezone,
                               style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -574,6 +1096,116 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMappedWorkforceCard() {
+    final assignedStaff = _employees.where((e) => _assignedEmployeeIds.contains(e.id)).toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.people_outline, size: 18, color: Color(0xFF57344F)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Mapped Workforce & Contracts',
+                    style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F3FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${assignedStaff.length}',
+                      style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF57344F)),
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: _openAssignEmployeeSheet,
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person_add_alt_outlined, size: 14, color: Color(0xFF00696E)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Assign',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF00696E)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (assignedStaff.isEmpty)
+            Text('No employees currently assigned to this schedule.', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey))
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: assignedStaff.map((emp) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 10,
+                        backgroundColor: const Color(0xFF57344F).withValues(alpha: 0.15),
+                        child: Text(
+                          emp.name.substring(0, 1),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF57344F)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        emp.name,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '(${emp.department})',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 10.5, color: const Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );
@@ -706,7 +1338,6 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
               const SizedBox(width: 8),
               Row(
                 children: [
-                  // Hours badge
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                     decoration: BoxDecoration(
@@ -752,10 +1383,10 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
 
           const SizedBox(height: 12),
 
-          // 3-Column Time Grid (Start Time, End Time, Break)
+          // 3-Column Interactive Time Grid
           Row(
             children: [
-              // Start Time
+              // Start Time Picker
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -766,7 +1397,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                     ),
                     const SizedBox(height: 4),
                     InkWell(
-                      onTap: () => _cycleStartTime(shift),
+                      onTap: () => _pickStartTime(shift),
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -781,7 +1412,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                               shift.startTime,
                               style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                             ),
-                            const Icon(Icons.schedule, size: 14, color: Color(0xFF80747A)),
+                            const Icon(Icons.access_time_rounded, size: 15, color: Color(0xFF714B67)),
                           ],
                         ),
                       ),
@@ -791,7 +1422,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
               ),
               const SizedBox(width: 8),
 
-              // End Time
+              // End Time Picker
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -802,7 +1433,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                     ),
                     const SizedBox(height: 4),
                     InkWell(
-                      onTap: () => _cycleEndTime(shift),
+                      onTap: () => _pickEndTime(shift),
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -817,7 +1448,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                               shift.endTime,
                               style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                             ),
-                            const Icon(Icons.schedule, size: 14, color: Color(0xFF80747A)),
+                            const Icon(Icons.access_time_rounded, size: 15, color: Color(0xFF714B67)),
                           ],
                         ),
                       ),
@@ -827,7 +1458,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
               ),
               const SizedBox(width: 8),
 
-              // Break Duration Dropdown
+              // Break Duration Selector
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -837,32 +1468,24 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                       style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
                     ),
                     const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF2F3FF),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: shift.breakMinutes,
-                          isExpanded: true,
-                          dropdownColor: Colors.white,
-                          icon: const Icon(Icons.expand_more, size: 16, color: Color(0xFF80747A)),
-                          style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                          items: const [
-                            DropdownMenuItem(value: 0, child: Text('0m', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                            DropdownMenuItem(value: 30, child: Text('30m', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                            DropdownMenuItem(value: 45, child: Text('45m', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                            DropdownMenuItem(value: 60, child: Text('1h 00m', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
+                    InkWell(
+                      onTap: () => _pickBreakDuration(shift),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF2F3FF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              shift.breakMinutes == 60 ? '1h 00m' : (shift.breakMinutes == 0 ? '0m' : '${shift.breakMinutes}m'),
+                              style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                            ),
+                            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFF714B67)),
                           ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() {
-                                shift.breakMinutes = val;
-                              });
-                            }
-                          },
                         ),
                       ),
                     ),
@@ -919,7 +1542,6 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Total & Compliance Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -996,7 +1618,6 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
 
           const SizedBox(height: 8),
 
-          // Verification Message
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -1023,7 +1644,6 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
 
           const SizedBox(height: 10),
 
-          // Primary Aubergine Button
           SizedBox(
             width: double.infinity,
             height: 48,

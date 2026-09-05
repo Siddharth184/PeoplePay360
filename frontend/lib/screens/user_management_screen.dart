@@ -245,7 +245,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
 
     if (mounted) {
-      if (res.isSuccess && res.data != null && res.data!.isNotEmpty) {
+      if (res.isSuccess && res.data != null) {
         final parsed = res.data!.map((u) {
           final email = u['email']?.toString() ?? '';
           final empName = u['employee_name']?.toString() ?? email.split('@').first;
@@ -277,8 +277,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           _users = parsed;
           _isLoading = false;
         });
+      } else if (!ApiClient.isBackendOnline || res.statusCode == 0) {
+        setState(() {
+          _users = _defaultUsers();
+          _isLoading = false;
+        });
       } else {
         setState(() {
+          _users = [];
           _isLoading = false;
         });
       }
@@ -314,12 +320,41 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       initialEmail: existing?.email,
       initialRole: existing?.role,
       onSave: (userData) async {
-        final _ = userData['employee'] as String;
+        final empName = userData['employee'] as String;
         final email = userData['email'] as String;
         final role = userData['role'] as String;
         final isActive = userData['isActive'] as bool? ?? true;
 
         if (existing == null) {
+          final parts = empName.trim().split(RegExp(r'\s+'));
+          final inits = parts.length > 1
+              ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
+              : (parts.isNotEmpty ? parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase() : 'U');
+
+          final newItem = _UserManagementItem(
+            id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
+            name: empName,
+            email: email,
+            role: role,
+            roleCategory: role.contains('Admin') ? 'Admin' : (role.contains('HR') ? 'HR Manager' : (role.contains('Payroll') ? 'Payroll User' : 'Employee')),
+            linkedEmployee: empName,
+            department: 'Company Staff',
+            status: isActive ? 'Active' : 'Disabled',
+            extraBadge: '2FA Enforced',
+            initials: inits,
+            avatarBg: const Color(0xFF92EFF5),
+            avatarText: const Color(0xFF006E73),
+            roleBg: const Color(0xFFCCF7FA),
+            roleText: const Color(0xFF006E73),
+            roleIcon: role.contains('Admin') ? Icons.shield : (role.contains('Payroll') ? Icons.payments_outlined : Icons.person_outline),
+          );
+
+          if (mounted) {
+            setState(() {
+              _users.insert(0, newItem);
+            });
+          }
+
           await UserManagementService.createUser({
             'email': email,
             'password': 'PeoplePay@360',

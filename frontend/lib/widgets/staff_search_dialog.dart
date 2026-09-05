@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/mock_data_service.dart';
+import '../services/employee_service.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 
@@ -24,13 +24,32 @@ class StaffSearchDialog extends StatefulWidget {
 class _StaffSearchDialogState extends State<StaffSearchDialog> {
   String _searchQuery = '';
   String _selectedDept = 'All';
+  List<EmployeeModel> _allStaff = [];
+  bool _isLoading = true;
 
   final List<String> _departments = ['All', 'Finance & Tech Ops', 'Human Resources', 'Software Dev'];
 
   @override
+  void initState() {
+    super.initState();
+    _loadStaff();
+  }
+
+  Future<void> _loadStaff() async {
+    final res = await EmployeeService.getEmployees();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        if (res.isSuccess && res.data != null) {
+          _allStaff = res.data!;
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final allStaff = MockDataService.allEmployees;
-    final filteredStaff = allStaff.where((emp) {
+    final filteredStaff = _allStaff.where((emp) {
       final matchesQuery = emp.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           emp.jobTitle.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           emp.department.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -138,17 +157,19 @@ class _StaffSearchDialogState extends State<StaffSearchDialog> {
 
           // Employee Search Results List
           Expanded(
-            child: filteredStaff.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.person_search_outlined, size: 56, color: Colors.grey.shade400),
-                        const SizedBox(height: 12),
-                        Text('No staff members matching "$_searchQuery"', style: TextStyle(color: Colors.grey.shade600)),
-                      ],
-                    ),
-                  )
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredStaff.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.person_search_outlined, size: 56, color: Colors.grey.shade400),
+                            const SizedBox(height: 12),
+                            Text('No staff members matching "$_searchQuery"', style: TextStyle(color: Colors.grey.shade600)),
+                          ],
+                        ),
+                      )
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filteredStaff.length,

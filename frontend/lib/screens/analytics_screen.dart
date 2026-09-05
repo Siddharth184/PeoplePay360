@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/mock_data_service.dart';
+import '../services/dashboard_service.dart';
+import '../services/api_client.dart';
+import '../models/models.dart';
+import '../widgets/analytics_pdf_dialog.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
@@ -9,12 +14,76 @@ class AnalyticsScreen extends StatefulWidget {
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
 }
 
+class _DeptCostData {
+  final String deptName;
+  final String deptCode;
+  final int staffCount;
+  final double totalWage;
+  final double avgSalary;
+  final double percentShare;
+  final Color barColor;
+
+  _DeptCostData({
+    required this.deptName,
+    required this.deptCode,
+    required this.staffCount,
+    required this.totalWage,
+    required this.avgSalary,
+    required this.percentShare,
+    required this.barColor,
+  });
+}
+
+class _TrendPointData {
+  final String monthLabel;
+  final double totalNetPaid;
+  final String displayVal;
+  final bool isPeak;
+
+  _TrendPointData({
+    required this.monthLabel,
+    required this.totalNetPaid,
+    required this.displayVal,
+    required this.isPeak,
+  });
+}
+
 class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProviderStateMixin {
   late AnimationController _refreshAnimController;
+
+  // Active Filters
   String _selectedPeriod = 'Sep 2026';
   String _selectedDept = 'All';
   String _selectedType = 'All Staff';
   String _selectedEntity = 'OXP Pvt Ltd';
+
+  // Dynamic Calculated Metrics
+  bool _isLoading = false;
+  double _totalGrossSalary = 2100000.0;
+  double _totalNetSalary = 1840000.0;
+  int _totalPayslipsCount = 148;
+  int _pendingPayslipsCount = 6;
+  int _paidPayslipsCount = 142;
+  double _avgCompensation = 12432.0;
+  int _approvedLeavesDays = 34;
+  double _attendanceHealthPercent = 94.2;
+
+  // Operational Attendance Mini Box Counts
+  int _presentCount = 94;
+  int _lateCount = 18;
+  int _absentCount = 9;
+  int _overtimeCount = 22;
+  int _missingPunchesCount = 5;
+
+  // Anomalies / Audit Counts
+  int _missingBankDetailsCount = 2;
+  int _duplicateEntriesCount = 1;
+  int _unvalidatedDraftsCount = 4;
+
+  // Dynamic Lists
+  List<_DeptCostData> _departmentSpendList = [];
+  List<_DeptCostData> _departmentMatrixList = [];
+  List<_TrendPointData> _trendDataList = [];
 
   @override
   void initState() {
@@ -23,6 +92,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+    _loadBackendAnalytics();
   }
 
   @override
@@ -31,8 +101,372 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
     super.dispose();
   }
 
+  String _formatCurrencyCompact(double amount) {
+    if (amount >= 100000) {
+      final lakhs = amount / 100000;
+      return '${lakhs.toStringAsFixed(1)}L';
+    } else if (amount >= 1000) {
+      final k = amount / 1000;
+      return '${k.toStringAsFixed(1)}k';
+    } else {
+      return amount.toStringAsFixed(0);
+    }
+  }
+
+  /// Converts a period label like 'Sep 2026' into a 'YYYY-MM' prefix
+  /// ('2026-09') used to match against attendance `dateStr` values.
+  /// Returns null if the label cannot be parsed, meaning "no period filter".
+  String? _monthPrefix(String periodLabel) {
+    const monthMap = {
+      'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+      'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
+      'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12',
+    };
+    final parts = periodLabel.trim().split(RegExp(r'\s+'));
+    if (parts.length < 2) return null;
+    final mon = monthMap[parts[0].toLowerCase()];
+    final year = parts[1];
+    if (mon == null || year.length != 4) return null;
+    return '$year-$mon';
+  }
+
+  void _computeMetrics() {
+    final allEmps = MockDataService.allEmployees;
+    final allContracts = MockDataService.contracts;
+    final allAttendance = MockDataService.attendances;
+    final allLeaves = MockDataService.timeOffRequests;
+
+    // Filter employees by department & type
+    final filteredEmps = allEmps.where((emp) {
+      if (_selectedDept != 'All' && !emp.department.toLowerCase().contains(_selectedDept.toLowerCase())) {
+        return false;
+      }
+      if (_selectedType != 'All Staff' && emp.employeeType != null && !emp.employeeType!.toLowerCase().contains(_selectedType.toLowerCase())) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    final scopeEmps = filteredEmps.isEmpty ? allEmps : filteredEmps;
+
+    // Group employees & contracts by department
+    final Map<String, List<EmployeeModel>> deptMap = {};
+    for (final emp in scopeEmps) {
+      final dName = emp.department.isNotEmpty ? emp.department : 'General Staff';
+      deptMap.putIfAbsent(dName, () => []).add(emp);
+    }
+
+    double overallWageBill = 0.0;
+    final List<_DeptCostData> deptCosts = [];
+    final colors = [
+      const Color(0xFF714B67),
+      const Color(0xFF57344F),
+      const Color(0xFF00696E),
+      const Color(0xFF78D5DB),
+      const Color(0xFF004A31),
+      const Color(0xFF93000A),
+    ];
+
+    int colorIdx = 0;
+    deptMap.forEach((dept, emps) {
+      double deptWage = 0.0;
+      for (final emp in emps) {
+        final c = allContracts.firstWhere(
+          (con) => con.employeeName.toLowerCase().contains(emp.name.toLowerCase().split(' ').first),
+          orElse: () => ContractModel(
+            id: 'fallback',
+            refCode: '',
+            employeeName: emp.name,
+            department: dept,
+            startDate: '2024-01-01',
+            wageMonthly: 85000.0,
+            status: 'RUNNING',
+          ),
+        );
+        deptWage += c.wageMonthly;
+      }
+      overallWageBill += deptWage;
+
+      final parts = dept.split(RegExp(r'\s+'));
+      final code = parts.map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase();
+
+      deptCosts.add(_DeptCostData(
+        deptName: dept,
+        deptCode: code.isNotEmpty ? code : 'DP',
+        staffCount: emps.length,
+        totalWage: deptWage,
+        avgSalary: emps.isNotEmpty ? deptWage / emps.length : 0.0,
+        percentShare: 0.0,
+        barColor: colors[colorIdx % colors.length],
+      ));
+      colorIdx++;
+    });
+
+    final finalDeptCosts = deptCosts.map((d) {
+      final share = overallWageBill > 0 ? (d.totalWage / overallWageBill) : 0.0;
+      return _DeptCostData(
+        deptName: d.deptName,
+        deptCode: d.deptCode,
+        staffCount: d.staffCount,
+        totalWage: d.totalWage,
+        avgSalary: d.avgSalary,
+        percentShare: share,
+        barColor: d.barColor,
+      );
+    }).toList();
+
+    finalDeptCosts.sort((a, b) => b.totalWage.compareTo(a.totalWage));
+
+    // Attendance stats — filtered by the active Department / Type / Period pills
+    // so the counts update in real time when any filter changes.
+
+    // Set of employee names in the currently selected dept/type cohort. When the
+    // dept/type filters are 'All' this contains every employee, so nothing is
+    // excluded. Matching is done on the first name to tolerate small naming
+    // differences between the employee list and the attendance logs.
+    final Set<String> scopeEmpKeys = {};
+    for (final emp in scopeEmps) {
+      final first = emp.name.toLowerCase().trim().split(RegExp(r'\s+')).first;
+      if (first.isNotEmpty) scopeEmpKeys.add(first);
+    }
+    final bool deptOrTypeFiltered = _selectedDept != 'All' || _selectedType != 'All Staff';
+
+    // Month prefix like '2026-09' derived from the selected period ('Sep 2026').
+    final String? periodPrefix = _monthPrefix(_selectedPeriod);
+
+    bool matchesScope(AttendanceModel log) {
+      // Period (month) filter
+      if (periodPrefix != null && !log.dateStr.startsWith(periodPrefix)) {
+        return false;
+      }
+      // Department / employee-type filter (via the employee cohort)
+      if (deptOrTypeFiltered) {
+        final name = (log.employeeName ?? '').toLowerCase().trim();
+        if (name.isEmpty) return false;
+        final first = name.split(RegExp(r'\s+')).first;
+        if (!scopeEmpKeys.contains(first)) return false;
+      }
+      return true;
+    }
+
+    final scopedAttendance = allAttendance.where(matchesScope).toList();
+
+    int pres = 0;
+    int late = 0;
+    int abs = 0;
+    int ot = 0;
+    int missed = 0;
+
+    for (final log in scopedAttendance) {
+      final st = log.status.toUpperCase();
+      if (st.contains('PRESENT')) pres++;
+      if (st.contains('LATE')) late++;
+      if (st.contains('ABSENT')) abs++;
+      if (log.workedHours > 9.0 || st.contains('OVERTIME')) ot++;
+      if (st.contains('MISSED') || log.checkOutTime == null || log.checkOutTime == '—') missed++;
+    }
+
+    // Whether the current filter selection actually produced any attendance rows.
+    // Used below to decide between showing real filtered zeros vs. seed defaults.
+    final bool hasScopedAttendance = scopedAttendance.isNotEmpty;
+
+    final totalAtt = pres + late + abs;
+    final attHealth = totalAtt > 0 ? ((pres + late) / totalAtt * 100.0) : 94.2;
+
+    // Anomalies
+    final noBank = allEmps.where((e) => e.bankAccountNumber == null || e.bankAccountNumber!.isEmpty).length;
+    final drafts = allContracts.where((c) => c.status == 'DRAFT').length;
+
+    // Rolling 6 months trend
+    final months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
+    final factors = [0.80, 0.83, 0.78, 0.82, 0.93, 1.0];
+    final List<_TrendPointData> trendPoints = [];
+
+    double maxNetVal = 0.0;
+    for (int i = 0; i < months.length; i++) {
+      final mVal = overallWageBill * 0.88 * factors[i];
+      if (mVal > maxNetVal) maxNetVal = mVal;
+    }
+
+    for (int i = 0; i < months.length; i++) {
+      final mVal = overallWageBill * 0.88 * factors[i];
+      trendPoints.add(_TrendPointData(
+        monthLabel: months[i],
+        totalNetPaid: mVal,
+        displayVal: '₹${_formatCurrencyCompact(mVal)}',
+        isPeak: mVal == maxNetVal,
+      ));
+    }
+
+    setState(() {
+      _totalGrossSalary = overallWageBill;
+      _totalNetSalary = overallWageBill * 0.88;
+      _totalPayslipsCount = scopeEmps.length * 12;
+      _pendingPayslipsCount = drafts > 0 ? drafts + 2 : 6;
+      _paidPayslipsCount = _totalPayslipsCount - _pendingPayslipsCount;
+      _avgCompensation = scopeEmps.isNotEmpty ? (overallWageBill / scopeEmps.length) : 12432.0;
+      _approvedLeavesDays = (allLeaves.where((l) => l.status == 'APPROVED').length * 4) + 10;
+      _attendanceHealthPercent = attHealth;
+
+      // When the scoped query returned real rows we show the exact counts —
+      // including legitimate zeros — so the filters reflect reality. Only when
+      // there is genuinely no data at all do we fall back to seed placeholders.
+      if (hasScopedAttendance) {
+        _presentCount = pres;
+        _lateCount = late;
+        _absentCount = abs;
+        _overtimeCount = ot;
+        _missingPunchesCount = missed;
+      } else {
+        _presentCount = 0;
+        _lateCount = 0;
+        _absentCount = 0;
+        _overtimeCount = 0;
+        _missingPunchesCount = 0;
+      }
+
+      _missingBankDetailsCount = noBank > 0 ? noBank : 2;
+      _unvalidatedDraftsCount = drafts > 0 ? drafts : 4;
+      _duplicateEntriesCount = 1;
+
+      _departmentSpendList = finalDeptCosts;
+      _departmentMatrixList = finalDeptCosts;
+      _trendDataList = trendPoints;
+    });
+  }
+
+  Future<void> _loadBackendAnalytics() async {
+    setState(() => _isLoading = true);
+
+    if (!ApiClient.isBackendOnline) {
+      _computeMetrics();
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
+
+    try {
+      final metricsRes = await DashboardService.getMetrics();
+      if (metricsRes.isSuccess && metricsRes.data != null) {
+        final data = metricsRes.data!;
+        final kpis = data['kpi'] as Map<String, dynamic>? ?? {};
+
+        final gross = (kpis['total_gross_salary'] is num) ? (kpis['total_gross_salary'] as num).toDouble() : 0.0;
+        final net = (kpis['total_net_salary'] is num) ? (kpis['total_net_salary'] as num).toDouble() : 0.0;
+        final totalSlips = (kpis['total_payslips_count'] is num) ? (kpis['total_payslips_count'] as num).toInt() : 0;
+        final pendingSlips = (kpis['pending_payslips_count'] is num) ? (kpis['pending_payslips_count'] as num).toInt() : 0;
+        final paidSlips = (kpis['paid_payslips_count'] is num) ? (kpis['paid_payslips_count'] as num).toInt() : 0;
+        final avgComp = (kpis['avg_compensation'] is num) ? (kpis['avg_compensation'] as num).toDouble() : 0.0;
+        final leaveDays = (kpis['approved_leaves_days'] is num) ? (kpis['approved_leaves_days'] as num).toInt() : 0;
+        final attHealth = (kpis['attendance_health_percent'] is num) ? (kpis['attendance_health_percent'] as num).toDouble() : 0.0;
+
+        final att = data['attendance_overview'] as Map<String, dynamic>? ?? {};
+        final pres = (att['present_count'] is num) ? (att['present_count'] as num).toInt() : 0;
+        final lateVal = (att['late_count'] is num) ? (att['late_count'] as num).toInt() : 0;
+        final absVal = (att['absent_count'] is num) ? (att['absent_count'] as num).toInt() : 0;
+        final otVal = (att['overtime_count'] is num) ? (att['overtime_count'] as num).toInt() : 0;
+        final missedVal = (att['missing_punches_count'] is num) ? (att['missing_punches_count'] as num).toInt() : 0;
+
+        final colors = [
+          const Color(0xFF714B67),
+          const Color(0xFF57344F),
+          const Color(0xFF00696E),
+          const Color(0xFF78D5DB),
+          const Color(0xFF004A31),
+          const Color(0xFF93000A),
+        ];
+
+        final rawCosts = data['department_costs'] as List? ?? [];
+        int colorIdx = 0;
+        final List<_DeptCostData> parsedCosts = [];
+        for (final item in rawCosts) {
+          if (item is Map<String, dynamic>) {
+            final name = item['department_name']?.toString() ?? 'Department';
+            final code = item['department_code']?.toString() ?? 'DP';
+            final staff = item['staff_count'] is num ? (item['staff_count'] as num).toInt() : 0;
+            final wage = item['total_wage'] is num ? (item['total_wage'] as num).toDouble() : 0.0;
+            final avg = item['avg_salary'] is num ? (item['avg_salary'] as num).toDouble() : 0.0;
+            final share = item['percent_share'] is num ? (item['percent_share'] as num).toDouble() : 0.0;
+
+            parsedCosts.add(_DeptCostData(
+              deptName: name,
+              deptCode: code,
+              staffCount: staff,
+              totalWage: wage,
+              avgSalary: avg,
+              percentShare: share,
+              barColor: colors[colorIdx % colors.length],
+            ));
+            colorIdx++;
+          }
+        }
+
+        final rawTrend = data['payroll_trend'] as List? ?? [];
+        final List<_TrendPointData> parsedTrend = [];
+        double maxNet = 0.0;
+        for (final item in rawTrend) {
+          if (item is Map<String, dynamic>) {
+            final n = item['total_net_paid'] is num ? (item['total_net_paid'] as num).toDouble() : 0.0;
+            if (n > maxNet) maxNet = n;
+          }
+        }
+
+        for (final item in rawTrend) {
+          if (item is Map<String, dynamic>) {
+            final label = item['month_label']?.toString() ?? '';
+            final n = item['total_net_paid'] is num ? (item['total_net_paid'] as num).toDouble() : 0.0;
+            parsedTrend.add(_TrendPointData(
+              monthLabel: label,
+              totalNetPaid: n,
+              displayVal: '₹${_formatCurrencyCompact(n)}',
+              isPeak: maxNet > 0 && n == maxNet,
+            ));
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _totalGrossSalary = gross;
+            _totalNetSalary = net;
+            _totalPayslipsCount = totalSlips;
+            _pendingPayslipsCount = pendingSlips;
+            _paidPayslipsCount = paidSlips;
+            _avgCompensation = avgComp;
+            _approvedLeavesDays = leaveDays;
+            _attendanceHealthPercent = attHealth;
+
+            _presentCount = pres;
+            _lateCount = lateVal;
+            _absentCount = absVal;
+            _overtimeCount = otVal;
+            _missingPunchesCount = missedVal;
+
+            if (parsedCosts.isNotEmpty) {
+              _departmentSpendList = parsedCosts;
+              _departmentMatrixList = parsedCosts;
+            }
+            if (parsedTrend.isNotEmpty) {
+              _trendDataList = parsedTrend;
+            }
+          });
+        }
+      } else {
+        _computeMetrics();
+      }
+    } catch (_) {
+      _computeMetrics();
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+
   void _triggerRefresh() {
     _refreshAnimController.forward(from: 0.0);
+    _loadBackendAnalytics();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -41,7 +475,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Live Analytics synced with OXP Core Ledger',
+                'Live Analytics synced with OXP Core Ledger ($_selectedPeriod)',
                 style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -57,25 +491,89 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
   }
 
   void _showExportPdfSuccess() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Exporting Executive Analytics Board (PDF)...',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+    showDialog(
+      context: context,
+      builder: (context) => AnalyticsPdfDialog(
+        period: _selectedPeriod,
+        department: _selectedDept,
+        employeeType: _selectedType,
+        corporateEntity: _selectedEntity,
+        totalGrossSalary: _totalGrossSalary,
+        netSalaryPaid: _totalNetSalary,
+        avgCompensation: _avgCompensation,
+        attendanceHealth: _attendanceHealthPercent,
+        departmentCosts: _departmentSpendList,
+      ),
+    );
+  }
+
+  void _showPickerSheet(String title, List<String> options, String currentVal, Function(String) onSelect) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        backgroundColor: const Color(0xFF57344F),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: EdgeInsets.only(
+          top: 16,
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF131B2E),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...options.map((opt) {
+                final isSel = opt == currentVal;
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                  title: Text(
+                    opt,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                      color: isSel ? const Color(0xFF714B67) : const Color(0xFF131B2E),
+                    ),
+                  ),
+                  trailing: isSel ? const Icon(Icons.check_circle_rounded, color: Color(0xFF714B67)) : null,
+                  onTap: () {
+                    Navigator.pop(context);
+                    onSelect(opt);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -100,6 +598,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                   // Horizontal Scrollable Filter Bar
                   _buildFilterBar(),
                   const SizedBox(height: 16),
+
+                  if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: LinearProgressIndicator(color: Color(0xFF714B67), backgroundColor: Color(0xFFE2E7FF)),
+                    ),
 
                   // Period Highlights Carousel Header & Ribbon
                   _buildCarouselHeader(),
@@ -183,19 +687,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                 Row(
                   children: [
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 6,
+                      height: 6,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF4EDEA3),
+                        color: Color(0xFF00696E),
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'LIVE SYNCED',
+                      'EXECUTIVE HR COST ANALYTICS',
                       style: GoogleFonts.jetBrainsMono(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                         color: const Color(0xFF00696E),
                         letterSpacing: 0.8,
                       ),
@@ -279,12 +783,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          // Active Primary Pill
+          // Active Primary Period Pill
           InkWell(
             onTap: () {
-              setState(() {
-                _selectedPeriod = _selectedPeriod == 'Sep 2026' ? 'Aug 2026' : 'Sep 2026';
-              });
+              _showPickerSheet(
+                'Select Analytics Period',
+                ['Sep 2026', 'Aug 2026', 'Jul 2026', 'Jun 2026', 'May 2026', 'Apr 2026'],
+                _selectedPeriod,
+                (val) {
+                  setState(() => _selectedPeriod = val);
+                  _loadBackendAnalytics();
+                },
+              );
             },
             borderRadius: BorderRadius.circular(20),
             child: Container(
@@ -322,25 +832,43 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
 
           // Dept Chip
           _buildFilterChip('Dept:', _selectedDept, () {
-            setState(() {
-              _selectedDept = _selectedDept == 'All' ? 'Engineering' : 'All';
-            });
+            _showPickerSheet(
+              'Filter by Department',
+              ['All', 'Human Resources', 'Finance & Tech Ops', 'Engineering', 'Design', 'Sales', 'Customer Support', 'Executive Management'],
+              _selectedDept,
+              (val) {
+                setState(() => _selectedDept = val);
+                _loadBackendAnalytics();
+              },
+            );
           }),
           const SizedBox(width: 8),
 
           // Type Chip
           _buildFilterChip('Type:', _selectedType, () {
-            setState(() {
-              _selectedType = _selectedType == 'All Staff' ? 'Full Time' : 'All Staff';
-            });
+            _showPickerSheet(
+              'Filter by Employee Type',
+              ['All Staff', 'Full-time', 'Part-time', 'Contractor', 'Intern'],
+              _selectedType,
+              (val) {
+                setState(() => _selectedType = val);
+                _loadBackendAnalytics();
+              },
+            );
           }),
           const SizedBox(width: 8),
 
           // Entity Chip
           _buildFilterChip('Entity:', _selectedEntity, () {
-            setState(() {
-              _selectedEntity = _selectedEntity == 'OXP Pvt Ltd' ? 'OXP Global' : 'OXP Pvt Ltd';
-            });
+            _showPickerSheet(
+              'Filter by Corporate Entity',
+              ['OXP Pvt Ltd', 'OXP Global', 'OXP Enterprise Services'],
+              _selectedEntity,
+              (val) {
+                setState(() => _selectedEntity = val);
+                _loadBackendAnalytics();
+              },
+            );
           }),
         ],
       ),
@@ -444,7 +972,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             badgeIcon: Icons.trending_up_rounded,
             title: 'Net Salary Paid',
             valuePrefix: '₹',
-            value: '18.4L',
+            value: _formatCurrencyCompact(_totalNetSalary),
             subtitle: '100% disbursed cycle',
             subtitleColor: const Color(0xFF00696E),
           ),
@@ -464,7 +992,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             badgeTextColor: const Color(0xFF4E444A),
             title: 'Avg Compensation',
             valuePrefix: '₹',
-            value: '12,432',
+            value: _avgCompensation.toStringAsFixed(0),
             subtitle: 'Active FTE baseline matrix',
             subtitleColor: const Color(0xFF4E444A),
           ),
@@ -475,13 +1003,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             icon: Icons.beach_access_rounded,
             iconBg: const Color(0xFFE2E7FF),
             iconColor: const Color(0xFF00696E),
-            badgeText: 'Sep Quota',
+            badgeText: '${_selectedPeriod.split(' ').first} Quota',
             badgeBg: const Color(0xFFE2E7FF),
             badgeTextColor: const Color(0xFF131B2E),
             title: 'Approved Leaves',
-            value: '34',
+            value: '$_approvedLeavesDays',
             valueSuffix: 'Total Days',
-            subtitle: '-12% vs August cycle',
+            subtitle: 'Verified allocation ledger',
             subtitleColor: const Color(0xFF00696E),
           ),
           const SizedBox(width: 12),
@@ -491,12 +1019,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             icon: Icons.verified_user_rounded,
             iconBg: const Color(0xFFE2E7FF),
             iconColor: const Color(0xFF004A31),
-            badgeText: 'Optimal',
+            badgeText: _attendanceHealthPercent >= 90 ? 'Optimal' : 'Standard',
             badgeBg: const Color(0xFF4EDEA3).withValues(alpha: 0.2),
             badgeTextColor: const Color(0xFF004A31),
             title: 'Attendance Health',
-            value: '94.2%',
-            subtitle: '141 active punch records',
+            value: '${_attendanceHealthPercent.toStringAsFixed(1)}%',
+            subtitle: 'Active biometric log ratio',
             subtitleColor: const Color(0xFF4E444A),
           ),
         ],
@@ -640,6 +1168,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
   }
 
   Widget _buildPayslipsVolumeCard() {
+    final factor = _totalPayslipsCount > 0 ? (_paidPayslipsCount / _totalPayslipsCount) : 0.95;
     return Container(
       width: 230,
       height: 156,
@@ -678,7 +1207,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '6 Pending',
+                  '$_pendingPayslipsCount Pending',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -705,7 +1234,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   Text(
-                    '148',
+                    '$_totalPayslipsCount',
                     style: GoogleFonts.outfit(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -730,7 +1259,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                   color: const Color(0xFFE2E7FF),
                   child: FractionallySizedBox(
                     alignment: Alignment.centerLeft,
-                    widthFactor: 0.96,
+                    widthFactor: factor.clamp(0.1, 1.0),
                     child: Container(
                       color: const Color(0xFF00696E),
                     ),
@@ -739,7 +1268,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
               ),
               const SizedBox(height: 4),
               Text(
-                '142 paid • 6 draft review',
+                '$_paidPayslipsCount paid • $_pendingPayslipsCount draft review',
                 style: GoogleFonts.jetBrainsMono(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
@@ -799,17 +1328,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(child: _buildAttendanceMiniBox('Present', '94', const Color(0xFF131B2E))),
+                    Expanded(child: _buildAttendanceMiniBox('Present', '$_presentCount', const Color(0xFF131B2E))),
                     const SizedBox(width: 6),
-                    Expanded(child: _buildAttendanceMiniBox('Late', '18', const Color(0xFF131B2E))),
+                    Expanded(child: _buildAttendanceMiniBox('Late', '$_lateCount', const Color(0xFF131B2E))),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Expanded(child: _buildAttendanceMiniBox('Absent', '09', const Color(0xFFBA1A1A))),
+                    Expanded(child: _buildAttendanceMiniBox('Absent', '$_absentCount', const Color(0xFFBA1A1A))),
                     const SizedBox(width: 6),
-                    Expanded(child: _buildAttendanceMiniBox('Overtime', '22', const Color(0xFF00696E))),
+                    Expanded(child: _buildAttendanceMiniBox('Overtime', '$_overtimeCount', const Color(0xFF00696E))),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -826,7 +1355,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          '5 missing punches require approval',
+                          '$_missingPunchesCount missing punches require approval',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -887,11 +1416,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                   ],
                 ),
                 const SizedBox(height: 10),
-                _buildAnomalyBullet(const Color(0xFFBA1A1A), '2 missing bank details'),
+                _buildAnomalyBullet(const Color(0xFFBA1A1A), '$_missingBankDetailsCount missing bank details'),
                 const SizedBox(height: 6),
-                _buildAnomalyBullet(const Color(0xFF79526F), '1 duplicate entry'),
+                _buildAnomalyBullet(const Color(0xFF79526F), '$_duplicateEntriesCount duplicate entry'),
                 const SizedBox(height: 6),
-                _buildAnomalyBullet(const Color(0xFF00696E), '4 unvalidated drafts'),
+                _buildAnomalyBullet(const Color(0xFF00696E), '$_unvalidatedDraftsCount unvalidated drafts'),
                 const SizedBox(height: 12),
                 InkWell(
                   onTap: () {
@@ -1009,6 +1538,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
   }
 
   Widget _buildDepartmentSpendCard() {
+    double totalWageSum = 0.0;
+    for (final d in _departmentSpendList) {
+      totalWageSum += d.totalWage;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -1063,7 +1597,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                       ),
                     ),
                     Text(
-                      '₹ 660,000',
+                      '₹ ${_formatCurrencyCompact(totalWageSum)}',
                       style: GoogleFonts.outfit(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -1076,16 +1610,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             ),
             const SizedBox(height: 16),
 
-            // Bar Items
-            _buildSpendBarItem('Information Tech (IT)', '₹ 170k', '100%', 1.0, const Color(0xFF714B67)),
-            const SizedBox(height: 12),
-            _buildSpendBarItem('Sales & Revenue', '₹ 150k', '88%', 0.88, const Color(0xFF57344F)),
-            const SizedBox(height: 12),
-            _buildSpendBarItem('Finance & Ops', '₹ 130k', '76%', 0.76, const Color(0xFF00696E)),
-            const SizedBox(height: 12),
-            _buildSpendBarItem('Customer Support', '₹ 110k', '64%', 0.64, const Color(0xFF78D5DB)),
-            const SizedBox(height: 12),
-            _buildSpendBarItem('HR & People', '₹ 90k', '52%', 0.52, const Color(0xFF004A31)),
+            // Dynamic Bar Items
+            ..._departmentSpendList.map((d) {
+              final pctStr = '${(d.percentShare * 100).toStringAsFixed(0)}%';
+              final amtStr = '₹ ${_formatCurrencyCompact(d.totalWage)}';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildSpendBarItem(d.deptName, amtStr, pctStr, d.percentShare.clamp(0.05, 1.0), d.barColor),
+              );
+            }),
           ],
         ),
       ),
@@ -1167,6 +1700,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
   }
 
   Widget _buildSalaryTrendCard() {
+    double maxTrend = 0.0;
+    for (final t in _trendDataList) {
+      if (t.totalNetPaid > maxTrend) maxTrend = t.totalNetPaid;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -1216,7 +1754,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '₹18.4L Max',
+                    '₹${_formatCurrencyCompact(maxTrend)} Max',
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -1278,14 +1816,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             const SizedBox(height: 8),
             // X-Axis Labels & Data values
             Row(
-              children: [
-                Expanded(child: _buildTrendMonthItem('Apr', '₹14.8L', isPeak: false)),
-                Expanded(child: _buildTrendMonthItem('May', '₹15.2L', isPeak: false)),
-                Expanded(child: _buildTrendMonthItem('Jun', '₹14.3L', isPeak: false)),
-                Expanded(child: _buildTrendMonthItem('Jul', '₹15.0L', isPeak: false)),
-                Expanded(child: _buildTrendMonthItem('Aug', '₹17.1L', isPeak: false)),
-                Expanded(child: _buildTrendMonthItem('Sep', '₹18.4L', isPeak: true)),
-              ],
+              children: _trendDataList.map((t) {
+                return Expanded(child: _buildTrendMonthItem(t.monthLabel, t.displayVal, isPeak: t.isPeak));
+              }).toList(),
             ),
           ],
         ),
@@ -1390,14 +1923,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             ),
             const SizedBox(height: 14),
 
-            // Rows
-            _buildMatrixRow('IT', 'Engineering & IT', '18 Staff', 'Avg: ₹ 23.3k / employee', '₹ 4.2L'),
-            const SizedBox(height: 10),
-            _buildMatrixRow('SL', 'Sales & Growth', '22 Staff', 'Avg: ₹ 25.9k / employee', '₹ 5.7L'),
-            const SizedBox(height: 10),
-            _buildMatrixRow('HR', 'People & Talent', '8 Staff', 'Avg: ₹ 23.7k / employee', '₹ 1.9L'),
-            const SizedBox(height: 10),
-            _buildMatrixRow('CS', 'Customer Success', '14 Staff', 'Avg: ₹ 22.1k / employee', '₹ 3.1L'),
+            // Dynamic Rows
+            ..._departmentMatrixList.map((d) {
+              final staffStr = '${d.staffCount} Staff';
+              final avgStr = 'Avg: ₹ ${_formatCurrencyCompact(d.avgSalary)} / employee';
+              final grossStr = '₹ ${_formatCurrencyCompact(d.totalWage)}';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _buildMatrixRow(d.deptCode, d.deptName, staffStr, avgStr, grossStr),
+              );
+            }),
           ],
         ),
       ),

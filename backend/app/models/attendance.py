@@ -6,7 +6,16 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Index, Numeric, String, Text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Index,
+    Numeric,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -44,6 +53,18 @@ class Attendance(Base):
             "check_out IS NULL OR check_out >= check_in", name="chk_check_in_out"
         ),
         Index("idx_attendance_emp_date", "employee_id", "check_in"),
+        # ZERO-LOOPHOLE: an employee may only ever have ONE open punch at a time.
+        # PostgreSQL partial unique index: uniqueness applies only to the rows
+        # where check_out IS NULL, so historical (closed) punches are unaffected.
+        # This is the same guarantee declared in db/schema.sql; declaring it on
+        # the model too keeps ORM metadata and the physical schema in sync and
+        # makes the guarantee visible to anyone reading the model.
+        Index(
+            "idx_attendance_single_open",
+            "employee_id",
+            unique=True,
+            postgresql_where=text("check_out IS NULL"),
+        ),
     )
 
     @property

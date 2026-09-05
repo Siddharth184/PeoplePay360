@@ -17,6 +17,7 @@ class EmployeeModel {
   final String? dateOfJoining;
   final String? bankName;
   final String? bankAccountNumber;
+  final String? workLocation;
 
   EmployeeModel({
     required this.id,
@@ -37,6 +38,7 @@ class EmployeeModel {
     this.dateOfJoining,
     this.bankName,
     this.bankAccountNumber,
+    this.workLocation,
   });
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class EmployeeModel {
       dateOfJoining: json['date_of_joining']?.toString(),
       bankName: json['bank_name']?.toString(),
       bankAccountNumber: json['bank_account_number']?.toString(),
+      workLocation: json['work_location']?.toString() ?? json['workLocation']?.toString() ?? 'Bengaluru HQ',
     );
   }
 
@@ -152,133 +155,280 @@ class WorkingScheduleModel {
 class TimeOffTypeModel {
   final String id;
   final String name;
-  final String code;
+  final String? code;
+  final String unit; // 'DAYS' or 'HOURS'
+  final bool requiresAllocation;
   final bool requiresApproval;
+  final bool isPaid;
   final String color;
+  final String? workEntryType;
 
   TimeOffTypeModel({
     required this.id,
     required this.name,
-    required this.code,
-    required this.requiresApproval,
+    this.code,
+    this.unit = 'DAYS',
+    this.requiresAllocation = true,
+    this.requiresApproval = true,
+    this.isPaid = true,
     required this.color,
+    this.workEntryType,
   });
 
   factory TimeOffTypeModel.fromJson(Map<String, dynamic> json) {
     return TimeOffTypeModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      code: json['code']?.toString() ?? '',
-      requiresApproval: json['requires_approval'] ?? true,
-      color: json['color']?.toString() ?? '#714B67',
+      code: json['code']?.toString(),
+      unit: json['unit']?.toString() ?? 'DAYS',
+      requiresAllocation: json['requires_allocation'] ?? json['requiresAllocation'] ?? true,
+      requiresApproval: json['requires_approval'] ?? json['requiresApproval'] ?? true,
+      isPaid: json['is_paid'] ?? true,
+      color: json['display_color']?.toString() ?? json['color']?.toString() ?? '#714B67',
+      workEntryType: json['work_entry_type']?.toString(),
+    );
+  }
+}
+
+class LeaveAllocationModel {
+  final String id;
+  final String employeeId;
+  final String? employeeName;
+  final String? employeeDepartment;
+  final String timeoffTypeId;
+  final String? timeoffTypeName;
+  final double allocatedDays;
+  final double takenDays;
+  final double remainingDays;
+  final int validityYear;
+  final String? validityLabel;
+  final String status;
+  final String? description;
+
+  LeaveAllocationModel({
+    required this.id,
+    required this.employeeId,
+    this.employeeName,
+    this.employeeDepartment,
+    required this.timeoffTypeId,
+    this.timeoffTypeName,
+    required this.allocatedDays,
+    required this.takenDays,
+    required this.remainingDays,
+    required this.validityYear,
+    this.validityLabel,
+    required this.status,
+    this.description,
+  });
+
+  factory LeaveAllocationModel.fromJson(Map<String, dynamic> json) {
+    final alloc = (json['allocated_days'] is num) ? (json['allocated_days'] as num).toDouble() : 0.0;
+    final taken = (json['taken_days'] is num) ? (json['taken_days'] as num).toDouble() : 0.0;
+    final rem = (json['remaining_days'] is num) ? (json['remaining_days'] as num).toDouble() : (alloc - taken);
+    return LeaveAllocationModel(
+      id: json['id']?.toString() ?? '',
+      employeeId: json['employee_id']?.toString() ?? '',
+      employeeName: json['employee_name']?.toString(),
+      employeeDepartment: json['employee_department']?.toString() ?? json['department']?.toString(),
+      timeoffTypeId: json['timeoff_type_id']?.toString() ?? '',
+      timeoffTypeName: json['timeoff_type_name']?.toString(),
+      allocatedDays: alloc,
+      takenDays: taken,
+      remainingDays: rem,
+      validityYear: json['validity_year'] is int ? json['validity_year'] : DateTime.now().year,
+      validityLabel: json['validity_label']?.toString(),
+      status: json['status']?.toString() ?? 'APPROVED',
+      description: json['description']?.toString(),
+    );
+  }
+}
+
+class LeaveBalanceModel {
+  final String allocationId;
+  final String timeoffTypeId;
+  final String timeoffTypeName;
+  final String displayColor;
+  final String unit;
+  final double allocatedDays;
+  final double takenDays;
+  final double remainingDays;
+  final int validityYear;
+
+  LeaveBalanceModel({
+    required this.allocationId,
+    required this.timeoffTypeId,
+    required this.timeoffTypeName,
+    required this.displayColor,
+    required this.unit,
+    required this.allocatedDays,
+    required this.takenDays,
+    required this.remainingDays,
+    required this.validityYear,
+  });
+
+  factory LeaveBalanceModel.fromJson(Map<String, dynamic> json) {
+    return LeaveBalanceModel(
+      allocationId: json['allocation_id']?.toString() ?? '',
+      timeoffTypeId: json['timeoff_type_id']?.toString() ?? '',
+      timeoffTypeName: json['timeoff_type_name']?.toString() ?? '',
+      displayColor: json['display_color']?.toString() ?? '#017E84',
+      unit: json['unit']?.toString() ?? 'DAYS',
+      allocatedDays: (json['allocated_days'] is num) ? (json['allocated_days'] as num).toDouble() : 0.0,
+      takenDays: (json['taken_days'] is num) ? (json['taken_days'] as num).toDouble() : 0.0,
+      remainingDays: (json['remaining_days'] is num) ? (json['remaining_days'] as num).toDouble() : 0.0,
+      validityYear: json['validity_year'] is int ? json['validity_year'] : DateTime.now().year,
     );
   }
 }
 
 class AttendanceModel {
   final String id;
-  final String dateStr;
-  final String checkInTime;
-  final String? checkOutTime;
-  final String status; // 'PRESENT', 'LATE', 'ABSENT', 'ON_LEAVE'
-  final double workedHours;
-  final String? employeeName;
   final String? employeeId;
+  final String? employeeName;
+
+  /// Raw check-in/out preserved so callers can format, sort or diff without
+  /// re-parsing display strings. `checkIn` is always present for a real record.
+  final DateTime? checkIn;
+  final DateTime? checkOut;
+
+  final String status; // 'PRESENT', 'LATE', 'ABSENT', 'HALF_DAY'
+  final double workedHours;
+  final double overtimeHours;
+  final bool isManualEdit;
+  final String? auditNotes;
+  final DateTime? createdAt;
+  final String? _explicitDateStr;
 
   AttendanceModel({
     required this.id,
-    required this.dateStr,
-    required this.checkInTime,
-    this.checkOutTime,
+    this.employeeId,
+    this.employeeName,
+    this.checkIn,
+    this.checkOut,
     required this.status,
     required this.workedHours,
-    this.employeeName,
-    this.employeeId,
-  });
+    this.overtimeHours = 0.0,
+    this.isManualEdit = false,
+    this.auditNotes,
+    this.createdAt,
+    String? dateStr,
+  }) : _explicitDateStr = dateStr;
+
+  /// yyyy-MM-dd derived from the check-in instant, or explicit date, or '' when unknown.
+  String get dateStr {
+    if (_explicitDateStr != null && _explicitDateStr.isNotEmpty) {
+      return _explicitDateStr;
+    }
+    final dt = checkIn;
+    if (dt == null) return '';
+    return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+  }
+
+  static String _fmtTime(DateTime dt) {
+    final hr = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+    return "${hr.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} $ampm";
+  }
+
+  /// Local-time display of the check-in, or '--' when absent.
+  String get checkInTime => checkIn == null ? '--' : _fmtTime(checkIn!.toLocal());
+
+  /// Local-time display of the check-out, or null while the punch is still open.
+  String? get checkOutTime => checkOut == null ? null : _fmtTime(checkOut!.toLocal());
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json) {
-    String inTime = '--';
-    String? outTime;
-    String dateStr = '';
-
-    if (json['check_in'] != null) {
-      final raw = json['check_in'].toString();
-      final dt = DateTime.tryParse(raw);
-      if (dt != null) {
-        dateStr = "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
-        final hr = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-        final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-        inTime = "${hr.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} $ampm";
-      } else {
-        inTime = raw;
-      }
-    } else if (json['checkInTime'] != null) {
-      inTime = json['checkInTime'].toString();
-      dateStr = json['dateStr']?.toString() ?? '';
+    DateTime? parseDt(dynamic v) {
+      if (v == null) return null;
+      return DateTime.tryParse(v.toString());
     }
 
-    if (json['check_out'] != null) {
-      final raw = json['check_out'].toString();
-      final dt = DateTime.tryParse(raw);
-      if (dt != null) {
-        final hr = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-        final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-        outTime = "${hr.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} $ampm";
-      } else {
-        outTime = raw;
-      }
-    } else if (json['checkOutTime'] != null) {
-      outTime = json['checkOutTime'].toString();
+    double parseNum(dynamic snake, dynamic camel) {
+      if (snake is num) return snake.toDouble();
+      if (camel is num) return camel.toDouble();
+      return 0.0;
     }
+
+    final rawDate = json['date']?.toString() ?? json['date_str']?.toString() ?? json['dateStr']?.toString();
 
     return AttendanceModel(
       id: json['id']?.toString() ?? '',
-      dateStr: dateStr.isNotEmpty ? dateStr : (json['dateStr']?.toString() ?? '2026-09-05'),
-      checkInTime: inTime,
-      checkOutTime: outTime,
+      employeeId: json['employee_id']?.toString() ?? json['employeeId']?.toString(),
+      employeeName: json['employee_name']?.toString() ?? json['employeeName']?.toString(),
+      checkIn: parseDt(json['check_in'] ?? json['checkIn']),
+      checkOut: parseDt(json['check_out'] ?? json['checkOut']),
       status: json['status']?.toString() ?? 'PRESENT',
-      workedHours: (json['worked_hours'] is num)
-          ? (json['worked_hours'] as num).toDouble()
-          : (json['workedHours'] is num ? (json['workedHours'] as num).toDouble() : 0.0),
-      employeeName: json['employee_name']?.toString(),
-      employeeId: json['employee_id']?.toString(),
+      workedHours: parseNum(json['worked_hours'], json['workedHours']),
+      overtimeHours: parseNum(json['overtime_hours'], json['overtimeHours']),
+      isManualEdit: json['is_manual_edit'] == true || json['isManualEdit'] == true,
+      auditNotes: json['audit_notes']?.toString() ?? json['auditNotes']?.toString(),
+      createdAt: parseDt(json['created_at'] ?? json['createdAt']),
+      dateStr: rawDate,
     );
   }
 }
 
 class TimeOffRequestModel {
   final String id;
+  final String? employeeId;
+  final String? employeeName;
+  final String? timeoffTypeId;
   final String typeName;
   final String startDate;
   final String endDate;
   final double daysCount;
-  final String status; // 'APPROVED', 'PENDING', 'REFUSED'
+  final String status; // 'TO_APPROVE', 'APPROVED', 'REFUSED', 'CANCELLED'
   final String reason;
-  final String? employeeName;
+  final String? approverEmployeeId;
+  final String? createdAt;
 
   TimeOffRequestModel({
     required this.id,
+    this.employeeId,
+    this.employeeName,
+    this.timeoffTypeId,
     required this.typeName,
     required this.startDate,
     required this.endDate,
     required this.daysCount,
     required this.status,
     required this.reason,
-    this.employeeName,
+    this.approverEmployeeId,
+    this.createdAt,
   });
 
   factory TimeOffRequestModel.fromJson(Map<String, dynamic> json) {
+    final start = json['start_date']?.toString() ??
+        json['date_from']?.toString() ??
+        json['startDate']?.toString() ??
+        '';
+    final end = json['end_date']?.toString() ??
+        json['date_to']?.toString() ??
+        json['endDate']?.toString() ??
+        '';
+    final numDays = (json['duration_days'] is num)
+        ? (json['duration_days'] as num).toDouble()
+        : ((json['number_of_days'] is num)
+            ? (json['number_of_days'] as num).toDouble()
+            : (json['daysCount'] is num ? (json['daysCount'] as num).toDouble() : 1.0));
+
+    final rsn = json['reason']?.toString() ?? json['name']?.toString() ?? '';
+
     return TimeOffRequestModel(
       id: json['id']?.toString() ?? '',
-      typeName: json['timeoff_type_name']?.toString() ?? json['typeName']?.toString() ?? 'Paid Time Off',
-      startDate: json['date_from']?.toString() ?? json['startDate']?.toString() ?? '',
-      endDate: json['date_to']?.toString() ?? json['endDate']?.toString() ?? '',
-      daysCount: (json['number_of_days'] is num)
-          ? (json['number_of_days'] as num).toDouble()
-          : (json['daysCount'] is num ? (json['daysCount'] as num).toDouble() : 1.0),
-      status: json['status']?.toString() ?? 'PENDING',
-      reason: json['name']?.toString() ?? json['reason']?.toString() ?? 'Time off request',
+      employeeId: json['employee_id']?.toString(),
       employeeName: json['employee_name']?.toString(),
+      timeoffTypeId: json['timeoff_type_id']?.toString(),
+      typeName: json['timeoff_type_name']?.toString() ??
+          json['typeName']?.toString() ??
+          json['leaveType']?.toString() ??
+          'Paid Time Off',
+      startDate: start,
+      endDate: end,
+      daysCount: numDays,
+      status: json['status']?.toString() ?? 'TO_APPROVE',
+      reason: rsn,
+      approverEmployeeId: json['approver_employee_id']?.toString(),
+      createdAt: json['created_at']?.toString(),
     );
   }
 }
@@ -325,41 +475,57 @@ class ContractModel {
 
 class SalaryRuleModel {
   final String id;
+  final String? salaryStructureId;
   final String name;
   final String code;
   final int sequence;
   final String category; // 'BASIC', 'ALLOWANCE', 'GROSS', 'DEDUCTION', 'NET'
   final String computationType; // 'FIXED', 'PERCENTAGE', 'PYTHON_CODE'
-  final String pythonCode;
   final double? fixedAmount;
-  final double? percentageRate;
   final String? percentageBase;
+  final double? percentageRate;
+  final String? pythonCode;
+  final double quantity;
+  final bool isActive;
+  final String? createdAt;
 
   SalaryRuleModel({
     required this.id,
+    this.salaryStructureId,
     required this.name,
     required this.code,
     required this.sequence,
     required this.category,
     required this.computationType,
-    required this.pythonCode,
     this.fixedAmount,
-    this.percentageRate,
     this.percentageBase,
+    this.percentageRate,
+    this.pythonCode,
+    this.quantity = 1.0,
+    this.isActive = true,
+    this.createdAt,
   });
 
   factory SalaryRuleModel.fromJson(Map<String, dynamic> json) {
     return SalaryRuleModel(
       id: json['id']?.toString() ?? '',
+      salaryStructureId: json['salary_structure_id']?.toString() ?? json['salaryStructureId']?.toString(),
       name: json['name']?.toString() ?? '',
       code: json['code']?.toString() ?? '',
-      sequence: json['sequence'] is int ? json['sequence'] : 10,
+      sequence: json['sequence'] is num ? (json['sequence'] as num).toInt() : 10,
       category: json['category']?.toString() ?? 'BASIC',
-      computationType: json['computation_type']?.toString() ?? 'FIXED',
-      pythonCode: json['python_code']?.toString() ?? '',
-      fixedAmount: json['fixed_amount'] is num ? (json['fixed_amount'] as num).toDouble() : null,
-      percentageRate: json['percentage_rate'] is num ? (json['percentage_rate'] as num).toDouble() : null,
-      percentageBase: json['percentage_base']?.toString(),
+      computationType: json['computation_type']?.toString() ?? json['computationType']?.toString() ?? 'FIXED',
+      fixedAmount: json['fixed_amount'] is num
+          ? (json['fixed_amount'] as num).toDouble()
+          : (json['fixedAmount'] is num ? (json['fixedAmount'] as num).toDouble() : null),
+      percentageBase: json['percentage_base']?.toString() ?? json['percentageBase']?.toString(),
+      percentageRate: json['percentage_rate'] is num
+          ? (json['percentage_rate'] as num).toDouble()
+          : (json['percentageRate'] is num ? (json['percentageRate'] as num).toDouble() : null),
+      pythonCode: json['python_code']?.toString() ?? json['pythonCode']?.toString() ?? '',
+      quantity: json['quantity'] is num ? (json['quantity'] as num).toDouble() : 1.0,
+      isActive: json['is_active'] is bool ? json['is_active'] as bool : (json['isActive'] is bool ? json['isActive'] as bool : true),
+      createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString(),
     );
   }
 }
@@ -367,27 +533,153 @@ class SalaryRuleModel {
 class SalaryStructureModel {
   final String id;
   final String name;
-  final String reference;
-  final String country;
-  final List<String> ruleIds;
+  final String code;
+  final bool isActive;
+  final String? notes;
+  final String? createdAt;
+  final int ruleCount;
+  final int activeRuleCount;
+  final int employeeCount;
+  final List<SalaryRuleModel> rules;
 
   SalaryStructureModel({
     required this.id,
     required this.name,
-    required this.reference,
-    required this.country,
-    required this.ruleIds,
-  });
+    String? code,
+    String? reference,
+    String? country,
+    List<String>? ruleIds,
+    this.isActive = true,
+    this.notes,
+    this.createdAt,
+    this.ruleCount = 0,
+    this.activeRuleCount = 0,
+    this.employeeCount = 0,
+    this.rules = const [],
+  }) : code = code ?? reference ?? '';
+
+  String get reference => code;
+  String get country => 'India';
+  List<String> get ruleIds => rules.map((r) => r.id).toList();
 
   factory SalaryStructureModel.fromJson(Map<String, dynamic> json) {
+    final rawRules = json['rules'] as List? ?? [];
+    final parsedRules = rawRules
+        .whereType<Map<String, dynamic>>()
+        .map((r) => SalaryRuleModel.fromJson(r))
+        .toList();
+
     return SalaryStructureModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      reference: json['code']?.toString() ?? json['reference']?.toString() ?? '',
-      country: 'India',
-      ruleIds: (json['rules'] is List)
-          ? (json['rules'] as List).map((r) => r['id']?.toString() ?? '').toList()
-          : [],
+      code: json['code']?.toString() ?? json['reference']?.toString() ?? '',
+      isActive: json['is_active'] is bool ? json['is_active'] as bool : (json['isActive'] is bool ? json['isActive'] as bool : true),
+      notes: json['notes']?.toString(),
+      createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString(),
+      ruleCount: json['rule_count'] is num ? (json['rule_count'] as num).toInt() : (json['ruleCount'] is num ? (json['ruleCount'] as num).toInt() : parsedRules.length),
+      activeRuleCount: json['active_rule_count'] is num
+          ? (json['active_rule_count'] as num).toInt()
+          : (json['activeRuleCount'] is num ? (json['activeRuleCount'] as num).toInt() : parsedRules.where((r) => r.isActive).length),
+      employeeCount: json['employee_count'] is num
+          ? (json['employee_count'] as num).toInt()
+          : (json['employeeCount'] is num ? (json['employeeCount'] as num).toInt() : 0),
+      rules: parsedRules,
+    );
+  }
+}
+
+class RuleSimulationLineModel {
+  final String ruleName;
+  final String ruleCode;
+  final String category;
+  final int sequence;
+  final double amount;
+  final String computationType;
+  final String explanation;
+
+  RuleSimulationLineModel({
+    required this.ruleName,
+    required this.ruleCode,
+    required this.category,
+    required this.sequence,
+    required this.amount,
+    required this.computationType,
+    required this.explanation,
+  });
+
+  factory RuleSimulationLineModel.fromJson(Map<String, dynamic> json) {
+    return RuleSimulationLineModel(
+      ruleName: json['rule_name']?.toString() ?? json['ruleName']?.toString() ?? '',
+      ruleCode: json['rule_code']?.toString() ?? json['ruleCode']?.toString() ?? '',
+      category: json['category']?.toString() ?? 'BASIC',
+      sequence: json['sequence'] is num ? (json['sequence'] as num).toInt() : 10,
+      amount: json['amount'] is num ? (json['amount'] as num).toDouble() : 0.0,
+      computationType: json['computation_type']?.toString() ?? json['computationType']?.toString() ?? 'FIXED',
+      explanation: json['explanation']?.toString() ?? '',
+    );
+  }
+}
+
+class RuleSimulationResponseModel {
+  final String salaryStructureId;
+  final String salaryStructureName;
+  final double wageMonthly;
+  final double basic;
+  final double allowances;
+  final double gross;
+  final double deductions;
+  final double net;
+  final List<RuleSimulationLineModel> lines;
+
+  RuleSimulationResponseModel({
+    required this.salaryStructureId,
+    required this.salaryStructureName,
+    required this.wageMonthly,
+    required this.basic,
+    required this.allowances,
+    required this.gross,
+    required this.deductions,
+    required this.net,
+    required this.lines,
+  });
+
+  factory RuleSimulationResponseModel.fromJson(Map<String, dynamic> json) {
+    final rawLines = json['lines'] as List? ?? [];
+    final parsedLines = rawLines
+        .whereType<Map<String, dynamic>>()
+        .map((l) => RuleSimulationLineModel.fromJson(l))
+        .toList();
+
+    return RuleSimulationResponseModel(
+      salaryStructureId: json['salary_structure_id']?.toString() ?? json['salaryStructureId']?.toString() ?? '',
+      salaryStructureName: json['salary_structure_name']?.toString() ?? json['salaryStructureName']?.toString() ?? '',
+      wageMonthly: json['wage_monthly'] is num ? (json['wage_monthly'] as num).toDouble() : 0.0,
+      basic: json['basic'] is num ? (json['basic'] as num).toDouble() : 0.0,
+      allowances: json['allowances'] is num ? (json['allowances'] as num).toDouble() : 0.0,
+      gross: json['gross'] is num ? (json['gross'] as num).toDouble() : 0.0,
+      deductions: json['deductions'] is num ? (json['deductions'] as num).toDouble() : 0.0,
+      net: json['net'] is num ? (json['net'] as num).toDouble() : 0.0,
+      lines: parsedLines,
+    );
+  }
+}
+
+class PythonRuleValidationResponseModel {
+  final bool valid;
+  final String message;
+  final double? probeResult;
+
+  PythonRuleValidationResponseModel({
+    required this.valid,
+    required this.message,
+    this.probeResult,
+  });
+
+  factory PythonRuleValidationResponseModel.fromJson(Map<String, dynamic> json) {
+    return PythonRuleValidationResponseModel(
+      valid: json['valid'] == true,
+      message: json['message']?.toString() ?? '',
+      probeResult: json['probe_result'] is num ? (json['probe_result'] as num).toDouble() : null,
     );
   }
 }
@@ -423,6 +715,12 @@ class PayslipModel {
   final String employeeName;
   final String periodStart;
   final String periodEnd;
+  final double workedDays;
+  final double workedHours;
+  final double overtimeHours;
+  final double scheduledHours;
+  final double overtimePay;
+  final double basicAmount;
   final double grossAmount;
   final double netAmount;
   final String status; // 'DONE', 'DRAFT', 'CANCELLED'
@@ -434,28 +732,70 @@ class PayslipModel {
     required this.employeeName,
     required this.periodStart,
     required this.periodEnd,
+    this.workedDays = 22.0,
+    this.workedHours = 176.0,
+    this.overtimeHours = 0.0,
+    this.scheduledHours = 176.0,
+    this.overtimePay = 0.0,
+    this.basicAmount = 0.0,
     required this.grossAmount,
     required this.netAmount,
     required this.status,
     required this.lines,
   });
 
+  static double? parseCurrency(dynamic val) {
+    if (val == null) return null;
+    if (val is num) return val.toDouble();
+    final s = val.toString().replaceAll(RegExp(r'[^\d.]'), '');
+    return double.tryParse(s);
+  }
+
   factory PayslipModel.fromJson(Map<String, dynamic> json) {
     final rawLines = json['lines'] as List? ?? [];
+    final parsedLines = rawLines.map((l) => PayslipLineModel.fromJson(l as Map<String, dynamic>)).toList();
+    
+    double otPay = 0.0;
+    for (final l in parsedLines) {
+      if (l.ruleCode == 'OT') {
+        otPay = l.amount;
+        break;
+      }
+    }
+    if (otPay == 0.0 && json['overtime_pay'] is num) {
+      otPay = (json['overtime_pay'] as num).toDouble();
+    }
+
     return PayslipModel(
       id: json['id']?.toString() ?? '',
-      refCode: json['number']?.toString() ?? json['refCode']?.toString() ?? '',
-      employeeName: json['employee_name']?.toString() ?? json['employeeName']?.toString() ?? '',
-      periodStart: json['date_from']?.toString() ?? json['periodStart']?.toString() ?? '',
-      periodEnd: json['date_to']?.toString() ?? json['periodEnd']?.toString() ?? '',
-      grossAmount: (json['gross_wage'] is num)
-          ? (json['gross_wage'] as num).toDouble()
-          : (json['grossAmount'] is num ? (json['grossAmount'] as num).toDouble() : 0.0),
-      netAmount: (json['net_wage'] is num)
-          ? (json['net_wage'] as num).toDouble()
-          : (json['netAmount'] is num ? (json['netAmount'] as num).toDouble() : 0.0),
+      refCode: json['reference_code']?.toString() ?? json['number']?.toString() ?? json['refCode']?.toString() ?? json['refNo']?.toString() ?? '',
+      employeeName: json['employee_name']?.toString() ?? json['employeeName']?.toString() ?? json['name']?.toString() ?? '',
+      periodStart: json['date_start']?.toString() ?? json['date_from']?.toString() ?? json['periodStart']?.toString() ?? '',
+      periodEnd: json['date_end']?.toString() ?? json['date_to']?.toString() ?? json['periodEnd']?.toString() ?? '',
+      workedDays: (json['worked_days'] is num) ? (json['worked_days'] as num).toDouble() : (double.tryParse(json['workedDays']?.toString() ?? '') ?? 22.0),
+      workedHours: (json['worked_hours'] is num) ? (json['worked_hours'] as num).toDouble() : 176.0,
+      overtimeHours: (json['overtime_hours'] is num) ? (json['overtime_hours'] as num).toDouble() : 0.0,
+      scheduledHours: (json['scheduled_hours'] is num) ? (json['scheduled_hours'] as num).toDouble() : 176.0,
+      overtimePay: otPay,
+      basicAmount: (json['basic_amount'] is num)
+          ? (json['basic_amount'] as num).toDouble()
+          : (parseCurrency(json['basic_amount'] ?? json['basic']) ?? 50000.0),
+      grossAmount: (json['gross_amount'] is num)
+          ? (json['gross_amount'] as num).toDouble()
+          : (json['gross_wage'] is num
+              ? (json['gross_wage'] as num).toDouble()
+              : (json['grossAmount'] is num
+                  ? (json['grossAmount'] as num).toDouble()
+                  : (parseCurrency(json['gross'] ?? json['grossPayout']) ?? 80000.0))),
+      netAmount: (json['net_amount'] is num)
+          ? (json['net_amount'] as num).toDouble()
+          : (json['net_wage'] is num
+              ? (json['net_wage'] as num).toDouble()
+              : (json['netAmount'] is num
+                  ? (json['netAmount'] as num).toDouble()
+                  : (parseCurrency(json['netPayout'] ?? json['net']) ?? 75000.0))),
       status: json['status']?.toString() ?? 'DONE',
-      lines: rawLines.map((l) => PayslipLineModel.fromJson(l as Map<String, dynamic>)).toList(),
+      lines: parsedLines,
     );
   }
 }

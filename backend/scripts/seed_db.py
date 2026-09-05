@@ -265,12 +265,14 @@ def seed_master_data(db) -> dict:
 
 
 def seed_salary_structure(db) -> SalaryStructure:
-    """The mockup's payroll configuration: three structures, 12 rules on Regular.
+    """The mockup's payroll configuration: three structures, 13 rules on Regular.
 
-    The mockup shows "Regular Salary | 12 rules" in the structures list but only
-    SEVEN lines on Aarav's payslip. That is not a contradiction: a structure holds
-    every rule the company might apply, and a rule that evaluates to zero produces
-    no payslip line (see the zero-suppression note in salary_engine).
+    The mockup shows the structure with many rules in the list but only SEVEN
+    lines on Aarav's payslip. That is not a contradiction: a structure holds every
+    rule the company might apply, and a rule that evaluates to zero produces no
+    payslip line (see the zero-suppression note in salary_engine). The Loss of Pay
+    (LOP) rule is one such rule: it is zero, and therefore invisible, unless the
+    employee has approved UNPAID leave in the period.
 
     On a 100,000 monthly wage these reproduce the mockup payslip exactly:
         BASIC 50% of wage        =  50,000
@@ -325,10 +327,25 @@ def seed_salary_structure(db) -> SalaryStructure:
             fixed_amount=Decimal("10000.00"),
         ),
         rule(
+            name="Overtime Pay",
+            code="OT",
+            sequence=35,
+            category="ALLOWANCE",
+            computation_type="PYTHON_CODE",
+            python_code=(
+                "# Overtime Pay: (Monthly wage / 208 standard monthly working hours) * 1.5 * overtime_hours\n"
+                "if overtime_hours > 0:\n"
+                "    result = round((contract.wage / 208) * 1.5 * overtime_hours, 2)\n"
+                "else:\n"
+                "    result = 0"
+            ),
+        ),
+        rule(
             name="Performance Bonus",
             code="BONUS",
             sequence=30,
             category="ALLOWANCE",
+
             computation_type="FIXED",
             fixed_amount=Decimal("0.00"),
         ),
@@ -396,6 +413,26 @@ def seed_salary_structure(db) -> SalaryStructure:
             category="DEDUCTION",
             computation_type="FIXED",
             fixed_amount=Decimal("2000.00"),
+        ),
+        # Loss of Pay: pro-rata deduction for UNPAID approved leave in the period.
+        # The number is produced entirely by this configured rule from the engine
+        # inputs (gross, expected_days, unpaid_leave_days) - no hardcoded payroll
+        # logic. Paid leave never reaches unpaid_leave_days, so it is not deducted.
+        # Evaluates to 0 (and is zero-suppressed) when there is no unpaid leave.
+        rule(
+            name="Loss of Pay (Unpaid Leave)",
+            code="LOP",
+            sequence=105,
+            category="DEDUCTION",
+            computation_type="PYTHON_CODE",
+            python_code=(
+                "# Daily rate x unpaid approved leave days.\n"
+                "if unpaid_leave_days > 0 and expected_days > 0:\n"
+                "    daily_rate = categories['GROSS'] / expected_days\n"
+                "    result = round(daily_rate * unpaid_leave_days, 2)\n"
+                "else:\n"
+                "    result = 0"
+            ),
         ),
         rule(
             name="Net Salary",
@@ -714,6 +751,7 @@ def seed_timeoff(db, people: dict) -> None:
         approval_level="MANAGER",
         display_color="#017E84",
         work_entry_type="Leave Work Entry",
+        is_paid=True,
         notes="Standard annual leave. Balance comes from approved allocations.",
     )
     sick = TimeOffType(
@@ -723,6 +761,7 @@ def seed_timeoff(db, people: dict) -> None:
         approval_level="HR_OFFICER",
         display_color="#C2410C",
         work_entry_type="Sick Work Entry",
+        is_paid=True,
         notes="Medical certificate required for three or more continuous days.",
     )
     comp_off = TimeOffType(
@@ -732,6 +771,7 @@ def seed_timeoff(db, people: dict) -> None:
         approval_level="HR_OFFICER",
         display_color="#4338CA",
         work_entry_type="Compensatory Work Entry",
+        is_paid=True,
         notes="Granted against approved overtime.",
     )
     unpaid = TimeOffType(
@@ -741,7 +781,8 @@ def seed_timeoff(db, people: dict) -> None:
         approval_level="HR_OFFICER",
         display_color="#6B7280",
         work_entry_type="Unpaid Work Entry",
-        notes="No allocation required; reduces paid worked days.",
+        is_paid=False,
+        notes="No allocation required; reduces paid worked days via loss-of-pay.",
     )
     db.add_all([pto, sick, comp_off, unpaid])
     db.flush()

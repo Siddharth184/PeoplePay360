@@ -1,23 +1,55 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../services/attendance_service.dart';
 import '../theme/app_theme.dart';
 import 'attendance_punch_sheet.dart';
 
-class DynamicIslandPill extends StatelessWidget {
+/// Compact live punch indicator. Reads the backend-authoritative punch state
+/// from [AttendanceService.stateNotifier]. The elapsed timer is derived from the
+/// backend `since` instant, not a local counter, so it stays truthful.
+class DynamicIslandPill extends StatefulWidget {
   final VoidCallback? onPunchTapped;
   const DynamicIslandPill({super.key, this.onPunchTapped});
 
-  String _formatDuration(int totalSecs) {
-    int hours = totalSecs ~/ 3600;
-    int minutes = (totalSecs % 3600) ~/ 60;
-    int seconds = totalSecs % 60;
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  @override
+  State<DynamicIslandPill> createState() => _DynamicIslandPillState();
+}
+
+class _DynamicIslandPillState extends State<DynamicIslandPill> {
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh the visible elapsed value once a second while punched in.
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  String _formatDuration(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final s = d.inSeconds % 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  Duration _elapsed(PunchState state) {
+    if (state.since == null) return Duration.zero;
+    final diff = DateTime.now().toUtc().difference(state.since!.toUtc());
+    return diff.isNegative ? Duration.zero : diff;
   }
 
   void _openSheet(BuildContext context) {
-    if (onPunchTapped != null) {
-      onPunchTapped!();
+    if (widget.onPunchTapped != null) {
+      widget.onPunchTapped!();
     } else {
       AttendancePunchSheet.show(context);
     }
@@ -39,46 +71,24 @@ class DynamicIslandPill extends StatelessWidget {
         switch (state.status) {
           case PunchStatus.punchedIn:
             mainColor = AppTheme.emeraldSuccess;
-            statusTitle = 'PUNCHED IN (HR APPROVED)';
-            statusSubtitle = _formatDuration(state.elapsedSeconds);
-            actionLabel = 'Manage Shift';
-            actionIcon = Icons.fingerprint;
-            break;
-          case PunchStatus.pendingPunchIn:
-            mainColor = const Color(0xFFF59E0B);
-            statusTitle = 'PUNCH IN PENDING HR';
-            statusSubtitle = 'Req at ${state.pendingRequest?.requestedTimeString ?? '--'}';
-            actionLabel = 'View Request';
-            actionIcon = Icons.hourglass_top_rounded;
-            break;
-          case PunchStatus.pendingPunchOut:
-            mainColor = const Color(0xFFF59E0B);
-            statusTitle = 'PUNCH OUT PENDING HR';
-            statusSubtitle = 'Req at ${state.pendingRequest?.requestedTimeString ?? '--'}';
-            actionLabel = 'View Request';
-            actionIcon = Icons.hourglass_bottom_rounded;
-            break;
-          case PunchStatus.pendingBreak:
-            mainColor = const Color(0xFFF59E0B);
-            statusTitle = 'BREAK REQ PENDING HR';
-            statusSubtitle = 'Awaiting Approval';
-            actionLabel = 'View Request';
-            actionIcon = Icons.hourglass_empty_rounded;
-            break;
-          case PunchStatus.onBreak:
-            mainColor = const Color(0xFF00696E);
-            statusTitle = 'ON BREAK (APPROVED)';
-            statusSubtitle = 'Shift Paused';
-            actionLabel = 'End Break';
-            actionIcon = Icons.coffee_rounded;
+            statusTitle = 'PUNCHED IN';
+            statusSubtitle = _formatDuration(_elapsed(state));
+            actionLabel = 'Punch Out';
+            actionIcon = Icons.logout_rounded;
             break;
           case PunchStatus.notPunchedIn:
-          case PunchStatus.punchedOut:
             mainColor = AppTheme.crimsonDanger;
             statusTitle = 'NOT PUNCHED IN';
             statusSubtitle = 'Shift Idle';
-            actionLabel = 'Submit Punch In';
+            actionLabel = 'Punch In';
             actionIcon = Icons.touch_app_rounded;
+            break;
+          case PunchStatus.unknown:
+            mainColor = const Color(0xFF80747A);
+            statusTitle = 'ATTENDANCE';
+            statusSubtitle = 'Tap to load';
+            actionLabel = 'Open';
+            actionIcon = Icons.fingerprint;
             break;
         }
 
@@ -93,10 +103,7 @@ class DynamicIslandPill extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: mainColor,
-                  width: 1.5,
-                ),
+                border: Border.all(color: mainColor, width: 1.5),
                 boxShadow: [
                   BoxShadow(
                     color: mainColor.withValues(alpha: 0.2),
@@ -115,8 +122,13 @@ class DynamicIslandPill extends StatelessWidget {
                       color: mainColor,
                       shape: BoxShape.circle,
                     ),
-                  ).animate(onPlay: (controller) => controller.repeat(reverse: true))
-                   .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.3, 1.3), duration: 1.seconds),
+                  )
+                      .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                      .scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1.3, 1.3),
+                        duration: 1.seconds,
+                      ),
                   const SizedBox(width: 10),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,11 +163,7 @@ class DynamicIslandPill extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          actionIcon,
-                          size: 15,
-                          color: mainColor,
-                        ),
+                        Icon(actionIcon, size: 15, color: mainColor),
                         const SizedBox(width: 4),
                         Text(
                           actionLabel,

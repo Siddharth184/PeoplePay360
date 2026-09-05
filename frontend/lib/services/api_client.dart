@@ -19,6 +19,8 @@ class ApiResponse<T> {
     this.rawJson,
   });
 
+  String? get message => errorMessage;
+
   factory ApiResponse.success(T data, {int statusCode = 200, dynamic rawJson}) {
     return ApiResponse(
       isSuccess: true,
@@ -195,12 +197,13 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 4),
+    Duration? timeout,
   }) async {
+    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
     try {
       final uri = _buildUri(path, queryParams);
       developer.log('GET $uri', name: 'ApiClient');
-      final response = await http.get(uri, headers: _buildHeaders(extraHeaders: headers)).timeout(timeout);
+      final response = await http.get(uri, headers: _buildHeaders(extraHeaders: headers)).timeout(effectiveTimeout);
       isBackendOnline = true;
       return _handleResponse<T>(response, parser);
     } catch (e, st) {
@@ -216,15 +219,16 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 6),
+    Duration? timeout,
   }) async {
+    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
     try {
       final uri = _buildUri(path, queryParams);
       final encodedBody = body != null ? jsonEncode(body) : null;
       developer.log('POST $uri', name: 'ApiClient');
       final response = await http
           .post(uri, headers: _buildHeaders(extraHeaders: headers), body: encodedBody)
-          .timeout(timeout);
+          .timeout(effectiveTimeout);
       isBackendOnline = true;
       return _handleResponse<T>(response, parser);
     } catch (e, st) {
@@ -240,15 +244,16 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 6),
+    Duration? timeout,
   }) async {
+    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
     try {
       final uri = _buildUri(path, queryParams);
       final encodedBody = body != null ? jsonEncode(body) : null;
       developer.log('PUT $uri', name: 'ApiClient');
       final response = await http
           .put(uri, headers: _buildHeaders(extraHeaders: headers), body: encodedBody)
-          .timeout(timeout);
+          .timeout(effectiveTimeout);
       isBackendOnline = true;
       return _handleResponse<T>(response, parser);
     } catch (e, st) {
@@ -264,15 +269,16 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 6),
+    Duration? timeout,
   }) async {
+    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
     try {
       final uri = _buildUri(path, queryParams);
       final encodedBody = body != null ? jsonEncode(body) : null;
       developer.log('PATCH $uri', name: 'ApiClient');
       final response = await http
           .patch(uri, headers: _buildHeaders(extraHeaders: headers), body: encodedBody)
-          .timeout(timeout);
+          .timeout(effectiveTimeout);
       isBackendOnline = true;
       return _handleResponse<T>(response, parser);
     } catch (e, st) {
@@ -287,14 +293,15 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 6),
+    Duration? timeout,
   }) async {
+    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
     try {
       final uri = _buildUri(path, queryParams);
       developer.log('DELETE $uri', name: 'ApiClient');
       final response = await http
           .delete(uri, headers: _buildHeaders(extraHeaders: headers))
-          .timeout(timeout);
+          .timeout(effectiveTimeout);
       isBackendOnline = true;
       return _handleResponse<T>(response, parser);
     } catch (e, st) {

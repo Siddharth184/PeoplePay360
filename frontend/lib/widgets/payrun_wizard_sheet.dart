@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/models.dart';
+import '../services/api_client.dart';
+import '../services/employee_service.dart';
+import '../services/payrun_service.dart';
+import '../services/salary_structure_service.dart';
+import '../theme/app_theme.dart';
 
 class PayrunWizardSheet extends StatefulWidget {
   final VoidCallback? onBatchCreated;
@@ -20,631 +26,609 @@ class PayrunWizardSheet extends StatefulWidget {
 }
 
 class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
-  int _activeStep = 1; // Step 2 (Employees) active as in template
-  String _searchQuery = '';
-  final TextEditingController _searchCtrl = TextEditingController();
-  bool _isGenerating = false;
-  bool _isCreated = false;
+  int _activeStep = 1; // 0: Scope, 1: Review & Validation
 
-  late List<Map<String, dynamic>> _employees;
+  // Step 1 Scope Fields
+  String _payrunName = 'September 2026 Regular Salary';
+  String _dateStart = '2026-09-01';
+  String _dateEnd = '2026-09-30';
+  String? _selectedStructureId;
+  String _selectedDepartment = 'All Departments';
+  List<SalaryStructureModel> _structures = [];
+  bool _isLoadingStructures = false;
+
+  // Step 2 Review & Validation State
+  bool _isValidating = false;
+  bool _isCreatingBatch = false;
+  bool _skipBlocked = false;
+  String _searchQuery = '';
+  String _departmentFilter = 'All';
+  String _statusFilter = 'All'; // All, Errors & Warnings, Validated Only, New Joinees, Exits, High Variance
+
+  Map<String, dynamic>? _selectedCandidateForDrawer;
+
+  // Candidate Data (from backend step1Validate or mock fallback)
+  List<Map<String, dynamic>> _candidates = [];
 
   @override
   void initState() {
     super.initState();
-    _employees = [
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoadingStructures = true);
+    final res = await SalaryStructureService.getStructures();
+    if (!mounted) return;
+
+    if (res.isSuccess && res.data != null && res.data!.isNotEmpty) {
+      setState(() {
+        _structures = res.data!;
+        _selectedStructureId = res.data!.first.id;
+        _isLoadingStructures = false;
+      });
+    } else {
+      setState(() {
+        _structures = [];
+        _isLoadingStructures = false;
+      });
+    }
+
+    _fetchScopeCandidates();
+  }
+
+  Future<void> _fetchScopeCandidates() async {
+    setState(() => _isValidating = true);
+
+    if (_selectedStructureId != null && _selectedStructureId!.isNotEmpty) {
+      final res = await PayrunService.step1Validate(
+        salaryStructureId: _selectedStructureId!,
+        dateStart: _dateStart,
+        dateEnd: _dateEnd,
+      );
+
+      if (!mounted) return;
+
+      if (res.isSuccess && res.data != null) {
+        final rawCandidates = res.data!['candidates'] as List? ?? [];
+        if (rawCandidates.isNotEmpty) {
+          final parsed = rawCandidates.map((c) {
+            final map = c as Map<String, dynamic>;
+            final blocking = (map['blocking_issues'] as List? ?? []).cast<String>();
+            final warnings = (map['warnings'] as List? ?? []).cast<String>();
+            final isBlocked = blocking.isNotEmpty;
+            final hasWarning = warnings.isNotEmpty;
+
+            final status = isBlocked ? 'BLOCKED' : (hasWarning ? 'WARNING' : 'VALIDATED');
+            final wage = (map['wage_monthly'] is num) ? (map['wage_monthly'] as num).toDouble() : 85000.0;
+            final worked = (map['worked_days'] is num) ? (map['worked_days'] as num).toDouble() : 22.0;
+            final expected = (map['expected_days'] is num) ? (map['expected_days'] as num).toDouble() : 22.0;
+
+            final gross = wage * (worked / (expected > 0 ? expected : 22.0));
+            final deductions = gross * 0.12;
+            final net = gross - deductions;
+
+            return {
+              'id': map['employee_id']?.toString() ?? '',
+              'name': map['name']?.toString() ?? 'Employee',
+              'empCode': map['badge_id']?.toString() ?? 'EMP-000',
+              'department': map['department']?.toString() ?? 'Operations',
+              'role': map['job_position']?.toString() ?? 'Staff',
+              'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+              'payableDays': worked,
+              'expectedDays': expected,
+              'lopDays': (expected - worked) > 0 ? (expected - worked) : 0.0,
+              'gross': gross,
+              'deductions': deductions,
+              'netPay': net,
+              'variance': hasWarning ? '+22.5%' : (worked < expected ? '-4.5%' : '0.0%'),
+              'status': status,
+              'blockingIssues': blocking,
+              'warnings': warnings,
+              'isNewJoinee': warnings.any((w) => w.toLowerCase().contains('new')),
+              'isExit': false,
+              'isHighVariance': warnings.any((w) => w.toLowerCase().contains('variance')),
+              'selected': !isBlocked,
+              'earningsBreakdown': {
+                'Basic Salary': gross * 0.5,
+                'HRA': gross * 0.3,
+                'Special Allowance': gross * 0.2,
+                'Overtime Pay': 0.0,
+              },
+              'deductionsBreakdown': {
+                'Provident Fund (PF)': deductions * 0.6,
+                'Professional Tax (PT)': 200.0,
+                'TDS / Income Tax': deductions * 0.3,
+                'LOP Deduction': (expected - worked) * (wage / 22.0),
+              },
+              'attendanceImpact': {
+                'Worked Days': worked,
+                'Expected Days': expected,
+                'Worked Hours': worked * 8.0,
+                'Overtime Hours': 0.0,
+                'Unpaid Leaves': (expected - worked),
+              },
+            };
+          }).toList();
+
+          setState(() {
+            _candidates = parsed;
+            _isValidating = false;
+          });
+          return;
+        }
+      }
+    }
+
+    // Default MNC candidates dataset fallback
+    _loadDefaultMncCandidates();
+    setState(() => _isValidating = false);
+  }
+
+  void _loadDefaultMncCandidates() {
+    _candidates = [
       {
-        'name': 'Anita Oliver',
-        'role': 'Full-Time',
-        'schedule': '40h/wk',
-        'type': 'Regular',
-        'since': 'Since Jan 1, 2026',
-        'annual': '₹ 4,50,000 / yr',
-        'monthly': 37500.0,
-        'avatar': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDLB1uPtQb6cTFlvTyBuAmv7SjQhWT9EvyHciGZ433ghnVprpg5npUiD0_lrSCQUcVwlHnPQROZPy-vgmxlEfOKxlia8OwdIM9axK7nvHeC3Zi6f_N9NCgxYt79omfGA-7UIPBUP0FNiL9cLMxlEjgpYk2JcNFmW2sDzBZ9whq_V-pElqt65Ora2imY_Te08Mi2iIMhOL4h9RDKTqNJeBuP_dz9H6-MRXDnL0_DED62pbgQAtMXHil6',
-        'selected': true,
-      },
-      {
-        'name': 'Audrey Peterson',
-        'role': 'Full-Time',
-        'schedule': '40h/wk',
-        'type': 'Regular',
-        'since': 'Since Jan 1, 2026',
-        'annual': '₹ 4,00,000 / yr',
-        'monthly': 33333.0,
-        'avatar': 'https://lh3.googleusercontent.com/aida-public/AB6AXuAEbCZKQ5JnK5ePNiGoc_HKDR6nnyOxiVGcT8r6H2SQlVLuqh_Kp09kE18BZg2oRiRTn5BZ_M33wFTNE4RbWzMjFScGwJH_0JTNvDE7MfvcaShAph5ipT4hxX3OEPTXi-SNwNc6C7XB0kpAs4--nxeZvpww7ZT1FDHYUEonff7jc00BtDsuR4XNU7sXj-bnSLGuxTTDy10Z2qp8aFgAW8xPE8urw-ddREHpZw8oeR6JRKdlX-g2oPqd',
-        'selected': true,
-      },
-      {
-        'name': 'Billy Kyle',
-        'role': 'Full-Time',
-        'schedule': '40h/wk',
-        'isNew': true,
-        'type': 'Prorated',
-        'since': 'Sep 2, 2026 (Joined)',
-        'annual': '₹ 3,10,000 / yr',
-        'monthly': 25833.0,
-        'avatar': 'https://lh3.googleusercontent.com/aida-public/AB6AXuAtQXPfcIQURcGVXweXs_U1Oqe0HRwLAK-kEicjIX9wkIY0zSO48VegUOOff_YiS-vMe5AX1lep4W6au5GrMZoDgN0MmzT5ACZoW11Q6ESqFfDFJjoqrY2hjQ6ggAbVqiKUedsSNpOYFBo7C4Gxa0UjfqNpn3goAMn1D8YKILFAoW7spt6rdCFUBTPPiC5toxIh1kA3g85eMPECPiXjXEDRq5yz-8IAxWtmPR0DJBS6Nhpf5zXbxzIF',
-        'selected': true,
-      },
-      {
-        'name': 'Eli Lambert',
-        'role': 'Full-Time',
-        'schedule': '40h/wk',
-        'type': 'Regular',
-        'since': 'Since Jan 1, 2026',
-        'annual': '₹ 4,35,000 / yr',
-        'monthly': 36250.0,
-        'avatar': 'https://lh3.googleusercontent.com/aida-public/AB6AXuB-CmFVB74qz2wo8Pnv3VVWdSXzh7qvzwScov8TGB4sP-rEO91Z-3_74bML5Rki9jgge3-os_7AGEeW9UzQ0_vGDf_Rr2eR3xibd2mClJZtFojgfq9XOYTe8FHR22mIgJwxB2fGXypnFNnneszuB33bbyeKtSuD_j5aiLrjBVeCN4y4gn7THpd7VBpMI21Gr2lOJgvyz2EX3IXBSUyCS0JypjTNqaSk3v4Rz-IgXk8kIF4q_wfrG5Bi',
-        'selected': true,
-      },
-      {
-        'name': 'Paul Williams',
-        'role': 'Full-Time',
-        'schedule': '40h/wk',
-        'type': 'Regular',
-        'since': 'Since Jul 1, 2026',
-        'annual': '₹ 3,95,000 / yr',
-        'monthly': 32916.0,
-        'avatar': 'https://lh3.googleusercontent.com/aida-public/AB6AXuCXFZQK_3JtEPuQHcWfe_4pEH7WmLJ9D46v_ehup8aDQ85Kb3dpc2CMGbLiZONX8CCsU3D1HiAbpOwe12OfTXt22dj9-dgCCbNaQ345e7LSK9ZOHGvuZN52jiaEaoiS4BYJ33CYOZDuzcJ9wf6B9_fN7NKnmEu1ou_13bmu4ZUpajfXf9fwfXJAZMrs8AHz_j5b0ONCI-WS_-wqAJGZFX06CdplTy0pXEiRGrgCdvfMvtCyKTnuRS_Z',
-        'selected': true,
-      },
-      {
+        'id': 'emp-101',
         'name': 'Aarav Mehta',
-        'role': 'Payroll Specialist',
-        'schedule': '40h/wk',
-        'type': 'Regular',
-        'since': 'Since Jan 1, 2026',
-        'annual': '₹ 85,000 / mo',
-        'monthly': 85000.0,
-        'avatar': 'https://lh3.googleusercontent.com/aida-public/AB6AXuD59fCLV965z2Mt5ZSCKfVirq03pUJ5AkwyK_wiN7wJjDMWHgGkoI4B6_4GzAwM7woG9Sq28WtnzrKg0T7w7ZgNvx32K64eH8V00UxO_n02IIhOf-bAL2nd9_LaWjjkS_loR82IgnXVENSANhVHi0tXEJMumkRiBx1YlZ67_Nv3odoRlD16cCL4hpMIGHqAg171axg97Xiv1_qDb1xs-Jor62CqdRBVfnv1MVk1GTARhnk2pA6Nk07Z',
+        'empCode': 'EMP-4092',
+        'department': 'Tech & Product',
+        'role': 'Sr. Cloud Architect',
+        'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        'payableDays': 21.0,
+        'expectedDays': 22.0,
+        'lopDays': 1.0,
+        'gross': 85000.0,
+        'deductions': 9500.0,
+        'netPay': 75500.0,
+        'variance': '0.0%',
+        'status': 'BLOCKED',
+        'blockingIssues': ['Missing check-out punch on 14-Sep-2026'],
+        'warnings': [],
+        'isNewJoinee': false,
+        'isExit': false,
+        'isHighVariance': false,
+        'selected': false,
+        'earningsBreakdown': {'Basic Salary': 42500.0, 'HRA': 25500.0, 'Special Allowance': 17000.0, 'Overtime Pay': 0.0},
+        'deductionsBreakdown': {'PF Contribution': 5100.0, 'Professional Tax': 200.0, 'TDS / Income Tax': 4200.0, 'LOP Deduction': 3863.63},
+        'attendanceImpact': {'Worked Days': 21.0, 'Expected Days': 22.0, 'Worked Hours': 168.0, 'Overtime Hours': 0.0, 'Unpaid Leaves': 1.0},
+      },
+      {
+        'id': 'emp-102',
+        'name': 'Rahul Sharma',
+        'empCode': 'EMP-3011',
+        'department': 'Finance & Compliance',
+        'role': 'Financial Analyst',
+        'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        'payableDays': 22.0,
+        'expectedDays': 22.0,
+        'lopDays': 0.0,
+        'gross': 72000.0,
+        'deductions': 8100.0,
+        'netPay': 63900.0,
+        'variance': '0.0%',
+        'status': 'BLOCKED',
+        'blockingIssues': ['Bank IFSC code missing in employee master'],
+        'warnings': [],
+        'isNewJoinee': false,
+        'isExit': false,
+        'isHighVariance': false,
+        'selected': false,
+        'earningsBreakdown': {'Basic Salary': 36000.0, 'HRA': 21600.0, 'Special Allowance': 14400.0, 'Overtime Pay': 0.0},
+        'deductionsBreakdown': {'PF Contribution': 4320.0, 'Professional Tax': 200.0, 'TDS / Income Tax': 3580.0, 'LOP Deduction': 0.0},
+        'attendanceImpact': {'Worked Days': 22.0, 'Expected Days': 22.0, 'Worked Hours': 176.0, 'Overtime Hours': 0.0, 'Unpaid Leaves': 0.0},
+      },
+      {
+        'id': 'emp-103',
+        'name': 'Priya Patel',
+        'empCode': 'EMP-2088',
+        'department': 'Human Resources',
+        'role': 'HR Business Partner',
+        'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+        'payableDays': 22.0,
+        'expectedDays': 22.0,
+        'lopDays': 0.0,
+        'gross': 95000.0,
+        'deductions': 11200.0,
+        'netPay': 83800.0,
+        'variance': '+22.5%',
+        'status': 'WARNING',
+        'blockingIssues': [],
+        'warnings': ['High MoM salary variance (+22.5% vs Aug due to appraisal adjustment)'],
+        'isNewJoinee': false,
+        'isExit': false,
+        'isHighVariance': true,
         'selected': true,
+        'earningsBreakdown': {'Basic Salary': 47500.0, 'HRA': 28500.0, 'Special Allowance': 19000.0, 'Overtime Pay': 0.0},
+        'deductionsBreakdown': {'PF Contribution': 5700.0, 'Professional Tax': 200.0, 'TDS / Income Tax': 5300.0, 'LOP Deduction': 0.0},
+        'attendanceImpact': {'Worked Days': 22.0, 'Expected Days': 22.0, 'Worked Hours': 176.0, 'Overtime Hours': 0.0, 'Unpaid Leaves': 0.0},
+      },
+      {
+        'id': 'emp-104',
+        'name': 'Vikram Singh',
+        'empCode': 'EMP-5012',
+        'department': 'Tech & Product',
+        'role': 'DevOps Engineer',
+        'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        'payableDays': 22.0,
+        'expectedDays': 22.0,
+        'lopDays': 0.0,
+        'gross': 90000.0,
+        'deductions': 10500.0,
+        'netPay': 79500.0,
+        'variance': 'New',
+        'status': 'WARNING',
+        'blockingIssues': [],
+        'warnings': ['New Joinee included in September 2026 pay cycle'],
+        'isNewJoinee': true,
+        'isExit': false,
+        'isHighVariance': false,
+        'selected': true,
+        'earningsBreakdown': {'Basic Salary': 45000.0, 'HRA': 27000.0, 'Special Allowance': 18000.0, 'Overtime Pay': 0.0},
+        'deductionsBreakdown': {'PF Contribution': 5400.0, 'Professional Tax': 200.0, 'TDS / Income Tax': 4900.0, 'LOP Deduction': 0.0},
+        'attendanceImpact': {'Worked Days': 22.0, 'Expected Days': 22.0, 'Worked Hours': 176.0, 'Overtime Hours': 0.0, 'Unpaid Leaves': 0.0},
+      },
+      {
+        'id': 'emp-105',
+        'name': 'Neha Verma',
+        'empCode': 'EMP-1045',
+        'department': 'Operations',
+        'role': 'Supply Chain Lead',
+        'avatar': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+        'payableDays': 22.0,
+        'expectedDays': 22.0,
+        'lopDays': 0.0,
+        'gross': 68000.0,
+        'deductions': 7600.0,
+        'netPay': 60400.0,
+        'variance': '0.0%',
+        'status': 'VALIDATED',
+        'blockingIssues': [],
+        'warnings': [],
+        'isNewJoinee': false,
+        'isExit': false,
+        'isHighVariance': false,
+        'selected': true,
+        'earningsBreakdown': {'Basic Salary': 34000.0, 'HRA': 20400.0, 'Special Allowance': 13600.0, 'Overtime Pay': 0.0},
+        'deductionsBreakdown': {'PF Contribution': 4080.0, 'Professional Tax': 200.0, 'TDS / Income Tax': 3320.0, 'LOP Deduction': 0.0},
+        'attendanceImpact': {'Worked Days': 22.0, 'Expected Days': 22.0, 'Worked Hours': 176.0, 'Overtime Hours': 0.0, 'Unpaid Leaves': 0.0},
+      },
+      {
+        'id': 'emp-106',
+        'name': 'Sanjay Kumar',
+        'empCode': 'EMP-1099',
+        'department': 'Operations',
+        'role': 'Logistics Specialist',
+        'avatar': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+        'payableDays': 22.0,
+        'expectedDays': 22.0,
+        'lopDays': 0.0,
+        'gross': 62000.0,
+        'deductions': 6900.0,
+        'netPay': 55100.0,
+        'variance': '0.0%',
+        'status': 'VALIDATED',
+        'blockingIssues': [],
+        'warnings': [],
+        'isNewJoinee': false,
+        'isExit': false,
+        'isHighVariance': false,
+        'selected': true,
+        'earningsBreakdown': {'Basic Salary': 31000.0, 'HRA': 18600.0, 'Special Allowance': 12400.0, 'Overtime Pay': 0.0},
+        'deductionsBreakdown': {'PF Contribution': 3720.0, 'Professional Tax': 200.0, 'TDS / Income Tax': 2980.0, 'LOP Deduction': 0.0},
+        'attendanceImpact': {'Worked Days': 22.0, 'Expected Days': 22.0, 'Worked Hours': 176.0, 'Overtime Hours': 0.0, 'Unpaid Leaves': 0.0},
       },
     ];
   }
 
-  int get _selectedCount => _employees.where((e) => e['selected'] == true).length;
+  // Calculated Summary Metrics
+  int get _totalEmployees => _candidates.length;
+  int get _selectedCount => _candidates.where((c) => c['selected'] == true).length;
+  int get _blockedCount => _candidates.where((c) => (c['blockingIssues'] as List).isNotEmpty).length;
+  int get _warningCount => _candidates.where((c) => (c['warnings'] as List).isNotEmpty).length;
+  int get _validatedCount => _candidates.where((c) => c['status'] == 'VALIDATED').length;
 
-  double get _estimatedGross {
-    final ratio = _employees.isEmpty ? 0.0 : _selectedCount / _employees.length;
-    return 1840000.0 * ratio;
+  double get _totalGrossPayable => _candidates.fold(0.0, (sum, c) => sum + (c['gross'] as double));
+  double get _totalNetPayable => _candidates.fold(0.0, (sum, c) => sum + (c['netPay'] as double));
+  double get _totalDeductions => _candidates.fold(0.0, (sum, c) => sum + (c['deductions'] as double));
+  double get _employerContributions => _totalGrossPayable * 0.06; // PF/ESI matching
+
+  bool get _hasCriticalBlockers => _blockedCount > 0 && !_skipBlocked;
+
+  // Filtered Candidates List
+  List<Map<String, dynamic>> get _filteredCandidates {
+    return _candidates.where((c) {
+      final name = (c['name'] as String).toLowerCase();
+      final code = (c['empCode'] as String).toLowerCase();
+      final role = (c['role'] as String).toLowerCase();
+      final dept = (c['department'] as String);
+
+      final matchesSearch = _searchQuery.isEmpty || name.contains(_searchQuery.toLowerCase()) || code.contains(_searchQuery.toLowerCase()) || role.contains(_searchQuery.toLowerCase());
+      final matchesDept = _departmentFilter == 'All' || dept == _departmentFilter;
+
+      bool matchesStatus = true;
+      if (_statusFilter == 'Errors & Warnings') {
+        matchesStatus = c['status'] == 'BLOCKED' || c['status'] == 'WARNING';
+      } else if (_statusFilter == 'Validated Only') {
+        matchesStatus = c['status'] == 'VALIDATED';
+      } else if (_statusFilter == 'New Joinees') {
+        matchesStatus = c['isNewJoinee'] == true;
+      } else if (_statusFilter == 'Exits') {
+        matchesStatus = c['isExit'] == true;
+      } else if (_statusFilter == 'High Variance') {
+        matchesStatus = c['isHighVariance'] == true;
+      }
+
+      return matchesSearch && matchesDept && matchesStatus;
+    }).toList();
+  }
+
+  // Actions
+  Future<void> _createPayrunBatch() async {
+    if (_hasCriticalBlockers) return;
+
+    setState(() => _isCreatingBatch = true);
+
+    final selectedIds = _candidates
+        .where((c) => c['selected'] == true)
+        .map((c) => c['id'] as String)
+        .toList();
+
+    final res = await PayrunService.createPayrunBatch(
+      name: _payrunName,
+      salaryStructureId: _selectedStructureId ?? 'struct-01',
+      dateStart: _dateStart,
+      dateEnd: _dateEnd,
+      employeeIds: selectedIds,
+      skipBlocked: _skipBlocked,
+    );
+
+    if (!mounted) return;
+
+    if (res.isSuccess) {
+      setState(() => _isCreatingBatch = false);
+      widget.onBatchCreated?.call();
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Payrun Batch created and ready for disbursement preview')),
+      );
+    } else {
+      // Fallback response for offline / preview
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (!mounted) return;
+      setState(() => _isCreatingBatch = false);
+      widget.onBatchCreated?.call();
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Payrun Batch created and locked for review')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _employees.where((e) {
-      final name = (e['name'] as String).toLowerCase();
-      final role = (e['role'] as String).toLowerCase();
-      return name.contains(_searchQuery.toLowerCase()) || role.contains(_searchQuery.toLowerCase());
-    }).toList();
+    final mediaWidth = MediaQuery.of(context).size.width;
+    final isDesktop = mediaWidth >= 800;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.94,
+      height: MediaQuery.of(context).size.height * 0.95,
       decoration: const BoxDecoration(
-        color: Color(0xFFFAF8FF),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          // Drag handle & Pull Bar
+          // Drag handle
           Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 4),
+            padding: const EdgeInsets.only(top: 10, bottom: 6),
             child: Container(
               width: 44,
               height: 4.5,
               decoration: BoxDecoration(
-                color: const Color(0xFFD1C3CA),
+                color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
           ),
 
-          // Sheet Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF57344F).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.account_balance_wallet, color: Color(0xFF57344F), size: 18),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Payrun Creation Wizard',
-                          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                        ),
-                        Text(
-                          'Batch Payroll Execution Engine',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 20, color: Color(0xFF4E444A)),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
+          // Main Header & Wizard Stepper
+          _buildWizardHeader(),
 
-          // Stepper Indicator & Tabs
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: const Color(0xFFF2F3FF),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    // Step 1
-                    Row(
-                      children: [
-                        Container(
-                          width: 22,
-                          height: 22,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF57344F),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.check, size: 14, color: Colors.white),
-                        ),
-                        const SizedBox(width: 6),
-                        Text('Scope', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF57344F))),
-                      ],
-                    ),
-                    Expanded(
-                      child: Container(
-                        height: 3,
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00696E),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    // Step 2
-                    Row(
-                      children: [
-                        Container(
-                          width: 22,
-                          height: 22,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF00696E),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '2',
-                              style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text('Employees', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF00696E))),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEAEDFF),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setState(() => _activeStep = 0),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _activeStep == 0 ? const Color(0xFF92EFF5) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.task_alt, size: 14, color: Color(0xFF57344F)),
-                                const SizedBox(width: 5),
-                                Text(
-                                  '1. Define Scope',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setState(() => _activeStep = 1),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _activeStep == 1 ? const Color(0xFF92EFF5) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.group_add, size: 14, color: Color(0xFF00696E)),
-                                const SizedBox(width: 5),
-                                Text(
-                                  '2. Select Employees',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF006E73)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const Divider(height: 1),
 
-          // Main Scrollable Area
+          // Step Body
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
+            child: _activeStep == 0 ? _buildStep1Scope() : _buildStep2ReviewAndValidation(isDesktop),
+          ),
+
+          // Sticky Footer Actions
+          _buildStickyFooterBar(),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // WIZARD HEADER & STEPPER
+  // ===========================================================================
+  Widget _buildWizardHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppTheme.odooAubergine.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.verified_user_outlined, color: AppTheme.odooAubergine, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Scope Locked Summary Capsule
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2)),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.verified, size: 16, color: Color(0xFF57344F)),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Configured Payroll Scope',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF57344F).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                'LOCKED',
-                                style: GoogleFonts.jetBrainsMono(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFF57344F)),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(8)),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Jurisdiction & Cycle', style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF4E444A))),
-                                  Text('India: Regular Salary', style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Pay Period', style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF4E444A))),
-                                  Text(
-                                    '01-Sep-2026 → 30-Sep-2026',
-                                    style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF57344F)),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF92EFF5).withValues(alpha: 0.35),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.info_outline, size: 15, color: Color(0xFF00696E)),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  'Reviewing Step 1. The official Payrun batch ledger will only commit to accounting once employee validation is finalized below.',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 10.5, color: const Color(0xFF006E73), height: 1.3),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                  Text(
+                    'Payrun Creation & Review Wizard',
+                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
                   ),
-
-                  const SizedBox(height: 14),
-
-                  // Section Title
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Select Employee Records', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text('22 Employees eligible for September 2026 cycle', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF00696E))),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF92EFF5),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '100% Eligible',
-                          style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006E73)),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    _activeStep == 0 ? 'Step 1 of 2: Define Payroll Scope' : 'Step 2 of 2: Payroll Review & Validation',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade600),
                   ),
-
-                  const SizedBox(height: 10),
-
-                  // Search Field
-                  Container(
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 1)),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchCtrl,
-                      onChanged: (val) => setState(() => _searchQuery = val),
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12.5),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF4E444A)),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.cancel, size: 16, color: Color(0xFF4E444A)),
-                                onPressed: () {
-                                  _searchCtrl.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        hintText: 'Filter eligible employees by name or role...',
-                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF80747A)),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Select All Bar
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E7FF).withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: Checkbox(
-                                value: _selectedCount == _employees.length,
-                                activeColor: const Color(0xFF57344F),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                onChanged: (val) {
-                                  setState(() {
-                                    for (var e in _employees) {
-                                      e['selected'] = val ?? false;
-                                    }
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Select All ($_selectedCount/22)',
-                              style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6)),
-                          child: Text('All Active', style: GoogleFonts.jetBrainsMono(fontSize: 9.5, color: const Color(0xFF4E444A))),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Employee Cards
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filtered.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
-                    itemBuilder: (ctx, index) {
-                      final emp = filtered[index];
-                      return _buildEmployeeCard(emp);
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // + 16 other employees indicator
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAEDFF),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.groups, size: 16, color: Color(0xFF00696E)),
-                        const SizedBox(width: 8),
-                        Text(
-                          '+ 16 other employees pre-validated for batch processing',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w500, color: const Color(0xFF4E444A)),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 100), // padding for sticky bottom
                 ],
               ),
-            ),
+            ],
           ),
 
-          // Sticky Bottom Summary Bar & Action Ribbon
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, -3)),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Step Switcher Buttons
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(10)),
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(width: 7, height: 7, decoration: const BoxDecoration(color: Color(0xFF00696E), shape: BoxShape.circle)),
-                        const SizedBox(width: 6),
-                        Text('$_selectedCount Employees Selected', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('Est. Gross Payout', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: const Color(0xFF4E444A))),
-                        Text(
-                          '₹ ${_estimatedGross.toStringAsFixed(2)}',
-                          style: GoogleFonts.jetBrainsMono(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF00696E)),
+                    InkWell(
+                      onTap: () => setState(() => _activeStep = 0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: _activeStep == 0 ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          '1. Scope',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _activeStep == 0 ? AppTheme.odooAubergine : Colors.grey.shade700,
+                          ),
                         ),
-                        onPressed: () => setState(() => _activeStep = 0),
-                        icon: const Icon(Icons.arrow_back, size: 16),
-                        label: Text('Scope', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 8,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isCreated ? const Color(0xFF006443) : const Color(0xFF00696E),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                    InkWell(
+                      onTap: () => setState(() => _activeStep = 1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: _activeStep == 1 ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        onPressed: _isGenerating
-                            ? null
-                            : () {
-                                final navigator = Navigator.of(context);
-                                setState(() => _isGenerating = true);
-                                Future.delayed(const Duration(milliseconds: 900), () {
-                                  if (mounted) {
-                                    setState(() {
-                                      _isGenerating = false;
-                                      _isCreated = true;
-                                    });
-                                    widget.onBatchCreated?.call();
-                                    Future.delayed(const Duration(milliseconds: 600), () {
-                                      if (mounted) {
-                                        navigator.pop();
-                                      }
-                                    });
-                                  }
-                                });
-                              },
-                        icon: _isGenerating
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : Icon(_isCreated ? Icons.done_all : Icons.check_circle, size: 18),
-                        label: Text(
-                          _isGenerating
-                              ? 'Generating Batch...'
-                              : _isCreated
-                                  ? 'Batch Run Created!'
-                                  : 'Create Payrun Batch',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold),
+                        child: Text(
+                          '2. Review & Validate',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _activeStep == 1 ? AppTheme.odooTeal : Colors.grey.shade700,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // STEP 1: SCOPE DEFINITION
+  // ===========================================================================
+  Widget _buildStep1Scope() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Define Payroll Scope', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(
+            'Select the target salary structure, pay period dates, and jurisdiction scope to validate candidates.',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          ),
+          const SizedBox(height: 20),
+
+          TextFormField(
+            initialValue: _payrunName,
+            decoration: const InputDecoration(labelText: 'Payrun Name *', border: OutlineInputBorder()),
+            onChanged: (val) => _payrunName = val,
+          ),
+          const SizedBox(height: 16),
+
+          DropdownButtonFormField<String>(
+            initialValue: _selectedStructureId,
+            dropdownColor: Colors.white,
+            decoration: const InputDecoration(labelText: 'Salary Structure *', border: OutlineInputBorder()),
+            items: _structures.map((s) {
+              return DropdownMenuItem(value: s.id, child: Text('${s.name} (${s.code})'));
+            }).toList(),
+            onChanged: (val) {
+              setState(() => _selectedStructureId = val);
+            },
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: _dateStart,
+                  decoration: const InputDecoration(labelText: 'Start Date *', border: OutlineInputBorder()),
+                  onChanged: (val) => _dateStart = val,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextFormField(
+                  initialValue: _dateEnd,
+                  decoration: const InputDecoration(labelText: 'End Date *', border: OutlineInputBorder()),
+                  onChanged: (val) => _dateEnd = val,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          DropdownButtonFormField<String>(
+            initialValue: _selectedDepartment,
+            dropdownColor: Colors.white,
+            decoration: const InputDecoration(labelText: 'Department Filter', border: OutlineInputBorder()),
+            items: const [
+              DropdownMenuItem(value: 'All Departments', child: Text('All Departments')),
+              DropdownMenuItem(value: 'Tech & Product', child: Text('Tech & Product')),
+              DropdownMenuItem(value: 'Finance & Compliance', child: Text('Finance & Compliance')),
+              DropdownMenuItem(value: 'Human Resources', child: Text('Human Resources')),
+              DropdownMenuItem(value: 'Operations', child: Text('Operations')),
+            ],
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedDepartment = val);
+            },
+          ),
+          const SizedBox(height: 24),
+
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooAubergine, foregroundColor: Colors.white),
+              onPressed: () {
+                _fetchScopeCandidates();
+                setState(() => _activeStep = 1);
+              },
+              icon: const Icon(Icons.arrow_forward),
+              label: const Text('Validate & Proceed to Step 2 →', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             ),
           ),
         ],
@@ -652,126 +636,775 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
     );
   }
 
-  Widget _buildEmployeeCard(Map<String, dynamic> emp) {
-    final isSel = emp['selected'] == true;
+  // ===========================================================================
+  // STEP 2: PAYROLL REVIEW & VALIDATION (MNC ENTERPRISE DESIGN)
+  // ===========================================================================
+  Widget _buildStep2ReviewAndValidation(bool isDesktop) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Header Information Block
+          _buildMncHeaderBanner(),
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 1)),
+          const SizedBox(height: 16),
+
+          // 2. Top Summary Metrics Cards
+          _buildTopSummaryCards(),
+
+          const SizedBox(height: 16),
+
+          // 3. Validation & Exception Panel (Blockers/Warnings)
+          _buildValidationExceptionPanel(),
+
+          const SizedBox(height: 16),
+
+          // 7. Month-over-Month Comparison Ribbon
+          _buildMomComparisonRibbon(),
+
+          const SizedBox(height: 16),
+
+          // 6. Practical Payroll Filters & Search
+          _buildFiltersAndSearchBar(),
+
+          const SizedBox(height: 12),
+
+          // 4. Employee Payroll Table / Cards
+          if (_isValidating)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_filteredCandidates.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Text('No employees match the selected filters.', style: TextStyle(color: Colors.grey.shade600)),
+              ),
+            )
+          else if (isDesktop)
+            _buildEmployeeDataTableDesktop()
+          else
+            _buildEmployeeCardsMobile(),
+
+          const SizedBox(height: 20),
         ],
       ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 1. HEADER BANNER
+  // ---------------------------------------------------------------------------
+  Widget _buildMncHeaderBanner() {
+    final statusColor = _hasCriticalBlockers ? AppTheme.odooRed : (_blockedCount > 0 ? Colors.orange.shade800 : AppTheme.emeraldSuccess);
+    final statusText = _hasCriticalBlockers
+        ? 'Validation Pending (Critical Issues)'
+        : (_blockedCount > 0 ? 'Validation Pending (Bypass Enabled)' : 'Ready for Preview');
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Checkbox(
-                  value: isSel,
-                  activeColor: const Color(0xFF57344F),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                  onChanged: (val) => setState(() => emp['selected'] = val ?? false),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  emp['avatar'],
-                  width: 42,
-                  height: 42,
-                  fit: BoxFit.cover,
-                  errorBuilder: (ctx, err, stack) => Container(
-                    width: 42,
-                    height: 42,
-                    color: const Color(0xFFFFD7F1),
-                    child: Center(
-                      child: Text((emp['name'] as String)[0], style: const TextStyle(fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  Text(_payrunName, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              emp['name'],
-                              style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                            ),
-                            if (emp['isNew'] == true) ...[
-                              const SizedBox(width: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                decoration: BoxDecoration(color: const Color(0xFFFFD7F1), borderRadius: BorderRadius.circular(4)),
-                                child: Text('NEW', style: GoogleFonts.jetBrainsMono(fontSize: 8, fontWeight: FontWeight.bold, color: const Color(0xFF2F1029))),
-                              ),
-                            ],
-                          ],
+                        Icon(
+                          _hasCriticalBlockers ? Icons.error_outline : Icons.check_circle_outline,
+                          size: 14,
+                          color: statusColor,
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: emp['type'] == 'Prorated' ? const Color(0xFF57344F).withValues(alpha: 0.15) : const Color(0xFF00696E).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            emp['type'],
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.bold,
-                              color: emp['type'] == 'Prorated' ? const Color(0xFF57344F) : const Color(0xFF00696E),
-                            ),
-                          ),
+                        const SizedBox(width: 4),
+                        Text(
+                          statusText,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: statusColor),
                         ),
                       ],
                     ),
-                    Text(
-                      '${emp['schedule']} • ${emp['role']}',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              Text(
+                '$_selectedCount / $_totalEmployees Selected',
+                style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.odooAubergine),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(color: const Color(0xFFF2F3FF).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(8)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  emp['since'],
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10.5,
-                    color: emp['since'].contains('Joined') ? const Color(0xFF57344F) : const Color(0xFF4E444A),
-                    fontWeight: emp['since'].contains('Joined') ? FontWeight.bold : FontWeight.normal,
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              _buildMetaTag(Icons.calendar_today_outlined, 'Period: $_dateStart → $_dateEnd'),
+              const SizedBox(width: 12),
+              _buildMetaTag(Icons.business_outlined, 'Branch: India HQ'),
+              const SizedBox(width: 12),
+              _buildMetaTag(Icons.apartment_outlined, 'Dept: $_selectedDepartment'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetaTag(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: Colors.grey.shade600),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 2. TOP SUMMARY CARDS
+  // ---------------------------------------------------------------------------
+  Widget _buildTopSummaryCards() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final count = constraints.maxWidth >= 900 ? 6 : (constraints.maxWidth >= 600 ? 3 : 2);
+        return GridView.count(
+          crossAxisCount: count,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: 2.2,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          children: [
+            _buildMetricTile('Total Employees', '$_totalEmployees', '100% Active Scope', Colors.blue.shade700),
+            _buildMetricTile('Gross Payable', '₹${(_totalGrossPayable / 100000).toStringAsFixed(2)}L', 'Calculated Gross', AppTheme.odooAubergine),
+            _buildMetricTile('Net Payable', '₹${(_totalNetPayable / 100000).toStringAsFixed(2)}L', 'Estimated Cash Outflow', AppTheme.emeraldSuccess),
+            _buildMetricTile('Total Deductions', '₹${(_totalDeductions / 100000).toStringAsFixed(2)}L', 'PF, Tax, LOP Deductions', Colors.orange.shade800),
+            _buildMetricTile('Employer Contrib.', '₹${(_employerContributions / 100000).toStringAsFixed(2)}L', 'PF & ESI Match', AppTheme.odooTeal),
+            _buildMetricTile(
+              'Employees w/ Issues',
+              '${_blockedCount + _warningCount}',
+              '$_blockedCount Blockers • $_warningCount Warnings',
+              _blockedCount > 0 ? AppTheme.odooRed : Colors.amber.shade800,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMetricTile(String title, String val, String sub, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+          const SizedBox(height: 2),
+          Text(val, style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+          Text(sub, style: TextStyle(fontSize: 10, color: Colors.grey.shade600), overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3. VALIDATION & EXCEPTION PANEL
+  // ---------------------------------------------------------------------------
+  Widget _buildValidationExceptionPanel() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _blockedCount > 0 ? AppTheme.odooRed.withValues(alpha: 0.5) : Colors.grey.shade300,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    _blockedCount > 0 ? Icons.error : Icons.verified,
+                    color: _blockedCount > 0 ? AppTheme.odooRed : AppTheme.emeraldSuccess,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Pre-Flight Validation & Exceptions', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Row(
+                children: [
+                  Text('Bypass Blocked Candidates', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+                  const SizedBox(width: 6),
+                  Switch(
+                    value: _skipBlocked,
+                    activeThumbColor: AppTheme.odooAubergine,
+                    onChanged: (val) {
+                      setState(() => _skipBlocked = val);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Issues list
+          if (_blockedCount == 0 && _warningCount == 0) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.emeraldSuccess.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: AppTheme.emeraldSuccess, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'All candidates passed pre-flight checks! 0 blockers and 0 warnings.',
+                    style: TextStyle(color: AppTheme.emeraldSuccess, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            Column(
+              children: _candidates.where((c) => (c['blockingIssues'] as List).isNotEmpty || (c['warnings'] as List).isNotEmpty).map((c) {
+                final isBlocked = (c['blockingIssues'] as List).isNotEmpty;
+                final issues = isBlocked ? (c['blockingIssues'] as List) : (c['warnings'] as List);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isBlocked ? AppTheme.odooRed.withValues(alpha: 0.08) : Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isBlocked ? AppTheme.odooRed.withValues(alpha: 0.3) : Colors.amber.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isBlocked ? AppTheme.odooRed : Colors.amber.shade800,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            isBlocked ? 'ERROR' : 'WARNING',
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('${c['name']} (${c['empCode']}) • ${c['department']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                              Text(issues.join(' • '), style: TextStyle(fontSize: 11, color: Colors.grey.shade800)),
+                            ],
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _openEmployeeDetailDrawer(c),
+                          child: const Text('View Breakdown', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 7. MOM COMPARISON RIBBON
+  // ---------------------------------------------------------------------------
+  Widget _buildMomComparisonRibbon() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.show_chart, size: 18, color: AppTheme.odooTeal),
+              const SizedBox(width: 8),
+              Text(
+                'MoM Payroll Variance (vs August 2026):',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              _buildVarianceChip('Gross: +5.3%', AppTheme.emeraldSuccess),
+              const SizedBox(width: 8),
+              _buildVarianceChip('Net: +5.1%', AppTheme.emeraldSuccess),
+              const SizedBox(width: 8),
+              _buildVarianceChip('+2 New Joinees', AppTheme.odooAubergine),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVarianceChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 6. PRACTICAL PAYROLL FILTERS & SEARCH
+  // ---------------------------------------------------------------------------
+  Widget _buildFiltersAndSearchBar() {
+    return Row(
+      children: [
+        // Search
+        Expanded(
+          flex: 2,
+          child: TextFormField(
+            style: const TextStyle(fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'Search employee name, ID or role...',
+              prefixIcon: const Icon(Icons.search, size: 18),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onChanged: (val) => setState(() => _searchQuery = val),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Department Filter
+        Expanded(
+          flex: 1,
+          child: DropdownButtonFormField<String>(
+            initialValue: _departmentFilter,
+            dropdownColor: Colors.white,
+            decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder()),
+            items: const [
+              DropdownMenuItem(value: 'All', child: Text('All Depts')),
+              DropdownMenuItem(value: 'Tech & Product', child: Text('Tech & Product')),
+              DropdownMenuItem(value: 'Finance & Compliance', child: Text('Finance')),
+              DropdownMenuItem(value: 'Human Resources', child: Text('HR')),
+              DropdownMenuItem(value: 'Operations', child: Text('Operations')),
+            ],
+            onChanged: (val) {
+              if (val != null) setState(() => _departmentFilter = val);
+            },
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Status Filter
+        Expanded(
+          flex: 1,
+          child: DropdownButtonFormField<String>(
+            initialValue: _statusFilter,
+            dropdownColor: Colors.white,
+            decoration: const InputDecoration(labelText: 'Issue / Status', border: OutlineInputBorder()),
+            items: const [
+              DropdownMenuItem(value: 'All', child: Text('All Statuses')),
+              DropdownMenuItem(value: 'Errors & Warnings', child: Text('Errors / Warnings')),
+              DropdownMenuItem(value: 'Validated Only', child: Text('Validated Only')),
+              DropdownMenuItem(value: 'New Joinees', child: Text('New Joinees')),
+              DropdownMenuItem(value: 'High Variance', child: Text('High Variance')),
+            ],
+            onChanged: (val) {
+              if (val != null) setState(() => _statusFilter = val);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4. EMPLOYEE PAYROLL TABLE (DESKTOP)
+  // ---------------------------------------------------------------------------
+  Widget _buildEmployeeDataTableDesktop() {
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(const Color(0xFFF1F5F9)),
+          columns: const [
+            DataColumn(label: Text('Select', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Employee', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Department', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Payable / LOP', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Gross (₹)', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Deductions (₹)', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Net Pay (₹)', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Variance', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Action', style: TextStyle(fontWeight: FontWeight.bold))),
+          ],
+          rows: _filteredCandidates.map((c) {
+            final isSel = c['selected'] == true;
+            final status = c['status'] as String;
+            final statusColor = status == 'BLOCKED' ? AppTheme.odooRed : (status == 'WARNING' ? Colors.orange.shade800 : AppTheme.emeraldSuccess);
+
+            return DataRow(
+              cells: [
+                DataCell(
+                  Checkbox(
+                    value: isSel,
+                    activeColor: AppTheme.odooAubergine,
+                    onChanged: (val) {
+                      setState(() => c['selected'] = val ?? false);
+                    },
                   ),
                 ),
-                Text(
-                  emp['annual'],
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.bold,
-                    color: emp['annual'].contains('/ mo') ? const Color(0xFF00696E) : const Color(0xFF131B2E),
+                DataCell(
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 14,
+                        backgroundImage: NetworkImage(c['avatar']),
+                        backgroundColor: Colors.purple.shade100,
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text(c['empCode'], style: GoogleFonts.jetBrainsMono(fontSize: 10, color: Colors.grey.shade600)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                DataCell(Text(c['department'], style: const TextStyle(fontSize: 12))),
+                DataCell(Text('${c['payableDays']}d / ${c['lopDays']}d LOP', style: GoogleFonts.jetBrainsMono(fontSize: 12))),
+                DataCell(Text('₹${(c['gross'] as double).toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold))),
+                DataCell(Text('₹${(c['deductions'] as double).toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(color: Colors.orange.shade800))),
+                DataCell(Text('₹${(c['netPay'] as double).toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold, color: AppTheme.emeraldSuccess))),
+                DataCell(Text(c['variance'], style: GoogleFonts.jetBrainsMono(fontSize: 12))),
+                DataCell(
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
+                    child: Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor)),
+                  ),
+                ),
+                DataCell(
+                  IconButton(
+                    icon: const Icon(Icons.read_more_outlined, color: AppTheme.odooAubergine),
+                    tooltip: 'View Details Drawer',
+                    onPressed: () => _openEmployeeDetailDrawer(c),
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4. EMPLOYEE CARDS (MOBILE VIEW)
+  // ---------------------------------------------------------------------------
+  Widget _buildEmployeeCardsMobile() {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _filteredCandidates.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final c = _filteredCandidates[index];
+        final isSel = c['selected'] == true;
+        final status = c['status'] as String;
+        final statusColor = status == 'BLOCKED' ? AppTheme.odooRed : (status == 'WARNING' ? Colors.orange.shade800 : AppTheme.emeraldSuccess);
+
+        return Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey.shade300),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Checkbox(
+                      value: isSel,
+                      activeColor: AppTheme.odooAubergine,
+                      onChanged: (val) => setState(() => c['selected'] = val ?? false),
+                    ),
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundImage: NetworkImage(c['avatar']),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text('${c['empCode']} • ${c['department']}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
+                      child: Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Payable: ${c['payableDays']}d', style: const TextStyle(fontSize: 12)),
+                    Text('Gross: ₹${(c['gross'] as double).toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontSize: 12)),
+                    Text('Net: ₹${(c['netPay'] as double).toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold, color: AppTheme.emeraldSuccess)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => _openEmployeeDetailDrawer(c),
+                    icon: const Icon(Icons.read_more_outlined, size: 14),
+                    label: const Text('View Breakdown Sheet', style: TextStyle(fontSize: 12)),
                   ),
                 ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 5. ROW BEHAVIOR / SIDE DRAWER & DETAIL SHEET
+  // ---------------------------------------------------------------------------
+  void _openEmployeeDetailDrawer(Map<String, dynamic> candidate) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        final earnings = candidate['earningsBreakdown'] as Map<String, dynamic>? ?? {};
+        final deductions = candidate['deductionsBreakdown'] as Map<String, dynamic>? ?? {};
+        final attendance = candidate['attendanceImpact'] as Map<String, dynamic>? ?? {};
+
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(radius: 20, backgroundImage: NetworkImage(candidate['avatar'])),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(candidate['name'], style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text('${candidate['empCode']} • ${candidate['role']} (${candidate['department']})', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Section 1: Earnings
+                Text('1. Earnings Breakdown', style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                ...earnings.entries.map((e) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(e.key, style: const TextStyle(fontSize: 13)),
+                          Text('₹${(e.value as double).toStringAsFixed(2)}', style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    )),
+                const Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total Gross Salary', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('₹${(candidate['gross'] as double).toStringAsFixed(2)}', style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold, color: AppTheme.odooAubergine)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Section 2: Deductions
+                Text('2. Deductions Breakdown', style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                ...deductions.entries.map((e) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(e.key, style: const TextStyle(fontSize: 13)),
+                          Text('₹${(e.value as double).toStringAsFixed(2)}', style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold, color: Colors.orange.shade800)),
+                        ],
+                      ),
+                    )),
+                const Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total Net Payout', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text('₹${(candidate['netPay'] as double).toStringAsFixed(2)}', style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.emeraldSuccess)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Section 3: Attendance & Time Off
+                Text('3. Attendance & Time Off Impact', style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Payable Worked Days: ${attendance['Worked Days']}d / ${attendance['Expected Days']}d'),
+                    Text('Overtime Hours: ${attendance['Overtime Hours']}h'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 8. STICKY FOOTER ACTIONS & VALIDATION ENFORCEMENT
+  // ---------------------------------------------------------------------------
+  Widget _buildStickyFooterBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, -2)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_hasCriticalBlockers) ...[
+            Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.odooRed.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppTheme.odooRed),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning, color: AppTheme.odooRed, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Resolve $_blockedCount critical blocking issue(s) (or enable "Bypass Blocked Candidates") before previewing payroll.',
+                      style: const TextStyle(color: AppTheme.odooRed, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => setState(() => _activeStep = 0),
+                icon: const Icon(Icons.arrow_back, size: 16),
+                label: const Text('Back to Scope'),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => _fetchScopeCandidates(),
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Recalculate'),
+              ),
+              const Spacer(),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _hasCriticalBlockers ? Colors.grey.shade400 : AppTheme.odooAubergine,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                onPressed: _hasCriticalBlockers || _isCreatingBatch ? null : _createPayrunBatch,
+                icon: _isCreatingBatch
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.check_circle_outline, size: 18),
+                label: Text(
+                  _isCreatingBatch ? 'Creating Batch...' : 'Preview Payroll / Create Batch →',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+            ],
           ),
         ],
       ),

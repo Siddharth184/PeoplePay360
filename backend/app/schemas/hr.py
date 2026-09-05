@@ -427,6 +427,16 @@ class TimeOffTypeCreate(BaseModel):
     display_color: str = Field(default="#017E84", max_length=20)
     work_entry_type: Optional[str] = Field(default=None, max_length=50)
     notes: Optional[str] = None
+    is_paid: bool = Field(
+        default=True,
+        description="Paid leave has no salary impact; unpaid leave drives a "
+        "pro-rata loss-of-pay deduction in payroll.",
+    )
+    unpaid_deduction_rule_code: Optional[str] = Field(
+        default=None,
+        max_length=30,
+        description="Optional DEDUCTION salary rule code for unpaid leave.",
+    )
 
 
 class TimeOffTypeUpdate(BaseModel):
@@ -440,6 +450,8 @@ class TimeOffTypeUpdate(BaseModel):
     work_entry_type: Optional[str] = Field(default=None, max_length=50)
     notes: Optional[str] = None
     is_active: Optional[bool] = None
+    is_paid: Optional[bool] = None
+    unpaid_deduction_rule_code: Optional[str] = Field(default=None, max_length=30)
 
 
 class TimeOffTypeOut(ORMModel):
@@ -452,6 +464,8 @@ class TimeOffTypeOut(ORMModel):
     work_entry_type: Optional[str] = None
     notes: Optional[str] = None
     is_active: bool
+    is_paid: bool = True
+    unpaid_deduction_rule_code: Optional[str] = None
 
 
 class AllocationCreate(BaseModel):

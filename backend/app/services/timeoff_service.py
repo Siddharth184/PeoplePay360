@@ -167,17 +167,34 @@ def create_leave_request(
     reason: str | None = None,
     duration_days: Decimal | None = None,
 ) -> LeaveRequest:
+    if start_date > end_date:
+        raise ValidationError("Start date cannot be after end date.")
+
+    employee = db.get(Employee, employee_id)
+    if not employee:
+        raise NotFoundError("Employee not found.")
+    if employee.status != "ACTIVE":
+        raise ValidationError("Time off can only be requested for active employees.")
+
     kind = db.get(TimeOffType, timeoff_type_id)
     if not kind or not kind.is_active:
         raise NotFoundError("Time off type not found or inactive.")
 
-    duration = (
-        to_decimal(duration_days)
-        if duration_days is not None
-        else compute_leave_duration(db, employee_id, start_date, end_date)
-    )
+    computed_days = compute_leave_duration(db, employee_id, start_date, end_date)
+
+    # Support controlled half-day override: single-day request on a working day
+    if (
+        duration_days is not None
+        and to_decimal(duration_days) == Decimal("0.50")
+        and start_date == end_date
+        and computed_days == Decimal("1.00")
+    ):
+        duration = Decimal("0.50")
+    else:
+        duration = computed_days
+
     if duration <= ZERO:
-        raise ValidationError("Leave duration must be greater than zero.")
+        raise ValidationError("The selected date range contains no working days for this employee.")
 
     clashes = _overlapping_requests(db, employee_id, start_date, end_date)
     if clashes:

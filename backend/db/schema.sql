@@ -275,6 +275,14 @@ CREATE TABLE IF NOT EXISTS timeoff_types (
 ALTER TABLE timeoff_types ADD COLUMN IF NOT EXISTS work_entry_type VARCHAR(50);
 ALTER TABLE timeoff_types ADD COLUMN IF NOT EXISTS notes TEXT;
 
+-- Payroll policy: whether leave of this type is paid (no salary impact) or unpaid
+-- (drives a loss-of-pay deduction in the salary engine). Defaults to TRUE so
+-- existing rows keep their current, salary-neutral behaviour after an upgrade.
+ALTER TABLE timeoff_types ADD COLUMN IF NOT EXISTS is_paid BOOLEAN NOT NULL DEFAULT TRUE;
+-- Optional: the salary rule code that applies the unpaid-leave deduction. When
+-- NULL the engine falls back to a standard pro-rata daily-rate deduction.
+ALTER TABLE timeoff_types ADD COLUMN IF NOT EXISTS unpaid_deduction_rule_code VARCHAR(30);
+
 CREATE TABLE IF NOT EXISTS leave_allocations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
@@ -437,6 +445,13 @@ CREATE TABLE IF NOT EXISTS payslips (
     -- ZERO-LOOPHOLE: no duplicate payslips for an employee inside one payrun
     UNIQUE (payrun_id, employee_id)
 );
+
+ALTER TABLE timeoff_types
+    ADD COLUMN IF NOT EXISTS is_paid BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE payslips
+    ADD COLUMN IF NOT EXISTS worked_hours NUMERIC(6, 2) NOT NULL DEFAULT 0.00;
+ALTER TABLE payslips
+    ADD COLUMN IF NOT EXISTS overtime_hours NUMERIC(6, 2) NOT NULL DEFAULT 0.00;
 
 CREATE TABLE IF NOT EXISTS payslip_lines (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

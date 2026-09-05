@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
+from decimal import Decimal
 from typing import Any, Dict, List, Sequence
 
 from sqlalchemy import func, select
@@ -211,7 +212,7 @@ def _anomalies_for(
     if not employee.working_schedule_id:
         warnings.append("No working schedule assigned; proration uses a Mon-Fri default.")
 
-    # --- Attendance sanity (advisory) -------------------------------------
+    # --- Attendance sanity & pre-flight validation ---------------------------
     attendance = compute_worked_days_and_hours(
         db, employee.id, date_start, date_end, employee.working_schedule_id
     )
@@ -221,6 +222,39 @@ def _anomalies_for(
         warnings.append(
             f"{attendance['absent_days']} unexplained absent day(s) in the period."
         )
+
+    # Missing check-out check
+    from datetime import datetime, time, timezone
+    from app.models.attendance import Attendance
+    open_punches = db.execute(
+        select(func.count(Attendance.id)).where(
+            Attendance.employee_id == employee.id,
+            Attendance.check_in >= datetime.combine(date_start, time.min, tzinfo=timezone.utc),
+            Attendance.check_in <= datetime.combine(date_end, time.max, tzinfo=timezone.utc),
+            Attendance.check_out.is_(None),
+        )
+    ).scalar() or 0
+    if open_punches > 0:
+        warnings.append(f"{open_punches} unclosed attendance punch(es) missing check-out.")
+
+    # High overtime check
+    tot_ot = to_decimal(attendance.get("total_overtime_hours", 0))
+    if tot_ot > Decimal("40.00"):
+        warnings.append(f"Unusually high overtime detected ({tot_ot} hours).")
+
+    # Missing Overtime Salary Rule check if overtime hours exist
+    if tot_ot > ZERO and structure_id:
+        ot_rule = db.execute(
+            select(SalaryRule).where(
+                SalaryRule.salary_structure_id == structure_id,
+                SalaryRule.code == "OT",
+                SalaryRule.is_active.is_(True),
+            )
+        ).scalars().first()
+        if not ot_rule:
+            warnings.append(
+                f"Overtime recorded ({tot_ot}h) but the active salary structure lacks an Overtime ('OT') rule."
+            )
 
     return {
         "employee": employee,
@@ -411,6 +445,8 @@ def create_payrun_batch(
             date_start=date_start,
             date_end=date_end,
             worked_days=attendance["worked_days"],
+            worked_hours=to_decimal(attendance.get("total_worked_hours", 0)),
+            overtime_hours=to_decimal(attendance.get("total_overtime_hours", 0)),
             basic_amount=computation["basic"],
             gross_amount=computation["gross"],
             net_amount=computation["net"],
@@ -486,6 +522,8 @@ def compute_payrun(db: Session, payrun_id: uuid.UUID | str) -> Payrun:
             db.add(PayslipLine(payslip_id=payslip.id, **line))
 
         payslip.worked_days = attendance["worked_days"]
+        payslip.worked_hours = to_decimal(attendance.get("total_worked_hours", 0))
+        payslip.overtime_hours = to_decimal(attendance.get("total_overtime_hours", 0))
         payslip.basic_amount = computation["basic"]
         payslip.gross_amount = computation["gross"]
         payslip.net_amount = computation["net"]

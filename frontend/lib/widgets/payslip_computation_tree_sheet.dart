@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/models.dart';
+import 'payslip_pdf_dialog.dart';
 
 class PayslipComputationTreeSheet extends StatefulWidget {
   final Map<String, dynamic> payslip;
@@ -430,10 +432,16 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onPressed: () {
-                      setState(() => _isTreeTab = false);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('🖨️ Generating printable Form XVI Payslip...')),
-                      );
+                      try {
+                        final raw = widget.payslip['rawPayslip'];
+                        final model = (raw is PayslipModel) ? raw : PayslipModel.fromJson(widget.payslip);
+                        showDialog(
+                          context: context,
+                          builder: (context) => PayslipPdfDialog(payslip: model),
+                        );
+                      } catch (_) {
+                        setState(() => _isTreeTab = false);
+                      }
                     },
                     icon: const Icon(Icons.print, size: 18),
                     label: Text('Print PDF', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
@@ -527,6 +535,31 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
               _buildTreeNode('House Rent Allowance', 'HRA', 'Allowance • 40% of BASIC', '+ ₹ 20,000.00', 'Computed', Icons.domain, const Color(0xFF6FFBBE), const Color(0xFF004A31)),
               const SizedBox(height: 8),
               _buildTreeNode('Standard Allowance', 'STD', 'Allowance • Fixed Rate', '+ ₹ 10,000.00', 'Fixed', Icons.payments, const Color(0xFF6FFBBE), const Color(0xFF004A31)),
+              if (widget.payslip['overtimePay'] != null && (widget.payslip['overtimePay'] as num) > 0) ...[
+                const SizedBox(height: 8),
+                _buildTreeNode(
+                  'Overtime Pay',
+                  'OT',
+                  'Allowance • 1.5x Hourly Rate',
+                  '+ ₹ ${(widget.payslip['overtimePay'] as num).toStringAsFixed(2)}',
+                  'Overtime',
+                  Icons.access_time_filled,
+                  const Color(0xFF92EFF5),
+                  const Color(0xFF006E73),
+                ),
+              ] else if (widget.payslip['overtime_pay'] != null && (widget.payslip['overtime_pay'] as num) > 0) ...[
+                const SizedBox(height: 8),
+                _buildTreeNode(
+                  'Overtime Pay',
+                  'OT',
+                  'Allowance • 1.5x Hourly Rate',
+                  '+ ₹ ${(widget.payslip['overtime_pay'] as num).toStringAsFixed(2)}',
+                  'Overtime',
+                  Icons.access_time_filled,
+                  const Color(0xFF92EFF5),
+                  const Color(0xFF006E73),
+                ),
+              ],
             ],
           ),
         ),

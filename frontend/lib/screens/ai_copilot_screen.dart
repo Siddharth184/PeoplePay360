@@ -4,6 +4,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../services/ai_copilot_service.dart';
+import '../services/notification_service.dart';
+import '../services/mock_data_service.dart';
 import 'escalation_ticket_screen.dart';
 
 class AiCopilotScreen extends StatefulWidget {
@@ -64,25 +66,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   List<_AiMessageItem> _defaultSeedMessages() {
     return [
       _AiMessageItem(
-        isUser: true,
-        text: 'Why was ₹5,000 deducted from my February payslip?',
-        time: '10:14 AM',
-      ),
-      _AiMessageItem(
         isUser: false,
-        text: "### February 2026 Payslip Statutory Breakdown\n\n"
-            "Based on your **February 2026 Payslip (SLIP-2026-0042)**, your gross earnings were **₹80,000.00** and total deductions were **₹5,000.00**:\n\n"
-            "- **Provident Fund (PF - 12%)**: **-₹3,000.00** *(Mandatory statutory match on Basic)*\n"
-            "- **Professional Tax (PT)**: **-₹2,000.00** *(State tax slab)*\n\n"
-            "**Net Payout Disbursed: ₹75,000.00**\n\n"
-            "> *No unpaid leave penalties or loss of pay (LOP) deductions were applied to your record.*",
-        time: '10:14 AM',
-        confidence: 1.0,
-        intent: 'PAYSLIP_BREAKDOWN',
-        citations: [
-          'Payslip Computation Ledger (PS-2026-02-0042)',
-          'Employees Provident Fund & MP Act (12% Statutory Rate)',
-        ],
+        text: 'Hi! How can I assist you with HR policy or payroll today?',
+        time: 'Just now',
+        citations: ['PeoplePay360 HR Assistant'],
       ),
     ];
   }
@@ -93,11 +80,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       _messages = [
         _AiMessageItem(
           isUser: false,
-          text:
-              'Hello! I am your **PeoplePay360 Copilot**, grounded in verified company policies, Odoo 18 statutory salary rules, and your live HR records.\n\n'
-              'Ask me anything about your **leave balances**, **payslip deductions**, **medical leave**, **company policies**, or **public holidays**.',
+          text: 'Hi! How can I assist you with HR policy or payroll today?',
           time: 'Just now',
-          citations: ['PeoplePay360 Verified Policy Vault 2026'],
+          citations: ['PeoplePay360 HR Assistant'],
         ),
       ];
       _textController.clear();
@@ -169,6 +154,39 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
 
           final isEscalated = data['escalation_id'] != null || data['mode'] == 'ESCALATED';
 
+          final ticket = isEscalated
+              ? EscalationTicketModel(
+                  id: data['escalation_id']?.toString() ?? 'esc_${DateTime.now().millisecondsSinceEpoch}',
+                  ticketNo: data['ticket_no']?.toString() ?? 'ESC-2026-0042',
+                  questionText: text,
+                  category: data['category']?.toString() ?? 'HR Policy & Benefits',
+                  status: 'OPEN',
+                  priority: 'NORMAL',
+                  slaDueAt: data['sla_due_at']?.toString() ?? 'Expected reply within 8 hours',
+                  answeredBy: 'Sara Khan (HR Manager)',
+                  retrievalConfidence: (data['confidence'] as num?)?.toDouble() ?? 0.85,
+                )
+              : null;
+
+          if (isEscalated) {
+            final ticketNo = data['ticket_no']?.toString() ?? 'ESC-2026-0042';
+            final empName = MockDataService.currentEmployee.name;
+            NotificationService.addNotification({
+              'id': 'esc-${DateTime.now().millisecondsSinceEpoch}',
+              'icon': Icons.warning_amber_rounded,
+              'color': const Color(0xFFB45309),
+              'bg': const Color(0xFFFEF3C7),
+              'title': '🚨 HR Escalation ($ticketNo)',
+              'subtitle': 'Question from $empName: "$text". Tap to review & reply.',
+              'time': 'Just now',
+              'tabIndex': 5,
+              'category': 'Escalations',
+              'isUnread': true,
+              'ticket': ticket,
+              'targetRole': 'HR',
+            });
+          }
+
           _messages.add(_AiMessageItem(
             isUser: false,
             text: answer,
@@ -176,19 +194,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             hasEscalation: isEscalated,
             confidence: (data['confidence'] as num?)?.toDouble(),
             intent: data['intent']?.toString(),
-            escalationTicket: isEscalated
-                ? EscalationTicketModel(
-                    id: data['escalation_id']?.toString() ?? 'esc_${DateTime.now().millisecondsSinceEpoch}',
-                    ticketNo: data['ticket_no']?.toString() ?? 'ESC-2026-0042',
-                    questionText: text,
-                    category: data['category']?.toString() ?? 'HR Policy & Benefits',
-                    status: 'OPEN',
-                    priority: 'NORMAL',
-                    slaDueAt: data['sla_due_at']?.toString() ?? 'Expected reply within 8 hours',
-                    answeredBy: 'Sara Khan (HR Manager)',
-                    retrievalConfidence: (data['confidence'] as num?)?.toDouble() ?? 0.85,
-                  )
-                : null,
+            escalationTicket: ticket,
             citations: citationsList,
           ));
         } else {
@@ -301,150 +307,81 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
 
   Widget _buildTopChrome() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1C3CA),
-                borderRadius: BorderRadius.circular(10),
-              ),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF57344F).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Color(0xFF57344F),
+                    size: 15,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF006443),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Grounded in verified HR & payroll rules',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: const Color(0xFF4E444A),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        final route = ModalRoute.of(context);
-                        if (route != null && !route.isFirst) {
-                          Navigator.pop(context);
-                        } else if (widget.onNavigateTab != null) {
-                          widget.onNavigateTab!(-1);
-                        } else if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Container(
-                        width: 34,
-                        height: 34,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF2F3FF),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Color(0xFF131B2E),
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF57344F).withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        color: Color(0xFF57344F),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PeoplePay360 Copilot',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.outfit(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF131B2E),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Container(
-                                width: 7,
-                                height: 7,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF006443),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              Expanded(
-                                child: Text(
-                                  'Grounded in verified HR & payroll rules',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    color: const Color(0xFF4E444A),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+          InkWell(
+            onTap: _clearChat,
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
               ),
-              InkWell(
-                onTap: _clearChat,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE2E7FF),
-                    borderRadius: BorderRadius.circular(20),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.restart_alt_rounded, size: 14, color: Color(0xFF4E444A)),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Clear Chat',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF4E444A),
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.restart_alt_rounded, size: 15, color: Color(0xFF4E444A)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Clear',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF4E444A),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -826,8 +763,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 const SizedBox(height: 12),
 
                 // Action Footer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     InkWell(
                       onTap: () {
@@ -864,18 +804,18 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                       children: [
                         IconButton(
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.copy_outlined, size: 16, color: Color(0xFF4E444A)),
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          icon: const Icon(Icons.copy_outlined, size: 15, color: Color(0xFF4E444A)),
                           tooltip: 'Copy text',
                           onPressed: () => _copyToClipboard(msg.text),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 6),
                         IconButton(
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           icon: Icon(
                             isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                            size: 16,
+                            size: 15,
                             color: isLiked ? const Color(0xFF00696E) : const Color(0xFF4E444A),
                           ),
                           onPressed: () {
@@ -889,13 +829,13 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                             });
                           },
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         IconButton(
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           icon: Icon(
                             isDisliked ? Icons.thumb_down : Icons.thumb_down_outlined,
-                            size: 16,
+                            size: 15,
                             color: isDisliked ? const Color(0xFFBA1A1A) : const Color(0xFF4E444A),
                           ),
                           onPressed: () {

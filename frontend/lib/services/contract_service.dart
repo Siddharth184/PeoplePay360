@@ -27,7 +27,7 @@ class ContractService {
       },
     );
 
-    if (response.isSuccess && response.data != null && response.data!.isNotEmpty) {
+    if (response.isSuccess && response.data != null) {
       return response;
     }
 

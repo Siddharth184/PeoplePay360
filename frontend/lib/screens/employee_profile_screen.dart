@@ -25,15 +25,6 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   List<PayslipModel> _employeePayslips = [];
   bool _isLoadingPayslips = false;
 
-  final List<String> _availableMonths = [
-    'September 2026',
-    'August 2026',
-    'July 2026',
-    'June 2026',
-    'May 2026',
-    'February 2026',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -91,10 +82,12 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     if (mounted) {
       setState(() {
         _isLoadingPayslips = false;
-        if (res.isSuccess && res.data != null && res.data!.isNotEmpty) {
+        if (res.isSuccess && res.data != null) {
           _employeePayslips = res.data!;
-        } else {
+        } else if (!ApiClient.isBackendOnline || res.statusCode == 0) {
           _employeePayslips = MockDataService.payslips;
+        } else {
+          _employeePayslips = [];
         }
       });
     }
@@ -109,11 +102,10 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     if (_selectedPayMonth.contains('February')) monthPrefix = '2026-02';
 
     if (_employeePayslips.isNotEmpty) {
-      final found = _employeePayslips.firstWhere(
+      return _employeePayslips.firstWhere(
         (p) => p.periodStart.startsWith(monthPrefix),
         orElse: () => _employeePayslips.first,
       );
-      return found;
     }
 
     final mockList = MockDataService.payslips;
@@ -1520,10 +1512,46 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildPayrollTab() {
+    if (_employeePayslips.isEmpty) {
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF2F3FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.receipt_long_outlined, size: 28, color: Color(0xFF714B67)),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'No Payslips Available',
+              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'There are no computed or confirmed payslips associated with this employee yet.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A)),
+            ),
+          ],
+        ),
+      );
+    }
+
     final activeSlip = _getActivePayslip();
     final basicLine = activeSlip.lines.firstWhere(
       (l) => l.category == 'BASIC',
-      orElse: () => PayslipLineModel(ruleName: 'Basic Salary', ruleCode: 'BASIC', category: 'BASIC', amount: activeSlip.grossAmount * 0.65),
+      orElse: () => PayslipLineModel(ruleName: 'Basic Salary', ruleCode: 'BASIC', category: 'BASIC', amount: activeSlip.grossAmount * 0.60),
     );
     final allowanceTotal = activeSlip.lines
         .where((l) => l.category == 'ALLOWANCE')
@@ -1531,6 +1559,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     final deductionTotal = activeSlip.lines
         .where((l) => l.category == 'DEDUCTION')
         .fold(0.0, (sum, l) => sum + l.amount.abs());
+
+    final availableMonths = _employeePayslips.map((p) => '${p.periodStart} → ${p.periodEnd}').toSet().toList();
 
     return Column(
       children: [
@@ -1589,7 +1619,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: _selectedPayMonth,
+                    value: availableMonths.contains(_selectedPayMonth) ? _selectedPayMonth : availableMonths.first,
                     isExpanded: true,
                     dropdownColor: Colors.white,
                     icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF714B67)),
@@ -1598,7 +1628,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF131B2E),
                     ),
-                    items: _availableMonths.map((String m) {
+                    items: availableMonths.map((String m) {
                       return DropdownMenuItem<String>(
                         value: m,
                         child: Row(
@@ -1655,7 +1685,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Payroll Breakdown ($_selectedPayMonth)',
+                      'Payroll Breakdown',
                       style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1682,21 +1712,21 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               _buildOrgRow(
                 icon: Icons.add_circle_outline,
                 iconColor: const Color(0xFF00696E),
-                title: 'Allowances (HRA + Special)',
-                value: '₹ ${(allowanceTotal > 0 ? allowanceTotal : 28500.0).toStringAsFixed(2)} / Mo',
+                title: 'Allowances',
+                value: '₹ ${allowanceTotal.toStringAsFixed(2)} / Mo',
               ),
               const Divider(height: 20),
               _buildOrgRow(
                 icon: Icons.remove_circle_outline,
                 iconColor: const Color(0xFFBA1A1A),
-                title: 'Statutory Deductions (PF + PT)',
-                value: '- ₹ ${(deductionTotal > 0 ? deductionTotal : 12400.0).toStringAsFixed(2)} / Mo',
+                title: 'Deductions',
+                value: '- ₹ ${deductionTotal.toStringAsFixed(2)} / Mo',
               ),
               const Divider(height: 20),
               _buildOrgRow(
                 icon: Icons.account_balance_wallet_outlined,
                 iconColor: const Color(0xFF714B67),
-                title: 'Net Monthly Dispatched',
+                title: 'Net Dispatched',
                 value: '₹ ${activeSlip.netAmount.toStringAsFixed(2)}',
                 trailing: Text(
                   'Gross: ₹ ${activeSlip.grossAmount.toStringAsFixed(0)}',
@@ -1721,7 +1751,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                   },
                   icon: const Icon(Icons.picture_as_pdf, size: 18),
                   label: Text(
-                    'View & Download $_selectedPayMonth Payslip PDF',
+                    'View & Download Payslip PDF',
                     style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),

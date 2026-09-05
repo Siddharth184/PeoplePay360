@@ -13,12 +13,13 @@ from sqlalchemy.orm import aliased, selectinload
 
 from app.api.deps import DbSession, PageParams, User, scope_employee_filter
 from app.core.errors import NotFoundError
-from app.core.security import CurrentUser, require_payroll
+from app.core.security import CurrentUser, require_payroll, require_payroll_manager
 from app.models.employee import Employee
 from app.models.payrun import Payrun, Payslip
 from app.models.salary import SalaryStructure
 from app.schemas.common import MessageResponse
 from app.schemas.payroll import (
+    LeaveImpactOut,
     PayrunCreate,
     PayrunDetailOut,
     PayrunOut,
@@ -29,7 +30,12 @@ from app.schemas.payroll import (
     PayslipOut,
     SendPayslipsResponse,
 )
-from app.services import email_service, payrun_service, pdf_service
+from app.services import (
+    attendance_service,
+    email_service,
+    payrun_service,
+    pdf_service,
+)
 
 router = APIRouter(tags=["Payroll"])
 
@@ -57,6 +63,13 @@ def _payrun_out(db, payrun: Payrun) -> PayrunOut:
 def _payslip_out(
     payslip: Payslip, employee_name: str | None = None, badge_id: str | None = None
 ) -> PayslipOut:
+    ot_amount = Decimal("0.00")
+    if hasattr(payslip, "lines") and payslip.lines:
+        for line in payslip.lines:
+            if getattr(line, "rule_code", None) == "OT":
+                ot_amount = getattr(line, "amount", Decimal("0.00"))
+                break
+
     return PayslipOut(
         id=payslip.id,
         reference_code=payslip.reference_code,
@@ -69,6 +82,10 @@ def _payslip_out(
         date_start=payslip.date_start,
         date_end=payslip.date_end,
         worked_days=payslip.worked_days,
+        worked_hours=getattr(payslip, "worked_hours", Decimal("0.00")) or Decimal("0.00"),
+        overtime_hours=getattr(payslip, "overtime_hours", Decimal("0.00")) or Decimal("0.00"),
+        scheduled_hours=payslip.worked_days * Decimal("8.00"),
+        overtime_pay=ot_amount,
         basic_amount=payslip.basic_amount,
         gross_amount=payslip.gross_amount,
         net_amount=payslip.net_amount,
@@ -77,6 +94,7 @@ def _payslip_out(
         emailed_at=payslip.emailed_at,
         created_at=payslip.created_at,
     )
+
 
 
 # ===========================================================================
@@ -220,7 +238,7 @@ def mark_paid(
     summary="Delete a DRAFT or COMPUTED batch (paid history is immutable)",
 )
 def delete_payrun(
-    payrun_id: uuid.UUID, db: DbSession, _: CurrentUser = Depends(require_payroll)
+    payrun_id: uuid.UUID, db: DbSession, _: CurrentUser = Depends(require_payroll_manager)
 ) -> MessageResponse:
     payrun_service.delete_payrun(db, payrun_id)
     return MessageResponse(detail="Payrun deleted.")
@@ -315,6 +333,34 @@ def get_payslip(
         Decimal("0.00"),
     )
 
+    # Time / Leave Impact block: recompute the same attendance + approved-leave
+    # figures the salary engine saw for this period, and tie the unpaid-leave
+    # deduction to the Loss-of-Pay ('LOP') salary line actually on the slip.
+    leave_impact = None
+    try:
+        att = attendance_service.compute_worked_days_and_hours(
+            db,
+            payslip.employee_id,
+            payslip.date_start,
+            payslip.date_end,
+            employee.working_schedule_id if employee else None,
+        )
+        lop_amount = next(
+            (abs(l.amount) for l in lines if l.rule_code == "LOP"),
+            Decimal("0.00"),
+        )
+        leave_impact = LeaveImpactOut(
+            worked_days=payslip.worked_days,
+            expected_days=att.get("expected_days", Decimal("0.00")),
+            approved_leave_days=att.get("leave_days", Decimal("0.00")),
+            paid_leave_days=att.get("paid_leave_days", Decimal("0.00")),
+            unpaid_leave_days=att.get("unpaid_leave_days", Decimal("0.00")),
+            absent_days=att.get("absent_days", Decimal("0.00")),
+            unpaid_leave_deduction=lop_amount,
+        )
+    except Exception:  # noqa: BLE001 - leave impact is informational, never fatal
+        leave_impact = None
+
     base = _payslip_out(
         payslip,
         employee.name if employee else None,
@@ -335,6 +381,7 @@ def get_payslip(
         total_deductions=total_deductions,
         lines=lines,
         grouped_lines=grouped,
+        leave_impact=leave_impact,
     )
 
 

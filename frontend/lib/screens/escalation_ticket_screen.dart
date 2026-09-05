@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
+import '../services/notification_service.dart';
 
 class EscalationTicketScreen extends StatefulWidget {
   final EscalationTicketModel? ticket;
@@ -97,6 +98,23 @@ class _EscalationTicketScreenState extends State<EscalationTicketScreen> {
       _isToastVisible = true;
     });
 
+    final ticketCode = widget.ticket?.ticketNo ?? 'ESC/2026/0001';
+    final answerText = _answerController.text.trim();
+
+    NotificationService.addNotification({
+      'id': 'ans-${DateTime.now().millisecondsSinceEpoch}',
+      'icon': Icons.mark_chat_read_rounded,
+      'color': const Color(0xFF006443),
+      'bg': const Color(0xFFE6F4EA),
+      'title': '✅ HR Answered Ticket $ticketCode',
+      'subtitle': 'Sara Khan (HR Director) replied: "$answerText"',
+      'time': 'Just now',
+      'tabIndex': 5,
+      'category': 'Escalations',
+      'isUnread': true,
+      'targetRole': 'EMPLOYEE',
+    });
+
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -111,7 +129,7 @@ class _EscalationTicketScreenState extends State<EscalationTicketScreen> {
                 const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  'Answer sent to Aarav Mehta • Indexed to KB',
+                  'Answer notified to employee inbox • Indexed to KB',
                   style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
                 ),
               ],

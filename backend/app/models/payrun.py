@@ -83,6 +83,13 @@ class Payslip(Base):
     worked_days: Mapped[Decimal] = mapped_column(
         Numeric(4, 2), nullable=False, default=ZERO
     )
+    worked_hours: Mapped[Decimal] = mapped_column(
+        Numeric(6, 2), nullable=False, default=ZERO
+    )
+    overtime_hours: Mapped[Decimal] = mapped_column(
+        Numeric(6, 2), nullable=False, default=ZERO
+    )
+
 
     basic_amount: Mapped[Decimal] = mapped_column(
         Numeric(12, 2), nullable=False, default=ZERO

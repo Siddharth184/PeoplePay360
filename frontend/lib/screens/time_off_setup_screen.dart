@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/models.dart';
+import '../services/employee_service.dart';
+import '../services/time_off_service.dart';
 
 class TimeOffSetupScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
@@ -12,87 +15,11 @@ class TimeOffSetupScreen extends StatefulWidget {
 class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTickerProviderStateMixin {
   String _selectedDept = 'All Employees';
   late AnimationController _pulseController;
+  bool _isLoading = true;
 
-  final List<Map<String, dynamic>> _allocations = [
-    {
-      'id': 'aarav',
-      'name': 'Aarav Mehta',
-      'empId': 'EMP-4092',
-      'initials': 'AM',
-      'avatarBg': const Color(0xFF714B67),
-      'avatarFg': Colors.white,
-      'dept': 'Finance',
-      'policy': 'Standard Annual Leave (2026)',
-      'taken': 8.0,
-      'remaining': 12.0,
-      'allocated': 20.0,
-      'takenPercent': 40,
-      'remainingPercent': 60,
-      'validUntil': 'Dec 31, 2026',
-      'cap': '5d',
-      'approver': 'Approved by Sara Khan (HR Lead)',
-      'accrualRate': '+1.67 d/mo',
-      'hasUrgency': false,
-    },
-    {
-      'id': 'sara',
-      'name': 'Sara Khan',
-      'empId': 'EMP-4091',
-      'initials': 'SK',
-      'avatarBg': const Color(0xFF00696E),
-      'avatarFg': Colors.white,
-      'dept': 'Finance',
-      'role': 'VP Finance & HR',
-      'policy': 'Standard Annual Leave',
-      'taken': 4.0,
-      'remaining': 14.0,
-      'allocated': 18.0,
-      'takenPercent': 22,
-      'remainingPercent': 78,
-      'validUntil': 'Dec 31, 2026',
-      'approver': 'Approved by Alex Morgan (SysAdmin)',
-      'hasUrgency': false,
-    },
-    {
-      'id': 'neha',
-      'name': 'Neha Patel',
-      'empId': 'EMP-4105',
-      'initials': 'NP',
-      'avatarBg': const Color(0xFFFFD7F1),
-      'avatarFg': const Color(0xFF57344F),
-      'dept': 'Finance',
-      'role': 'Accounts Associate',
-      'policy': 'Compensatory Off',
-      'taken': 1.0,
-      'remaining': 1.0,
-      'allocated': 2.0,
-      'takenPercent': 50,
-      'remainingPercent': 50,
-      'validUntil': 'Valid until Oct 31, 2026',
-      'urgencyText': '58d left',
-      'hasUrgency': true,
-      'approver': 'Sara Khan approved',
-    },
-    {
-      'id': 'rohan',
-      'name': 'Rohan Patel',
-      'empId': 'EMP-4076',
-      'initials': 'RP',
-      'avatarBg': const Color(0xFFDAE2FD),
-      'avatarFg': const Color(0xFF131B2E),
-      'dept': 'Engineering',
-      'role': 'Engineering',
-      'policy': 'Sick / Medical Leave',
-      'taken': 2.0,
-      'remaining': 10.0,
-      'allocated': 12.0,
-      'takenPercent': 16.7,
-      'remainingPercent': 83.3,
-      'validUntil': 'Valid Dec 31, 2026',
-      'certNote': 'Medical cert. verified',
-      'hasUrgency': false,
-    },
-  ];
+  List<LeaveAllocationModel> _allocations = [];
+  List<EmployeeModel> _employees = [];
+  List<TimeOffTypeModel> _leaveTypes = [];
 
   @override
   void initState() {
@@ -101,6 +28,23 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    final allocRes = await TimeOffService.getLeaveAllocations();
+    final empRes = await EmployeeService.getEmployees();
+    final typeRes = await TimeOffService.getTimeOffTypes();
+
+    if (mounted) {
+      setState(() {
+        _allocations = allocRes.data ?? [];
+        _employees = empRes.data ?? [];
+        _leaveTypes = typeRes.data ?? [];
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -110,9 +54,16 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
   }
 
   void _openAllocateSheet() {
+    if (_employees.isEmpty || _leaveTypes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Employees or Leave Types loading... please wait.')),
+      );
+      return;
+    }
+
     final daysCtrl = TextEditingController(text: '5.0');
-    String selectedEmp = 'Aarav Mehta (EMP-4092)';
-    String selectedPolicy = 'Standard Annual Leave (2026)';
+    String selectedEmpId = _employees.first.id;
+    String selectedTypeId = _leaveTypes.first.id;
 
     showModalBottomSheet(
       context: context,
@@ -179,18 +130,16 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                 decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(12)),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: selectedEmp,
+                    value: selectedEmpId,
                     isExpanded: true,
                     dropdownColor: Colors.white,
                     style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                    items: const [
-                      DropdownMenuItem(value: 'Aarav Mehta (EMP-4092)', child: Text('Aarav Mehta (EMP-4092) — Finance', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                      DropdownMenuItem(value: 'Sara Khan (EMP-4091)', child: Text('Sara Khan (EMP-4091) — VP HR', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                      DropdownMenuItem(value: 'Neha Patel (EMP-4105)', child: Text('Neha Patel (EMP-4105) — Accounts', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                      DropdownMenuItem(value: 'Rohan Patel (EMP-4076)', child: Text('Rohan Patel (EMP-4076) — Eng', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                    ],
+                    items: _employees.map((emp) => DropdownMenuItem(
+                      value: emp.id,
+                      child: Text('${emp.name} (${emp.badgeId != null && emp.badgeId!.isNotEmpty ? emp.badgeId : emp.id}) — ${emp.department}', style: const TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600)),
+                    )).toList(),
                     onChanged: (val) {
-                      if (val != null) setSheetState(() => selectedEmp = val);
+                      if (val != null) setSheetState(() => selectedEmpId = val);
                     },
                   ),
                 ),
@@ -198,7 +147,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
 
               const SizedBox(height: 14),
 
-              // Policy Selector
+              // Policy / Leave Type Selector
               Text('Leave Allocation Policy *', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               Container(
@@ -206,17 +155,16 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                 decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(12)),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: selectedPolicy,
+                    value: selectedTypeId,
                     isExpanded: true,
                     dropdownColor: Colors.white,
                     style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                    items: const [
-                      DropdownMenuItem(value: 'Standard Annual Leave (2026)', child: Text('Standard Annual Leave (2026)', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                      DropdownMenuItem(value: 'Compensatory Off Credit', child: Text('Compensatory Off Credit', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                      DropdownMenuItem(value: 'Special Medical Quota', child: Text('Special Medical Quota', style: TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600))),
-                    ],
+                    items: _leaveTypes.map((t) => DropdownMenuItem(
+                      value: t.id,
+                      child: Text(t.name, style: const TextStyle(color: Color(0xFF131B2E), fontWeight: FontWeight.w600)),
+                    )).toList(),
                     onChanged: (val) {
-                      if (val != null) setSheetState(() => selectedPolicy = val);
+                      if (val != null) setSheetState(() => selectedTypeId = val);
                     },
                   ),
                 ),
@@ -266,25 +214,37 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0,
                       ),
-                      onPressed: () {
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         final addDays = double.tryParse(daysCtrl.text.trim()) ?? 5.0;
-                        setState(() {
-                          final aarav = _allocations.firstWhere((a) => a['id'] == 'aarav');
-                          aarav['allocated'] = (aarav['allocated'] as double) + addDays;
-                          aarav['remaining'] = (aarav['remaining'] as double) + addDays;
-                          final total = aarav['allocated'] as double;
-                          final taken = aarav['taken'] as double;
-                          aarav['takenPercent'] = ((taken / total) * 100).round();
-                          aarav['remainingPercent'] = 100 - (aarav['takenPercent'] as int);
+                        final res = await TimeOffService.createAllocation({
+                          'employee_id': selectedEmpId,
+                          'timeoff_type_id': selectedTypeId,
+                          'allocated_days': addDays,
+                          'valid_until': '2026-12-31',
+                          'status': 'APPROVED',
                         });
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: const Color(0xFF006443),
-                            behavior: SnackBarBehavior.floating,
-                            content: Text('✓ Successfully allocated +$addDays days to Aarav Mehta with Odoo 18 engine!'),
-                          ),
-                        );
+
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                        }
+                        if (res.isSuccess) {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              backgroundColor: const Color(0xFF006443),
+                              behavior: SnackBarBehavior.floating,
+                              content: Text('✓ Successfully allocated +$addDays days to employee!'),
+                            ),
+                          );
+                          _loadData();
+                        } else {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              backgroundColor: const Color(0xFFBA1A1A),
+                              content: Text(res.errorMessage ?? 'Allocation creation failed'),
+                            ),
+                          );
+                        }
                       },
                       child: const Text('Confirm Allocation'),
                     ),
@@ -310,11 +270,6 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    final filteredList = _allocations.where((a) {
-      if (_selectedDept == 'All Employees') return true;
-      return a['dept'] == _selectedDept;
-    }).toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8FF),
       body: SafeArea(
@@ -507,13 +462,13 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _buildDeptChip('All Employees', 42),
+                          _buildDeptChip('All Employees', _allocations.length),
                           const SizedBox(width: 8),
-                          _buildDeptChip('Finance', 12),
+                          _buildDeptChip('Finance', _allocations.where((a) => a.employeeDepartment == 'Finance').length),
                           const SizedBox(width: 8),
-                          _buildDeptChip('Engineering', 18),
+                          _buildDeptChip('Engineering', _allocations.where((a) => a.employeeDepartment == 'Engineering').length),
                           const SizedBox(width: 8),
-                          _buildDeptChip('Operations', 12),
+                          _buildDeptChip('Operations', _allocations.where((a) => a.employeeDepartment == 'Operations').length),
                         ],
                       ),
                     ),
@@ -521,22 +476,45 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                     const SizedBox(height: 14),
 
                     // Summary KPI Ribbon
-                    Row(
-                      children: [
-                        _buildSummaryCard('Allocated', '420', 'Days', 1.0, const Color(0xFF714B67)),
-                        const SizedBox(width: 8),
-                        _buildSummaryCard('Utilized', '148', '35.2%', 0.352, const Color(0xFF79526F)),
-                        const SizedBox(width: 8),
-                        _buildSummaryCard('Available', '272', '64.8%', 0.648, const Color(0xFF00696E), isHighlighted: true),
-                      ],
+                    Builder(
+                      builder: (context) {
+                        final totalAlloc = _allocations.fold<double>(0, (sum, a) => sum + a.allocatedDays);
+                        final totalTaken = _allocations.fold<double>(0, (sum, a) => sum + a.takenDays);
+                        final totalRem = _allocations.fold<double>(0, (sum, a) => sum + a.remainingDays);
+                        final takenPct = totalAlloc > 0 ? (totalTaken / totalAlloc * 100) : 0.0;
+                        final remPct = totalAlloc > 0 ? (totalRem / totalAlloc * 100) : 0.0;
+
+                        return Row(
+                          children: [
+                            _buildSummaryCard('Allocated', totalAlloc.toStringAsFixed(0), 'Days', 1.0, const Color(0xFF714B67)),
+                            const SizedBox(width: 8),
+                            _buildSummaryCard('Utilized', totalTaken.toStringAsFixed(0), '${takenPct.toStringAsFixed(1)}%', takenPct / 100, const Color(0xFF79526F)),
+                            const SizedBox(width: 8),
+                            _buildSummaryCard('Available', totalRem.toStringAsFixed(0), '${remPct.toStringAsFixed(1)}%', remPct / 100, const Color(0xFF00696E), isHighlighted: true),
+                          ],
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 16),
 
                     // Allocation Cards List
-                    Column(
-                      children: filteredList.map((alloc) => _buildAllocationCard(alloc)).toList(),
-                    ),
+                    if (_isLoading)
+                      const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+                    else if (_allocations.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text('No leave allocations found.', style: GoogleFonts.plusJakartaSans(color: Colors.grey[600])),
+                        ),
+                      )
+                    else
+                      Column(
+                        children: _allocations
+                            .where((a) => _selectedDept == 'All Employees' || a.employeeDepartment == _selectedDept)
+                            .map((alloc) => _buildAllocationCard(alloc))
+                            .toList(),
+                      ),
                   ],
                 ),
               ),
@@ -657,7 +635,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
-                value: progress,
+                value: progress.clamp(0.0, 1.0),
                 minHeight: 4,
                 backgroundColor: const Color(0xFFE2E8F0),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
@@ -669,13 +647,17 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
     );
   }
 
-  Widget _buildAllocationCard(Map<String, dynamic> alloc) {
-    final taken = alloc['taken'] as double;
-    final remaining = alloc['remaining'] as double;
-    final allocated = alloc['allocated'] as double;
-    final takenPercent = alloc['takenPercent'] as num;
-    final remainingPercent = alloc['remainingPercent'] as num;
-    final hasUrgency = alloc['hasUrgency'] == true;
+  Widget _buildAllocationCard(LeaveAllocationModel alloc) {
+    final taken = alloc.takenDays;
+    final remaining = alloc.remainingDays;
+    final allocated = alloc.allocatedDays;
+    final takenPercent = allocated > 0 ? ((taken / allocated) * 100).round() : 0;
+    final remainingPercent = 100 - takenPercent;
+
+    final empName = (alloc.employeeName != null && alloc.employeeName!.isNotEmpty) ? alloc.employeeName! : alloc.employeeId;
+    final deptName = (alloc.employeeDepartment != null && alloc.employeeDepartment!.isNotEmpty) ? alloc.employeeDepartment! : 'General';
+    final typeName = (alloc.timeoffTypeName != null && alloc.timeoffTypeName!.isNotEmpty) ? alloc.timeoffTypeName! : alloc.timeoffTypeId;
+    final initials = empName.split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join('').toUpperCase();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -706,17 +688,17 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                             Container(
                               width: 42,
                               height: 42,
-                              decoration: BoxDecoration(
-                                color: alloc['avatarBg'] as Color,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF714B67),
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
                                 child: Text(
-                                  alloc['initials'] as String,
+                                  initials.isNotEmpty ? initials : 'EM',
                                   style: GoogleFonts.outfit(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: alloc['avatarFg'] as Color,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
@@ -743,7 +725,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                             Row(
                               children: [
                                 Text(
-                                  alloc['name'] as String,
+                                  empName,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.bold,
@@ -758,7 +740,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    alloc['empId'] as String,
+                                    alloc.employeeId.substring(0, alloc.employeeId.length > 8 ? 8 : alloc.employeeId.length),
                                     style: GoogleFonts.jetBrainsMono(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.bold,
@@ -772,7 +754,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                             Row(
                               children: [
                                 Text(
-                                  alloc['role'] ?? alloc['dept'] as String,
+                                  deptName,
                                   style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF4E444A)),
                                 ),
                                 const SizedBox(width: 4),
@@ -780,7 +762,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
-                                    alloc['policy'] as String,
+                                    typeName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.plusJakartaSans(
@@ -796,39 +778,16 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                         ),
                       ],
                     ),
-                    if (hasUrgency)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFDAD6),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.schedule, size: 13, color: Color(0xFFBA1A1A)),
-                            const SizedBox(width: 3),
-                            Text(
-                              alloc['urgencyText'] as String,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFFBA1A1A),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      IconButton(
-                        icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF4E444A)),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Options for ${alloc['name']} (Edit Allocation / Export / Revoke)')),
-                          );
-                        },
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF4E444A)),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Allocation status: ${alloc.status}')),
+                        );
+                      },
+                    ),
                   ],
                 ),
 
@@ -988,24 +947,24 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
               children: [
                 Row(
                   children: [
-                    Icon(
-                      hasUrgency ? Icons.warning_amber_rounded : Icons.verified_outlined,
+                    const Icon(
+                      Icons.verified_outlined,
                       size: 15,
-                      color: hasUrgency ? const Color(0xFFBA1A1A) : const Color(0xFF006443),
+                      color: Color(0xFF006443),
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      alloc['approver'] ?? alloc['certNote'] ?? 'Approved',
+                      'Status: ${alloc.status}',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: hasUrgency ? const Color(0xFFBA1A1A) : const Color(0xFF4E444A),
+                        color: const Color(0xFF4E444A),
                       ),
                     ),
                   ],
                 ),
                 Text(
-                  alloc['validUntil'] as String,
+                  'Valid: FY ${alloc.validityYear}',
                   style: GoogleFonts.jetBrainsMono(fontSize: 10.5, color: const Color(0xFF4E444A)),
                 ),
               ],

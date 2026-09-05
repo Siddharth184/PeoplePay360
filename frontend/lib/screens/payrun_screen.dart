@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/payrun_service.dart';
+import '../services/api_client.dart';
 import '../widgets/payslip_computation_tree_sheet.dart';
 import '../widgets/payrun_wizard_sheet.dart';
 
@@ -26,7 +28,8 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
   bool _isPaid = false;
   bool _payslipsSent = false;
 
-  late List<Map<String, dynamic>> _payslips;
+  List<Map<String, dynamic>> _payslips = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -36,10 +39,60 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
-    _loadPayslips();
+    _loadPayrunData();
   }
 
-  void _loadPayslips() {
+  Future<void> _loadPayrunData() async {
+    setState(() => _isLoading = true);
+
+    final payslipsRes = await PayrunService.getPayslips();
+
+    if (!mounted) return;
+
+
+
+    if (payslipsRes.isSuccess && payslipsRes.data != null) {
+      final parsed = payslipsRes.data!.map((slip) {
+        final isDone = slip.status.toUpperCase() == 'CONFIRMED' || slip.status.toUpperCase() == 'PAID' || slip.status == 'Done';
+        return {
+          'id': slip.id,
+          'name': slip.employeeName.isNotEmpty ? slip.employeeName : 'Employee',
+          'empCode': 'EMP-${slip.id.length > 4 ? slip.id.substring(0, 4) : "001"}',
+          'role': 'Staff Member',
+          'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          'status': isDone ? 'Done' : 'Draft',
+          'workedDays': '${slip.workedDays.toInt()}',
+          'basic': '₹${slip.basicAmount.toStringAsFixed(0)}',
+          'gross': '₹${slip.grossAmount.toStringAsFixed(0)}',
+          'netPayout': '₹${slip.netAmount.toStringAsFixed(0)}',
+          'footerNote': 'Computed via Salary Structure (${slip.refCode})',
+          'footerIcon': isDone ? Icons.check_circle : Icons.schedule,
+          'footerIconColor': isDone ? const Color(0xFF006443) : const Color(0xFF714B67),
+          'hasWarning': false,
+          'refNo': slip.refCode,
+          'rawStatus': slip.status,
+          'rawPayslip': slip,
+        };
+      }).toList();
+
+      setState(() {
+        _payslips = parsed;
+        _isLoading = false;
+      });
+    } else if (!ApiClient.isBackendOnline || payslipsRes.statusCode == 0) {
+      setState(() {
+        _loadMockPayslips();
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _payslips = [];
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _loadMockPayslips() {
     _payslips = [
       {
         'id': 'aarav',
@@ -58,61 +111,6 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
         'footerIconColor': const Color(0xFF006443),
         'hasWarning': false,
         'refNo': 'PS-2026-02-0042',
-      },
-      {
-        'id': 'sara',
-        'name': 'Sara Khan',
-        'empCode': 'EMP-4091',
-        'role': 'People Experience Partner',
-        'avatar':
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuBK4kN_bBC0IGWVB4B8conUEHBYzfF3JruQyYijIoaFzIrqWmVBJm4akR4ymPpXtKUiQVOYE1T4LAN-P6WABaKs0P7QRjZLUlha5lvM6_HMeZI9TH2EBtmzUfYNwIsnafmnz1R-sLXs3UwPCDhy7LCYoMibv-wnetMaKXgyKu101B9am7bzeAWkuB7fGGASTROXg15Wczg_ekEPw1pVwQ3R2KpxSQbLX54WesGiMJ0NV4vqy9RNgeqY',
-        'status': 'Done',
-        'warningTag': 'A/C Missing',
-        'workedDays': '21',
-        'payoutStatus': 'Bank Hold',
-        'netPayout': '₹88,000',
-        'footerNote': 'Bank file export blocked',
-        'footerIcon': Icons.credit_card_off,
-        'footerIconColor': const Color(0xFFBA1A1A),
-        'actionBtn': 'Fix A/C',
-        'hasWarning': true,
-        'refNo': 'PS-2026-02-0041',
-      },
-      {
-        'id': 'john',
-        'name': 'John Dsouza',
-        'empCode': 'EMP-4098',
-        'role': 'Financial Risk Analyst',
-        'avatar':
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuD_4Y5Bd48Qv9yduAbsl3WH7EPWuwQ4GBW3t9UC327F9FTiBEavv_ZJsj0_Fpp1oA8jQPupaLmCUqXgs2bRvYP6HWuUOhx2jx97_RH_weLEuetK_7BeeTZRKJYHdZgSYceP256K50Sfa-Wjm9AvkVgt9EmPRtWSpTmzoZwQpu157jgb4gdLXRCjTr8fM8A7dEHdlIoWWsc3yqf5_tWpllW7OPa2wsFwtDb2n6NItk44DHcTIAvqI8ih',
-        'status': 'Draft',
-        'warningTag': 'Duplicate',
-        'workedDays': '22',
-        'conflictText': 'Payslip #SLIP-881',
-        'netPayout': '₹66,000',
-        'footerNote': 'Needs merge or drop',
-        'footerIcon': Icons.merge_type,
-        'footerIconColor': const Color(0xFFBA1A1A),
-        'actionBtn': 'Resolve',
-        'hasWarning': true,
-        'refNo': 'PS-2026-02-0040',
-      },
-      {
-        'id': 'rohan',
-        'name': 'Rohan Patel',
-        'empCode': 'EMP-4076',
-        'role': 'Lead Product Designer',
-        'initials': 'RP',
-        'status': 'Done',
-        'workedDays': '22',
-        'basic': '₹45,000',
-        'gross': '₹72,000',
-        'netPayout': '₹68,500',
-        'footerNote': 'Verified Bank details on file',
-        'footerIcon': Icons.check_circle,
-        'footerIconColor': const Color(0xFF006443),
-        'hasWarning': false,
-        'refNo': 'PS-2026-02-0039',
       },
     ];
   }
@@ -202,16 +200,44 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
                   const SizedBox(height: 10),
 
                   // Payslips List
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: filtered.length,
-                      separatorBuilder: (c, i) => const SizedBox(height: 10),
-                      itemBuilder: (ctx, index) => _buildPayslipCard(filtered[index]),
+                  if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (filtered.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            const Icon(Icons.receipt_long_outlined, size: 48, color: Color(0xFF908D96)),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No payruns or payslips created yet',
+                              style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Run the payrun wizard to calculate batch payslips from backend.',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF714B67)),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: filtered.length,
+                        separatorBuilder: (c, i) => const SizedBox(height: 10),
+                        itemBuilder: (ctx, index) => _buildPayslipCard(filtered[index]),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -346,7 +372,7 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
                   _bankDetailsFixed = false;
                   _duplicateResolved = false;
                   _draftsAutoValidated = false;
-                  _loadPayslips();
+                  _loadPayrunData();
                 });
                 _triggerToast('Batch Reset', 'All anomaly alerts restored to initial state.');
               }

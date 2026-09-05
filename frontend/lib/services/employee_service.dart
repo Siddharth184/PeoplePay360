@@ -36,16 +36,7 @@ class EmployeeService {
       },
     );
 
-    if (response.isSuccess && response.data != null && response.data!.isNotEmpty) {
-      // Sync MockDataService.allEmployees
-      for (final emp in response.data!) {
-        final idx = MockDataService.allEmployees.indexWhere((e) => e.id == emp.id);
-        if (idx != -1) {
-          MockDataService.allEmployees[idx] = emp;
-        } else {
-          MockDataService.allEmployees.add(emp);
-        }
-      }
+    if (response.isSuccess && response.data != null) {
       return response;
     }
 
@@ -69,15 +60,8 @@ class EmployeeService {
 
     if (response.isSuccess && response.data != null) {
       final emp = response.data!;
-      if (employeeId == MockDataService.currentEmployee.id || employeeId == 'emp-001') {
-        MockDataService.currentEmployee = emp;
+      if (employeeId == ApiClient.currentEmployeeId || employeeId == MockDataService.currentEmployee.id) {
         currentEmployeeNotifier.value = emp;
-      }
-      final idx = MockDataService.allEmployees.indexWhere((e) => e.id == employeeId);
-      if (idx != -1) {
-        MockDataService.allEmployees[idx] = emp;
-      } else {
-        MockDataService.allEmployees.add(emp);
       }
       return response;
     }
@@ -87,7 +71,7 @@ class EmployeeService {
         (e) => e.id == employeeId,
         orElse: () => MockDataService.currentEmployee,
       );
-      if (employeeId == MockDataService.currentEmployee.id || employeeId == 'emp-001') {
+      if (employeeId == ApiClient.currentEmployeeId || employeeId == MockDataService.currentEmployee.id) {
         currentEmployeeNotifier.value = found;
       }
       return ApiResponse.success(found);
@@ -104,25 +88,52 @@ class EmployeeService {
     );
 
     if (response.isSuccess && response.data != null) {
-      MockDataService.allEmployees.insert(0, response.data!);
-    } else {
+      return response;
+    }
+
+    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
+      final String empName = data['name']?.toString() ?? 'New Employee';
+      final String dept = data['department_name']?.toString() ?? data['department']?.toString() ?? 'General';
+      final String job = data['job_position_name']?.toString() ?? data['job_position']?.toString() ?? 'Staff';
+      final double wage = (data['wage_monthly'] is num)
+          ? (data['wage_monthly'] as num).toDouble()
+          : (double.tryParse(data['wage_monthly']?.toString() ?? '') ?? 85000.0);
+
       final newEmp = EmployeeModel(
         id: 'emp-${DateTime.now().millisecondsSinceEpoch}',
-        name: data['name']?.toString() ?? 'New Employee',
+        name: empName,
         email: data['work_email']?.toString() ?? data['email']?.toString() ?? '',
-        jobTitle: data['job_position_name']?.toString() ?? data['job_position']?.toString() ?? data['jobTitle']?.toString() ?? 'Staff',
-        department: data['department_name']?.toString() ?? data['department']?.toString() ?? 'General',
-        workPhone: data['phone']?.toString() ?? data['workPhone']?.toString() ?? '',
-        managerName: 'Sara Khan',
-        avatarUrl: '',
+        jobTitle: job,
+        department: dept,
+        workPhone: data['phone']?.toString() ?? data['workPhone']?.toString() ?? '+91 98765 00099',
+        managerName: data['manager_name']?.toString() ?? data['managerName']?.toString() ?? 'Sara Khan',
+        avatarUrl: data['avatar_url']?.toString() ?? '',
         timeOffBalance: 14,
         activeContractsCount: 1,
         attendancesCount: 0,
         payslipsCount: 0,
-        status: 'ACTIVE',
-        employeeType: 'Full-time',
+        badgeId: data['badge_id']?.toString() ?? 'EMP-${4000 + MockDataService.allEmployees.length}',
+        employeeType: data['employee_type']?.toString() ?? 'Full-time',
+        status: data['status']?.toString() ?? 'ACTIVE',
+        dateOfJoining: data['date_of_joining']?.toString() ?? '2026-09-01',
+        bankName: data['bank_name']?.toString() ?? 'HDFC Bank',
+        bankAccountNumber: data['bank_account_number']?.toString() ?? '5010-9941-${1000 + MockDataService.allEmployees.length}',
+        workLocation: data['work_location']?.toString() ?? 'Bengaluru HQ',
       );
       MockDataService.allEmployees.insert(0, newEmp);
+
+      final newContract = ContractModel(
+        id: 'con-${DateTime.now().millisecondsSinceEpoch}',
+        refCode: 'CON/2026/00${50 + MockDataService.contracts.length}',
+        employeeName: empName,
+        department: dept,
+        startDate: data['date_of_joining']?.toString() ?? '2026-09-01',
+        wageMonthly: wage,
+        status: 'RUNNING',
+        structureName: 'Regular Employee Base',
+      );
+      MockDataService.contracts.insert(0, newContract);
+
       return ApiResponse.success(newEmp);
     }
 
@@ -144,36 +155,42 @@ class EmployeeService {
       );
     }
 
-    EmployeeModel updated;
     if (response.isSuccess && response.data != null) {
-      updated = response.data!;
-    } else {
+      final updated = response.data!;
+      if (id == ApiClient.currentEmployeeId || id == MockDataService.currentEmployee.id) {
+        currentEmployeeNotifier.value = updated;
+      }
+      return response;
+    }
+
+    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
       final existing = MockDataService.allEmployees.firstWhere(
         (e) => e.id == id,
         orElse: () => MockDataService.currentEmployee,
       );
-      updated = existing.copyWith(
+      final updated = existing.copyWith(
         name: data['name']?.toString() ?? existing.name,
         jobTitle: data['job_position_name']?.toString() ?? data['job_position']?.toString() ?? data['jobTitle']?.toString() ?? existing.jobTitle,
         department: data['department_name']?.toString() ?? data['department']?.toString() ?? existing.department,
         email: data['work_email']?.toString() ?? data['email']?.toString() ?? existing.email,
         workPhone: data['phone']?.toString() ?? data['workPhone']?.toString() ?? existing.workPhone,
       );
+
+      if (id == ApiClient.currentEmployeeId || id == MockDataService.currentEmployee.id) {
+        MockDataService.currentEmployee = updated;
+        currentEmployeeNotifier.value = updated;
+      }
+      final idx = MockDataService.allEmployees.indexWhere((e) => e.id == id);
+      if (idx != -1) {
+        MockDataService.allEmployees[idx] = updated;
+      } else {
+        MockDataService.allEmployees.add(updated);
+      }
+
+      return ApiResponse.success(updated);
     }
 
-    // Synchronize local caches and reactive listeners
-    if (id == MockDataService.currentEmployee.id || id == 'emp-001') {
-      MockDataService.currentEmployee = updated;
-      currentEmployeeNotifier.value = updated;
-    }
-    final idx = MockDataService.allEmployees.indexWhere((e) => e.id == id);
-    if (idx != -1) {
-      MockDataService.allEmployees[idx] = updated;
-    } else {
-      MockDataService.allEmployees.add(updated);
-    }
-
-    return ApiResponse.success(updated);
+    return response;
   }
 
   static Future<ApiResponse<List<Map<String, dynamic>>>> getDepartments() async {

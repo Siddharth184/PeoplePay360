@@ -293,7 +293,7 @@ def answer_contract_details(db: Session, employee_id: uuid.UUID | str) -> Option
     )
 
 
-def answer_next_holiday(db: Session, employee_id: uuid.UUID | str) -> Optional[str]:
+def answer_next_holiday(db: Session, employee_id: uuid.UUID | str | None = None) -> Optional[str]:
     rows = db.execute(
         text(
             """
@@ -308,6 +308,27 @@ def answer_next_holiday(db: Session, employee_id: uuid.UUID | str) -> Optional[s
         return "There are no upcoming public holidays configured."
     lines = [f"- **{r.name}**: {r.holiday_date:%A, %d %B %Y}" for r in rows]
     return "Upcoming public holidays:\n\n" + "\n".join(lines)
+
+
+def answer_employee_count(db: Session, employee_id: uuid.UUID | str | None = None) -> Optional[str]:
+    total = db.execute(text("SELECT COUNT(*) FROM employees WHERE status = 'ACTIVE'")).scalar() or 0
+    depts = db.execute(
+        text(
+            """
+            SELECT d.name, COUNT(e.id) as cnt
+            FROM departments d
+            JOIN employees e ON e.department_id = d.id
+            WHERE e.status = 'ACTIVE'
+            GROUP BY d.name
+            ORDER BY cnt DESC
+            """
+        )
+    ).fetchall()
+
+    lines = [f"### PeoplePay360 Headcount Summary\n\nThere are **{total} active employees** across the organization:\n"]
+    for d in depts:
+        lines.append(f"- **{d.name}**: {d.cnt} employee(s)")
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -336,6 +357,17 @@ POLICY_VETO_RE = re.compile(
 )
 
 TIER0_INTENTS: tuple[Tier0Intent, ...] = (
+    Tier0Intent(
+        name="EMPLOYEE_COUNT",
+        patterns=(
+            r"\b(total|how many|count|list|show)\b.*\b(employees?|staff|headcount|workforce|people|team)\b",
+            r"\bheadcount\b",
+            r"\btotal employee\b",
+            r"\bemployee count\b",
+        ),
+        handler=answer_employee_count,
+        description="Active employee count and departmental breakdown",
+    ),
     Tier0Intent(
         name="LEAVE_BALANCE",
         patterns=(
@@ -422,17 +454,6 @@ _COMPILED: Dict[str, List[re.Pattern[str]]] = {
 
 
 def detect_tier0_intent(prompt: str) -> Optional[Tier0Intent]:
-    """Match the question against the Tier 0 catalogue. First match wins.
-
-    Deliberately ordered and deterministic: the routing decision must be
-    reproducible and explainable, and must work with no network at all.
-
-    The policy veto is checked first. Answering "how many PTO days do I get a
-    year?" with the caller's current balance would be a confidently wrong answer,
-    so anything that reads as a handbook question is handed to retrieval instead.
-    NEXT_HOLIDAY is exempt: it is company-wide data with an exact SQL answer, so
-    there is no benefit to paraphrasing it.
-    """
     normalised = (prompt or "").strip()
     if not normalised:
         return None
@@ -442,7 +463,7 @@ def detect_tier0_intent(prompt: str) -> Optional[Tier0Intent]:
     for intent in TIER0_INTENTS:
         if not any(pattern.search(normalised) for pattern in _COMPILED[intent.name]):
             continue
-        if policy_flavoured and intent.name != "NEXT_HOLIDAY":
+        if policy_flavoured and intent.name not in ("NEXT_HOLIDAY", "EMPLOYEE_COUNT"):
             return None
         return intent
     return None
@@ -459,7 +480,7 @@ def answer_tier0(
     intent = detect_tier0_intent(prompt)
     if intent is None:
         return None
-    if employee_id is None:
+    if employee_id is None and intent.name not in ("NEXT_HOLIDAY", "EMPLOYEE_COUNT"):
         # Personal-data intents are meaningless without a linked employee record.
         return None
 

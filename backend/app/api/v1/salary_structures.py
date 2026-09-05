@@ -243,7 +243,10 @@ def add_rule(
     db: DbSession,
     _: CurrentUser = Depends(require_payroll_manager),
 ) -> SalaryRuleOut:
-    _load(db, structure_id)
+    structure = _load(db, structure_id)
+    if any(r.code == payload.code for r in structure.rules):
+        raise ConflictError(f"Rule code '{payload.code}' already exists in this structure.")
+
     if payload.computation_type.value == "PYTHON_CODE":
         validate_python_rule(payload.python_code)
 
@@ -283,10 +286,21 @@ def update_rule(
         raise NotFoundError(f"Salary rule {rule_id} not found.")
 
     updates = payload.model_dump(exclude_unset=True)
+    if "code" in updates and updates["code"] != rule.code:
+        structure = db.get(SalaryStructure, rule.salary_structure_id)
+        if structure and any(r.code == updates["code"] and r.id != rule.id for r in structure.rules):
+            raise ConflictError(f"Rule code '{updates['code']}' already exists in this structure.")
+
     for field, value in updates.items():
         setattr(rule, field, value.value if hasattr(value, "value") else value)
 
-    if rule.computation_type == "PYTHON_CODE":
+    if rule.computation_type == "FIXED" and rule.fixed_amount is None:
+        raise ConflictError("fixed_amount is required for FIXED rules.")
+    elif rule.computation_type == "PERCENTAGE" and (rule.percentage_base is None or rule.percentage_rate is None):
+        raise ConflictError("percentage_base and percentage_rate are required for PERCENTAGE rules.")
+    elif rule.computation_type == "PYTHON_CODE":
+        if not (rule.python_code or "").strip():
+            raise ConflictError("python_code is required for PYTHON_CODE rules.")
         validate_python_rule(rule.python_code)
 
     db.commit()

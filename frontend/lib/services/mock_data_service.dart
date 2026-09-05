@@ -307,32 +307,45 @@ class MockDataService {
     ),
   ];
 
-  static List<AttendanceModel> attendances = [
-    AttendanceModel(id: 'att-01', dateStr: '2026-09-05', checkInTime: '09:02 AM', checkOutTime: null, status: 'PRESENT', workedHours: 5.5, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-    AttendanceModel(id: 'att-02', dateStr: '2026-09-04', checkInTime: '09:15 AM', checkOutTime: '06:10 PM', status: 'LATE', workedHours: 8.5, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-    AttendanceModel(id: 'att-03', dateStr: '2026-09-03', checkInTime: '08:58 AM', checkOutTime: '06:00 PM', status: 'PRESENT', workedHours: 9.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-    AttendanceModel(id: 'att-04', dateStr: '2026-09-02', checkInTime: '09:00 AM', checkOutTime: '05:55 PM', status: 'PRESENT', workedHours: 8.9, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-    AttendanceModel(id: 'att-05', dateStr: '2026-09-01', checkInTime: '09:05 AM', checkOutTime: '06:15 PM', status: 'PRESENT', workedHours: 9.1, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-    AttendanceModel(id: 'att-06', dateStr: '2026-08-31', checkInTime: '08:55 AM', checkOutTime: '06:02 PM', status: 'PRESENT', workedHours: 9.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-    AttendanceModel(id: 'att-07', dateStr: '2026-09-05', checkInTime: '09:20 AM', checkOutTime: null, status: 'LATE', workedHours: 5.2, employeeName: 'Priya Patel', employeeId: 'emp-002'),
-    AttendanceModel(id: 'att-08', dateStr: '2026-09-05', checkInTime: '08:45 AM', checkOutTime: null, status: 'PRESENT', workedHours: 5.8, employeeName: 'Vikram Singh', employeeId: 'emp-005'),
-    AttendanceModel(id: 'att-09', dateStr: '2026-09-05', checkInTime: '--', checkOutTime: null, status: 'ON_LEAVE', workedHours: 0.0, employeeName: 'Karan Mehta', employeeId: 'emp-009'),
-    AttendanceModel(id: 'att-10', dateStr: '2026-09-05', checkInTime: '--', checkOutTime: null, status: 'ABSENT', workedHours: 0.0, employeeName: 'Mohammed Ali', employeeId: 'emp-007'),
-    AttendanceModel(id: 'att-11', dateStr: '2026-09-04', checkInTime: '09:01 AM', checkOutTime: '06:05 PM', status: 'PRESENT', workedHours: 9.0, employeeName: 'Neha Verma', employeeId: 'emp-006'),
-    AttendanceModel(id: 'att-12', dateStr: '2026-09-04', checkInTime: '08:50 AM', checkOutTime: '05:45 PM', status: 'PRESENT', workedHours: 8.9, employeeName: 'Ananya Reddy', employeeId: 'emp-008'),
-    AttendanceModel(id: 'att-13', dateStr: '2026-09-04', checkInTime: '09:32 AM', checkOutTime: '06:40 PM', status: 'LATE', workedHours: 9.1, employeeName: 'Rajesh Kumar', employeeId: 'emp-003'),
-    AttendanceModel(id: 'att-14', dateStr: '2026-09-03', checkInTime: '08:40 AM', checkOutTime: '05:50 PM', status: 'PRESENT', workedHours: 9.2, employeeName: 'Sara Khan', employeeId: 'emp-004'),
-  ];
+  static List<AttendanceModel>? _attendancesList;
+
+  /// OFFLINE DEMO ONLY. Never shown when the backend is reachable.
+  /// Dates are generated relative to "today" so the offline sample always looks
+  /// current instead of being pinned to a fixed calendar day.
+  static List<AttendanceModel> get attendances {
+    if (_attendancesList != null) return _attendancesList!;
+    final now = DateTime.now();
+    DateTime dayAt(int daysAgo, int hour, int minute) {
+      final d = now.subtract(Duration(days: daysAgo));
+      return DateTime(d.year, d.month, d.day, hour, minute);
+    }
+
+    _attendancesList = [
+      AttendanceModel(id: 'att-01', checkIn: dayAt(0, 9, 2), checkOut: null, status: 'PRESENT', workedHours: 5.5, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-02', checkIn: dayAt(1, 9, 15), checkOut: dayAt(1, 18, 10), status: 'LATE', workedHours: 8.5, overtimeHours: 0.5, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-03', checkIn: dayAt(2, 8, 58), checkOut: dayAt(2, 18, 0), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-04', checkIn: dayAt(3, 9, 0), checkOut: dayAt(3, 17, 55), status: 'PRESENT', workedHours: 8.9, overtimeHours: 0.9, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-05', checkIn: dayAt(4, 9, 5), checkOut: dayAt(4, 18, 15), status: 'PRESENT', workedHours: 9.1, overtimeHours: 1.1, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-06', checkIn: dayAt(5, 8, 55), checkOut: dayAt(5, 18, 2), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-07', checkIn: dayAt(0, 9, 20), checkOut: null, status: 'LATE', workedHours: 5.2, overtimeHours: 0.0, employeeName: 'Priya Patel', employeeId: 'emp-002'),
+      AttendanceModel(id: 'att-08', checkIn: dayAt(0, 8, 45), checkOut: null, status: 'PRESENT', workedHours: 5.8, overtimeHours: 0.0, employeeName: 'Vikram Singh', employeeId: 'emp-005'),
+      AttendanceModel(id: 'att-11', checkIn: dayAt(1, 9, 1), checkOut: dayAt(1, 18, 5), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Neha Verma', employeeId: 'emp-006'),
+      AttendanceModel(id: 'att-12', checkIn: dayAt(1, 8, 50), checkOut: dayAt(1, 17, 45), status: 'PRESENT', workedHours: 8.9, overtimeHours: 0.9, employeeName: 'Ananya Reddy', employeeId: 'emp-008'),
+      AttendanceModel(id: 'att-13', checkIn: dayAt(1, 9, 32), checkOut: dayAt(1, 18, 40), status: 'LATE', workedHours: 9.1, overtimeHours: 1.1, employeeName: 'Rajesh Kumar', employeeId: 'emp-003'),
+      AttendanceModel(id: 'att-14', checkIn: dayAt(2, 8, 40), checkOut: dayAt(2, 17, 50), status: 'PRESENT', workedHours: 9.2, overtimeHours: 1.2, employeeName: 'Sara Khan', employeeId: 'emp-004'),
+    ];
+    return _attendancesList!;
+  }
 
   static List<TimeOffRequestModel> timeOffRequests = [
-    TimeOffRequestModel(id: 'req-01', typeName: 'Paid Time Off (PTO)', startDate: '2026-09-15', endDate: '2026-09-18', daysCount: 4.0, status: 'PENDING', reason: 'Family Annual Event', employeeName: 'Aarav Sharma'),
-    TimeOffRequestModel(id: 'req-02', typeName: 'Sick Leave', startDate: '2026-08-10', endDate: '2026-08-10', daysCount: 1.0, status: 'APPROVED', reason: 'Fever & Doctor Visit', employeeName: 'Aarav Sharma'),
-    TimeOffRequestModel(id: 'req-03', typeName: 'Casual Leave', startDate: '2026-07-01', endDate: '2026-07-02', daysCount: 2.0, status: 'APPROVED', reason: 'Personal errands', employeeName: 'Aarav Sharma'),
-    TimeOffRequestModel(id: 'req-04', typeName: 'Paid Time Off (PTO)', startDate: '2026-09-22', endDate: '2026-09-26', daysCount: 5.0, status: 'PENDING', reason: 'Diwali travel to hometown', employeeName: 'Priya Patel'),
-    TimeOffRequestModel(id: 'req-05', typeName: 'Sick Leave', startDate: '2026-09-02', endDate: '2026-09-03', daysCount: 2.0, status: 'APPROVED', reason: 'Viral flu, doctor advised rest', employeeName: 'Vikram Singh'),
-    TimeOffRequestModel(id: 'req-06', typeName: 'Comp Off', startDate: '2026-09-12', endDate: '2026-09-12', daysCount: 1.0, status: 'PENDING', reason: 'Weekend payroll deployment (Aug 30)', employeeName: 'Neha Verma'),
-    TimeOffRequestModel(id: 'req-07', typeName: 'Maternity Leave', startDate: '2026-10-01', endDate: '2026-12-30', daysCount: 90.0, status: 'APPROVED', reason: 'Maternity leave as per policy', employeeName: 'Ananya Reddy'),
-    TimeOffRequestModel(id: 'req-08', typeName: 'Unpaid Leave', startDate: '2026-08-25', endDate: '2026-08-27', daysCount: 3.0, status: 'REFUSED', reason: 'Insufficient balance, LOP requested', employeeName: 'Mohammed Ali'),
+    TimeOffRequestModel(id: 'req-01', timeoffTypeId: 'tot-01', typeName: 'Paid Time Off', startDate: '2026-09-15', endDate: '2026-09-18', daysCount: 4.0, status: 'TO_APPROVE', reason: 'Family Annual Event', employeeName: 'Aarav Mehta', employeeId: 'emp-001'),
+    TimeOffRequestModel(id: 'req-02', timeoffTypeId: 'tot-02', typeName: 'Sick Leave', startDate: '2026-08-10', endDate: '2026-08-10', daysCount: 1.0, status: 'APPROVED', reason: 'Fever & Doctor Visit', employeeName: 'Aarav Mehta', employeeId: 'emp-001'),
+    TimeOffRequestModel(id: 'req-03', timeoffTypeId: 'tot-04', typeName: 'Compensatory Off', startDate: '2026-07-01', endDate: '2026-07-02', daysCount: 2.0, status: 'APPROVED', reason: 'Personal errands', employeeName: 'Aarav Mehta', employeeId: 'emp-001'),
+    TimeOffRequestModel(id: 'req-04', timeoffTypeId: 'tot-01', typeName: 'Paid Time Off', startDate: '2026-09-22', endDate: '2026-09-26', daysCount: 5.0, status: 'TO_APPROVE', reason: 'Diwali travel to hometown', employeeName: 'Priya Patel', employeeId: 'emp-002'),
+    TimeOffRequestModel(id: 'req-05', timeoffTypeId: 'tot-02', typeName: 'Sick Leave', startDate: '2026-09-02', endDate: '2026-09-03', daysCount: 2.0, status: 'APPROVED', reason: 'Viral flu, doctor advised rest', employeeName: 'Vikram Singh', employeeId: 'emp-005'),
+    TimeOffRequestModel(id: 'req-06', timeoffTypeId: 'tot-04', typeName: 'Compensatory Off', startDate: '2026-09-12', endDate: '2026-09-12', daysCount: 1.0, status: 'TO_APPROVE', reason: 'Weekend payroll deployment (Aug 30)', employeeName: 'Neha Verma', employeeId: 'emp-006'),
+    TimeOffRequestModel(id: 'req-07', timeoffTypeId: 'tot-03', typeName: 'Maternity Leave', startDate: '2026-10-01', endDate: '2026-12-30', daysCount: 90.0, status: 'APPROVED', reason: 'Maternity leave as per policy', employeeName: 'Ananya Reddy', employeeId: 'emp-008'),
+    TimeOffRequestModel(id: 'req-08', timeoffTypeId: 'tot-05', typeName: 'Unpaid Leave', startDate: '2026-08-25', endDate: '2026-08-27', daysCount: 3.0, status: 'REFUSED', reason: 'Insufficient balance, LOP requested', employeeName: 'Mohammed Ali', employeeId: 'emp-007'),
   ];
 
   /// Leave balances / allocations per employee per leave type.
@@ -633,10 +646,102 @@ class MockDataService {
       id: 'tot-05',
       name: 'Unpaid Leave',
       code: 'LOP',
+      requiresAllocation: false,
       requiresApproval: true,
+      isPaid: false,
       color: '#64748b', // slate
     ),
   ];
+
+  static List<LeaveBalanceModel>? _leaveBalancesList;
+
+  static List<LeaveBalanceModel> getLeaveBalances([String? employeeId]) {
+    if (_leaveBalancesList == null) {
+      _leaveBalancesList = [
+        LeaveBalanceModel(
+          allocationId: 'alloc-01',
+          timeoffTypeId: 'tot-01',
+          timeoffTypeName: 'Paid Time Off',
+          displayColor: '#0d9488',
+          unit: 'DAYS',
+          allocatedDays: 20.0,
+          takenDays: 5.0,
+          remainingDays: 15.0,
+          validityYear: DateTime.now().year,
+        ),
+        LeaveBalanceModel(
+          allocationId: 'alloc-02',
+          timeoffTypeId: 'tot-02',
+          timeoffTypeName: 'Sick Leave',
+          displayColor: '#e11d48',
+          unit: 'DAYS',
+          allocatedDays: 10.0,
+          takenDays: 2.0,
+          remainingDays: 8.0,
+          validityYear: DateTime.now().year,
+        ),
+        LeaveBalanceModel(
+          allocationId: 'alloc-03',
+          timeoffTypeId: 'tot-03',
+          timeoffTypeName: 'Maternity Leave',
+          displayColor: '#57344f',
+          unit: 'DAYS',
+          allocatedDays: 90.0,
+          takenDays: 0.0,
+          remainingDays: 90.0,
+          validityYear: DateTime.now().year,
+        ),
+        LeaveBalanceModel(
+          allocationId: 'alloc-04',
+          timeoffTypeId: 'tot-04',
+          timeoffTypeName: 'Compensatory Off',
+          displayColor: '#2563eb',
+          unit: 'DAYS',
+          allocatedDays: 5.0,
+          takenDays: 1.0,
+          remainingDays: 4.0,
+          validityYear: DateTime.now().year,
+        ),
+        LeaveBalanceModel(
+          allocationId: 'alloc-05',
+          timeoffTypeId: 'tot-05',
+          timeoffTypeName: 'Unpaid Leave',
+          displayColor: '#64748b',
+          unit: 'DAYS',
+          allocatedDays: 99.0,
+          takenDays: 0.0,
+          remainingDays: 99.0,
+          validityYear: DateTime.now().year,
+        ),
+      ];
+    }
+    return _leaveBalancesList!;
+  }
+
+  /// Debit or credit leave balance dynamically in memory.
+  static void updateLeaveBalance(String timeOffTypeId, String typeName, double deltaTaken) {
+    final list = getLeaveBalances();
+    final idx = list.indexWhere((b) =>
+        (timeOffTypeId.isNotEmpty && b.timeoffTypeId == timeOffTypeId) ||
+        b.timeoffTypeName.toLowerCase().contains(typeName.toLowerCase()) ||
+        typeName.toLowerCase().contains(b.timeoffTypeName.toLowerCase()));
+    if (idx >= 0) {
+      final old = list[idx];
+      final newTaken = (old.takenDays + deltaTaken) < 0 ? 0.0 : (old.takenDays + deltaTaken);
+      final newRemaining = old.allocatedDays - newTaken;
+      list[idx] = LeaveBalanceModel(
+        allocationId: old.allocationId,
+        timeoffTypeId: old.timeoffTypeId,
+        timeoffTypeName: old.timeoffTypeName,
+        displayColor: old.displayColor,
+        unit: old.unit,
+        allocatedDays: old.allocatedDays,
+        takenDays: double.parse(newTaken.toStringAsFixed(1)),
+        remainingDays: double.parse(newRemaining.toStringAsFixed(1)),
+        validityYear: old.validityYear,
+      );
+    }
+  }
 
   static List<SalaryStructureModel> salaryStructures = [
     SalaryStructureModel(

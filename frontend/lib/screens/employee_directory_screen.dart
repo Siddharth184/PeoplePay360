@@ -53,6 +53,8 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
         _isLoading = false;
         if (res.isSuccess && res.data != null && res.data!.isNotEmpty) {
           _staffList = res.data!;
+        } else {
+          _staffList = List<EmployeeModel>.from(MockDataService.allEmployees);
         }
       });
     }
@@ -87,9 +89,20 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
 
   void _openCreateEmployeeSheet() {
     final nameCtrl = TextEditingController();
-    final titleCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController(text: '+91 98765 ');
+    final badgeIdCtrl = TextEditingController(text: 'EMP-${4000 + MockDataService.allEmployees.length + 1}');
+    final joiningDateCtrl = TextEditingController(text: '2026-09-01');
+    final wageCtrl = TextEditingController(text: '85000');
+    final bankAccountCtrl = TextEditingController(text: '5010-9941-${1000 + MockDataService.allEmployees.length + 1}');
+
+    String jobTitle = 'Software Engineer';
     String dept = 'Engineering';
+    String location = 'Bengaluru HQ';
+    String manager = 'Sara Khan';
+    String empType = 'Full-time';
+    String bankName = 'HDFC Bank';
+    bool isSubmitting = false;
 
     showModalBottomSheet(
       context: context,
@@ -97,159 +110,349 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            top: 20,
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.88,
+              ),
+              padding: EdgeInsets.only(
+                top: 16,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'New Employee Profile',
-                      style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.grey),
-                      onPressed: () => Navigator.pop(context),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF57344F).withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF57344F), size: 22),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Onboard New Employee',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(fontSize: 19, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.grey),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: nameCtrl,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                  decoration: InputDecoration(
-                    labelText: 'Full Name *',
-                    labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontWeight: FontWeight.w600),
-                    hintText: 'e.g. Aarav Mehta',
-                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8)),
-                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF714B67), size: 20),
-                    filled: true,
-                    fillColor: const Color(0xFFF2F3FF),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextFormField(
-                  controller: titleCtrl,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                  decoration: InputDecoration(
-                    labelText: 'Job Title *',
-                    labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontWeight: FontWeight.w600),
-                    hintText: 'e.g. Payroll Specialist',
-                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8)),
-                    prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFF714B67), size: 20),
-                    filled: true,
-                    fillColor: const Color(0xFFF2F3FF),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                DropdownButtonFormField<String>(
-                  initialValue: dept,
-                  dropdownColor: Colors.white,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                  decoration: InputDecoration(
-                    labelText: 'Department *',
-                    labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontWeight: FontWeight.w600),
-                    prefixIcon: const Icon(Icons.business_outlined, color: Color(0xFF714B67), size: 20),
-                    filled: true,
-                    fillColor: const Color(0xFFF2F3FF),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'Engineering', child: Text('Engineering', style: TextStyle(color: Color(0xFF131B2E)))),
-                    DropdownMenuItem(value: 'Finance', child: Text('Finance', style: TextStyle(color: Color(0xFF131B2E)))),
-                    DropdownMenuItem(value: 'Human Resources', child: Text('Human Resources', style: TextStyle(color: Color(0xFF131B2E)))),
-                    DropdownMenuItem(value: 'Sales', child: Text('Sales', style: TextStyle(color: Color(0xFF131B2E)))),
-                    DropdownMenuItem(value: 'Marketing', child: Text('Marketing', style: TextStyle(color: Color(0xFF131B2E)))),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) dept = val;
-                  },
-                ),
-                const SizedBox(height: 14),
-                TextFormField(
-                  controller: emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                  decoration: InputDecoration(
-                    labelText: 'Work Email *',
-                    labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontWeight: FontWeight.w600),
-                    hintText: 'e.g. employee@oxp.com',
-                    hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8)),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF714B67), size: 20),
-                    filled: true,
-                    fillColor: const Color(0xFFF2F3FF),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00696E),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: () async {
-                      final name = nameCtrl.text.trim();
-                      final email = emailCtrl.text.trim();
-                      final nav = Navigator.of(context);
+                    const SizedBox(height: 16),
 
-                      if (name.isNotEmpty && email.isNotEmpty) {
-                        await EmployeeService.createEmployee({
-                          'name': name,
-                          'work_email': email,
-                          'job_position_name': titleCtrl.text.trim().isNotEmpty ? titleCtrl.text.trim() : 'Software Engineer',
-                          'department_name': dept,
-                          'company_name': 'OXP Pvt Ltd',
-                        });
-                        if (mounted) {
-                          _fetchEmployees();
-                        }
-                      }
-                      nav.pop();
-                      _triggerToast('✅ Employee saved successfully');
-                    },
-                    child: Text(
-                      'Save Employee',
-                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 15),
+                    // SECTION 1: PERSONAL & CONTACT
+                    _buildFormSectionHeader('1. Personal & Contact Information', Icons.badge_outlined),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: nameCtrl,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Full Name *', Icons.person_outline, hint: 'e.g. Aarav Mehta'),
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Work Email *', Icons.email_outlined, hint: 'aarav@oxp.com'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Work Phone *', Icons.phone_outlined, hint: '+91 98765 43210'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: badgeIdCtrl,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Employee Badge ID *', Icons.qr_code_outlined, hint: 'EMP-4095'),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // SECTION 2: ROLE & ASSIGNMENT
+                    _buildFormSectionHeader('2. Role & Organizational Assignment', Icons.business_outlined),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: jobTitle,
+                      isExpanded: true,
+                      isDense: true,
+                      dropdownColor: Colors.white,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Job Position / Role *', Icons.work_outline),
+                      items: const [
+                        DropdownMenuItem(value: 'Software Engineer', child: Text('Software Engineer', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Payroll Specialist', child: Text('Payroll Specialist', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'HR Manager', child: Text('HR Manager', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'HR Payroll User', child: Text('HR Payroll User', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Product Manager', child: Text('Product Manager', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Financial Analyst', child: Text('Financial Analyst', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Operations Lead', child: Text('Operations Lead', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Sales Manager', child: Text('Sales Manager', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Data Analyst', child: Text('Data Analyst', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'QA Engineer', child: Text('QA Engineer', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'System Administrator', child: Text('System Administrator', overflow: TextOverflow.ellipsis)),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => jobTitle = val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: dept,
+                      isExpanded: true,
+                      isDense: true,
+                      dropdownColor: Colors.white,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Department *', Icons.apartment_outlined),
+                      items: const [
+                        DropdownMenuItem(value: 'Engineering', child: Text('Engineering', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Finance', child: Text('Finance', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Human Resources', child: Text('Human Resources', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Sales', child: Text('Sales', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Marketing', child: Text('Marketing', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Executive Management', child: Text('Executive Management', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Customer Support', child: Text('Customer Support', overflow: TextOverflow.ellipsis)),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => dept = val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: location,
+                      isExpanded: true,
+                      isDense: true,
+                      dropdownColor: Colors.white,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Office Location *', Icons.location_on_outlined),
+                      items: const [
+                        DropdownMenuItem(value: 'Bengaluru HQ', child: Text('Bengaluru HQ', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Mumbai Hub', child: Text('Mumbai Hub', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Delhi NCR', child: Text('Delhi NCR', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Hyderabad Tech', child: Text('Hyderabad Tech', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Remote', child: Text('Remote', overflow: TextOverflow.ellipsis)),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => location = val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: manager,
+                      isExpanded: true,
+                      isDense: true,
+                      dropdownColor: Colors.white,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Reporting Manager *', Icons.supervisor_account_outlined),
+                      items: const [
+                        DropdownMenuItem(value: 'Sara Khan', child: Text('Sara Khan (HR Director)', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Vikram Nair', child: Text('Vikram Nair (Finance Lead)', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Aarav Mehta', child: Text('Aarav Mehta (Payroll Lead)', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Admin User', child: Text('Admin User', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Board of Directors', child: Text('Board of Directors', overflow: TextOverflow.ellipsis)),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => manager = val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: empType,
+                      isExpanded: true,
+                      isDense: true,
+                      dropdownColor: Colors.white,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Employment Type *', Icons.category_outlined),
+                      items: const [
+                        DropdownMenuItem(value: 'Full-time', child: Text('Full-time', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Part-time', child: Text('Part-time', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Contractor', child: Text('Contractor', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Intern', child: Text('Intern', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Probation', child: Text('Probation', overflow: TextOverflow.ellipsis)),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => empType = val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: joiningDateCtrl,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Date of Joining (YYYY-MM-DD) *', Icons.calendar_month_outlined),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // SECTION 3: BANKING & COMPENSATION
+                    _buildFormSectionHeader('3. Banking & Payroll Setup', Icons.account_balance_outlined),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: wageCtrl,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Monthly Wage / Base Salary (₹) *', Icons.payments_outlined, hint: '85000'),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: bankName,
+                      isExpanded: true,
+                      isDense: true,
+                      dropdownColor: Colors.white,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Bank Name *', Icons.account_balance_wallet_outlined),
+                      items: const [
+                        DropdownMenuItem(value: 'HDFC Bank', child: Text('HDFC Bank', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'ICICI Bank', child: Text('ICICI Bank', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Axis Bank', child: Text('Axis Bank', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'State Bank of India', child: Text('State Bank of India (SBI)', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'Kotak Mahindra Bank', child: Text('Kotak Mahindra Bank', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'IndusInd Bank', child: Text('IndusInd Bank', overflow: TextOverflow.ellipsis)),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => bankName = val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: bankAccountCtrl,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                      decoration: _buildInputDecoration('Bank Account No. *', Icons.numbers_outlined, hint: '5010-9941-8812'),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00696E),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: () async {
+                          if (isSubmitting) return;
+
+                          final name = nameCtrl.text.trim();
+                          final email = emailCtrl.text.trim();
+                          final phone = phoneCtrl.text.trim();
+                          final badgeId = badgeIdCtrl.text.trim();
+                          final joiningDate = joiningDateCtrl.text.trim();
+                          final wageStr = wageCtrl.text.trim();
+                          final bankAcc = bankAccountCtrl.text.trim();
+
+                          if (name.isEmpty || email.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('⚠️ Please enter Full Name and Work Email')),
+                            );
+                            return;
+                          }
+
+                          setSheetState(() => isSubmitting = true);
+
+                          Navigator.of(context).pop();
+                          _triggerToast('⏳ Onboarding employee...');
+
+                          await EmployeeService.createEmployee({
+                            'name': name,
+                            'work_email': email,
+                            'phone': phone,
+                            'badge_id': badgeId,
+                            'job_position_name': jobTitle,
+                            'department_name': dept,
+                            'work_location': location,
+                            'manager_name': manager,
+                            'employee_type': empType,
+                            'date_of_joining': joiningDate,
+                            'wage_monthly': double.tryParse(wageStr) ?? 85000.0,
+                            'bank_name': bankName,
+                            'bank_account_number': bankAcc,
+                            'company_name': 'OXP Pvt Ltd',
+                          });
+
+                          if (mounted) {
+                            await _fetchEmployees();
+                            _triggerToast('✅ Employee onboarded & active contract created');
+                          }
+                        },
+                        icon: isSubmitting
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.check_circle_outline_rounded, size: 20),
+                        label: Text(
+                          isSubmitting ? 'Saving...' : 'Save & Complete Onboarding',
+                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildFormSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF57344F)),
+        const SizedBox(width: 6),
+        Text(
+          title,
+          style: GoogleFonts.outfit(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF57344F),
+          ),
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _buildInputDecoration(String label, IconData icon, {String? hint}) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF57344F), fontSize: 13, fontWeight: FontWeight.w600),
+      hintText: hint,
+      hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
+      prefixIcon: Icon(icon, color: const Color(0xFF714B67), size: 18),
+      filled: true,
+      fillColor: const Color(0xFFF8FAFC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF714B67), width: 1.5)),
     );
   }
 

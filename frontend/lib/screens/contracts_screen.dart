@@ -75,27 +75,32 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
   Future<void> _fetchContracts() async {
     final res = await ContractService.getContracts(employeeId: _emp.id);
-    if (mounted && res.isSuccess && res.data != null && res.data!.isNotEmpty) {
-      _allContracts = res.data!;
-      final matching = _allContracts.firstWhere(
-        (c) => _matchesEmployeeName(c.employeeName, _emp.name) && (c.status == 'RUNNING' || c.status == 'Running'),
-        orElse: () => _allContracts.firstWhere(
-          (c) => _matchesEmployeeName(c.employeeName, _emp.name),
-          orElse: () => _buildFallbackContract(_emp),
-        ),
-      );
-      _applyContractData(matching);
-    } else {
-      // Fallback from MockDataService
-      _allContracts = MockDataService.contracts;
-      final matching = _allContracts.firstWhere(
-        (c) => _matchesEmployeeName(c.employeeName, _emp.name) && (c.status == 'RUNNING' || c.status == 'Running'),
-        orElse: () => _allContracts.firstWhere(
-          (c) => _matchesEmployeeName(c.employeeName, _emp.name),
-          orElse: () => _buildFallbackContract(_emp),
-        ),
-      );
-      _applyContractData(matching);
+    if (mounted) {
+      if (res.isSuccess && res.data != null) {
+        _allContracts = res.data!;
+        if (_allContracts.isNotEmpty) {
+          final matching = _allContracts.firstWhere(
+            (c) => _matchesEmployeeName(c.employeeName, _emp.name) && (c.status == 'RUNNING' || c.status == 'Running'),
+            orElse: () => _allContracts.firstWhere(
+              (c) => _matchesEmployeeName(c.employeeName, _emp.name),
+              orElse: () => _buildFallbackContract(_emp),
+            ),
+          );
+          _applyContractData(matching);
+        } else {
+          _applyContractData(_buildFallbackContract(_emp));
+        }
+      } else if (!ApiClient.isBackendOnline || res.statusCode == 0) {
+        _allContracts = MockDataService.contracts;
+        final matching = _allContracts.firstWhere(
+          (c) => _matchesEmployeeName(c.employeeName, _emp.name) && (c.status == 'RUNNING' || c.status == 'Running'),
+          orElse: () => _allContracts.firstWhere(
+            (c) => _matchesEmployeeName(c.employeeName, _emp.name),
+            orElse: () => _buildFallbackContract(_emp),
+          ),
+        );
+        _applyContractData(matching);
+      }
     }
   }
 
@@ -924,11 +929,6 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Business Guard Banner
-                  _buildBusinessGuardBanner(),
-
-                  const SizedBox(height: 12),
-
                   // Section 1: Employment Terms Card (Employee + Dates + Department + Position)
                   _buildEmploymentTermsCard(),
 
@@ -1085,50 +1085,6 @@ class _ContractsScreenState extends State<ContractsScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Row(
-            children: [
-              InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('📜 Audit: Contract created 01-Jan-2026 for ${_emp.name}')),
-                  );
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF2F3FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.history_edu, size: 18, color: Color(0xFF131B2E)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('⚡ Options: Print PDF • Export XML • Archive')),
-                  );
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF2F3FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.more_vert, size: 18, color: Color(0xFF131B2E)),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -1255,60 +1211,6 @@ class _ContractsScreenState extends State<ContractsScreen> {
                 ),
               );
             }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBusinessGuardBanner() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFCCF7FA).withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF00696E),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.verified_user, color: Colors.white, size: 16),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Active Contract Guard',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF004F53),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                RichText(
-                  text: TextSpan(
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5,
-                      color: const Color(0xFF4E444A),
-                      height: 1.4,
-                    ),
-                    children: [
-                      const TextSpan(text: 'Contract parameters for '),
-                      TextSpan(text: _emp.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF131B2E))),
-                      const TextSpan(text: ' are validated against overlapping active periods to prevent double payruns.'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

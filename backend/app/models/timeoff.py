@@ -46,6 +46,16 @@ class TimeOffType(Base):
     work_entry_type: Mapped[str | None] = mapped_column(String(50))
     notes: Mapped[str | None] = mapped_column(Text)
 
+    # Payroll integration policy.
+    # is_paid=True  -> leave carries full pay; no salary deduction.
+    # is_paid=False -> unpaid / loss-of-pay; the payroll engine applies a
+    #                  pro-rata daily-rate deduction for the leave days.
+    # Defaults to True so pre-existing types remain salary-neutral.
+    is_paid: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Optional override: the DEDUCTION salary rule code that expresses the unpaid
+    # deduction. When NULL, the engine uses its standard daily-rate calculation.
+    unpaid_deduction_rule_code: Mapped[str | None] = mapped_column(String(30))
+
     __table_args__ = (
         CheckConstraint("unit IN ('DAYS', 'HOURS')", name="chk_timeoff_unit"),
         CheckConstraint(

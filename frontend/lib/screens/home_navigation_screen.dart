@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/notifications_drawer.dart';
+import '../services/notification_service.dart';
 import '../widgets/staff_search_dialog.dart';
 import '../services/api_client.dart';
-import '../services/mock_data_service.dart';
 import '../services/employee_service.dart';
 import '../models/models.dart';
 import 'employee_profile_screen.dart';
@@ -272,6 +272,7 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
     }
 
     final bottomNavIndices = enrichedNavItems.map((e) => e.targetIndex).toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
       canPop: false,
@@ -285,7 +286,7 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
           leading: _currentIndex != 0
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  tooltip: 'Back to Previous Screen',
+                  tooltip: 'Back',
                   onPressed: _handleBack,
                 )
               : null,
@@ -295,71 +296,52 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
             overflow: TextOverflow.ellipsis,
           ),
           actions: [
-            IconButton(
-              icon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(Icons.notifications_outlined),
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.odooTeal,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text(
-                        '2',
-                        style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+            ValueListenableBuilder<List<Map<String, dynamic>>>(
+              valueListenable: NotificationService.notificationsNotifier,
+              builder: (context, notifications, _) {
+                final unreadCount = notifications.where((n) => n['isUnread'] == true).length;
+                return IconButton(
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.notifications_outlined),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: -2,
+                          top: -2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.odooTeal,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '$unreadCount',
+                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
-              tooltip: 'HR Notifications Inbox',
-              onPressed: () {
-                NotificationsDrawer.show(context, onNavigateTab: _onTabSelected);
+                  tooltip: 'HR Notifications Inbox',
+                  onPressed: () {
+                    NotificationsDrawer.show(context, onNavigateTab: _onTabSelected);
+                  },
+                );
               },
             ),
           ],
         ),
         drawer: Drawer(
+          backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFFAFAFA),
+          surfaceTintColor: Colors.transparent,
           child: Column(
             children: [
+              _buildDrawerHeader(context),
               Expanded(
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   children: [
-                    ValueListenableBuilder<EmployeeModel>(
-                      valueListenable: EmployeeService.currentEmployeeNotifier,
-                      builder: (context, activeEmp, _) {
-                        final displayName = ApiClient.currentEmployeeName ?? activeEmp.name;
-                        final displayEmail = ApiClient.currentEmail ?? activeEmp.email;
-                        final initials = displayName.split(' ').where((e) => e.isNotEmpty).map((e) => e[0]).take(2).join();
-                        return UserAccountsDrawerHeader(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [AppTheme.odooAubergine, Color(0xFF57344F)],
-                            ),
-                          ),
-                          accountName: Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          accountEmail: Text('$displayEmail • ${widget.userRole}'),
-                          currentAccountPicture: CircleAvatar(
-                            backgroundColor: Colors.white,
-                            child: Text(
-                              initials.isNotEmpty ? initials : 'U',
-                              style: const TextStyle(
-                                color: AppTheme.odooAubergine,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    // Helper to check if an index is already pinned to the Bottom Navigation Bar
                     ...(() {
                       bool isPinned(int idx) => bottomNavIndices.contains(idx);
 
@@ -367,71 +349,108 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
 
                       if (!isPinned(0)) {
                         modules.add(
-                          ListTile(
-                            leading: const Icon(Icons.person_outline, color: AppTheme.odooAubergine),
-                            title: Text(isEmployee ? 'My Profile & Info' : 'My Profile & Dashboard'),
-                            selected: _currentIndex == 0,
-                            onTap: () { Navigator.pop(context); _onTabSelected(0); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.person_outline_rounded,
+                            title: isEmployee ? 'My Profile & Info' : 'My Profile & Dashboard',
+                            accentColor: const Color(0xFF38BDF8),
+                            isSelected: _currentIndex == 0,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(0);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(1)) {
                         modules.add(
-                          ListTile(
-                            leading: const Icon(Icons.fingerprint, color: AppTheme.odooAubergine),
-                            title: Text(isEmployee ? 'My Attendance' : 'Attendance Ledger'),
-                            selected: _currentIndex == 1,
-                            onTap: () { Navigator.pop(context); _onTabSelected(1); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.fingerprint_rounded,
+                            title: isEmployee ? 'My Attendance' : 'Attendance Ledger',
+                            accentColor: const Color(0xFF34D399),
+                            isSelected: _currentIndex == 1,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(1);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(2)) {
                         modules.add(
-                          ListTile(
-                            leading: const Icon(Icons.flight_takeoff, color: AppTheme.odooAubergine),
-                            title: Text(isEmployee ? 'My Time Off' : 'Time Off & Allocations'),
-                            selected: _currentIndex == 2,
-                            onTap: () { Navigator.pop(context); _onTabSelected(2); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.flight_takeoff_rounded,
+                            title: isEmployee ? 'My Time Off' : 'Time Off & Allocations',
+                            accentColor: const Color(0xFFFBBF24),
+                            isSelected: _currentIndex == 2,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(2);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(3) && hasHr) {
                         modules.add(
-                          ListTile(
-                            leading: const Icon(Icons.description_outlined, color: AppTheme.odooAubergine),
-                            title: const Text('Contracts & AST Rules'),
-                            selected: _currentIndex == 3,
-                            onTap: () { Navigator.pop(context); _onTabSelected(3); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.description_outlined,
+                            title: 'Contracts & AST Rules',
+                            accentColor: const Color(0xFF818CF8),
+                            isSelected: _currentIndex == 3,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(3);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(4) && hasPayroll) {
                         modules.add(
-                          ListTile(
-                            leading: const Icon(Icons.payments_outlined, color: AppTheme.odooAubergine),
-                            title: const Text('2-Step Payrun Wizard'),
-                            selected: _currentIndex == 4,
-                            onTap: () { Navigator.pop(context); _onTabSelected(4); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.payments_outlined,
+                            title: '2-Step Payrun Wizard',
+                            accentColor: const Color(0xFFA78BFA),
+                            isSelected: _currentIndex == 4,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(4);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(5) && (hasHr || hasPayroll)) {
                         modules.add(
-                          ListTile(
-                            leading: const Icon(Icons.bar_chart_rounded, color: AppTheme.odooAubergine),
-                            title: const Text('HR Cost Analytics'),
-                            selected: _currentIndex == 5,
-                            onTap: () { Navigator.pop(context); _onTabSelected(5); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.bar_chart_rounded,
+                            title: 'HR Cost Analytics',
+                            accentColor: const Color(0xFF2DD4BF),
+                            isSelected: _currentIndex == 5,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(5);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(6)) {
                         modules.add(
-                          ListTile(
-                            leading: const Icon(Icons.smart_toy, color: AppTheme.odooTeal),
-                            title: const Text('AI HR Copilot (RAG)'),
-                            selected: _currentIndex == 6,
-                            onTap: () { Navigator.pop(context); _onTabSelected(6); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.smart_toy_rounded,
+                            title: 'AI HR Copilot (RAG)',
+                            accentColor: const Color(0xFFF472B6),
+                            badgeText: 'AI',
+                            badgeColor: const Color(0xFFEC4899),
+                            isSelected: _currentIndex == 6,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(6);
+                            },
                           ),
                         );
                       }
@@ -440,63 +459,78 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
 
                       if (!isPinned(7) && hasHr) {
                         configs.add(
-                          ListTile(
-                            leading: const Icon(Icons.people_alt_outlined, color: AppTheme.odooAubergine),
-                            title: const Text('Employee Master Data'),
-                            selected: _currentIndex == 7,
-                            onTap: () { Navigator.pop(context); _onTabSelected(7); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.people_alt_outlined,
+                            title: 'Employee Master Data',
+                            accentColor: const Color(0xFF60A5FA),
+                            isSelected: _currentIndex == 7,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(7);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(8) && hasHr) {
                         configs.add(
-                          ListTile(
-                            leading: const Icon(Icons.schedule_rounded, color: AppTheme.odooAubergine),
-                            title: const Text('Working Schedules'),
-                            selected: _currentIndex == 8,
-                            onTap: () { Navigator.pop(context); _onTabSelected(8); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.schedule_rounded,
+                            title: 'Working Schedules',
+                            accentColor: const Color(0xFFC084FC),
+                            isSelected: _currentIndex == 8,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(8);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(9) && hasHr) {
                         configs.add(
-                          ListTile(
-                            leading: const Icon(Icons.beach_access_rounded, color: AppTheme.odooAubergine),
-                            title: const Text('Time Off Types & Alloc'),
-                            selected: _currentIndex == 9,
-                            onTap: () { Navigator.pop(context); _onTabSelected(9); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.beach_access_rounded,
+                            title: 'Time Off Types & Alloc',
+                            accentColor: const Color(0xFFFB923C),
+                            isSelected: _currentIndex == 9,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(9);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(10) && hasPayroll) {
                         configs.add(
-                          ListTile(
-                            leading: const Icon(Icons.settings_suggest_outlined, color: AppTheme.odooAubergine),
-                            title: Row(
-                              children: [
-                                const Text('Payroll Rules & Structure'),
-                                if (ApiClient.activeRole == 'HR_PAYROLL_USER') ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                    decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(4)),
-                                    child: Text('Read-Only', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            selected: _currentIndex == 10,
-                            onTap: () { Navigator.pop(context); _onTabSelected(10); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.settings_suggest_outlined,
+                            title: 'Payroll Rules & Structure',
+                            accentColor: const Color(0xFFFB7185),
+                            badgeText: ApiClient.activeRole == 'HR_PAYROLL_USER' ? 'Read-Only' : null,
+                            badgeColor: ApiClient.activeRole == 'HR_PAYROLL_USER' ? Colors.amber.shade700 : null,
+                            isSelected: _currentIndex == 10,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(10);
+                            },
                           ),
                         );
                       }
                       if (!isPinned(11) && isAdmin) {
                         configs.add(
-                          ListTile(
-                            leading: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.odooAubergine),
-                            title: const Text('User Management (RBAC)'),
-                            selected: _currentIndex == 11,
-                            onTap: () { Navigator.pop(context); _onTabSelected(11); },
+                          _buildDrawerTile(
+                            context: context,
+                            icon: Icons.admin_panel_settings_outlined,
+                            title: 'User Management (RBAC)',
+                            accentColor: const Color(0xFFF87171),
+                            isSelected: _currentIndex == 11,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _onTabSelected(11);
+                            },
                           ),
                         );
                       }
@@ -504,17 +538,12 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                       final resultList = <Widget>[];
 
                       if (modules.isNotEmpty) {
+                        resultList.add(_buildDrawerCategoryHeader('CORE MODULES', const Color(0xFF38BDF8)));
                         resultList.addAll(modules);
                       }
 
                       if (configs.isNotEmpty) {
-                        resultList.add(const Divider());
-                        resultList.add(
-                          const Padding(
-                            padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
-                            child: Text('CONFIGURATION & SETUP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                          ),
-                        );
+                        resultList.add(_buildDrawerCategoryHeader('CONFIGURATION & SETUP', const Color(0xFFC084FC)));
                         resultList.addAll(configs);
                       }
 
@@ -522,20 +551,23 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                     })(),
 
                     if (hasHr) ...[
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.search_rounded),
-                        title: const Text('Staff Directory Search'),
+                      _buildDrawerCategoryHeader('DIRECTORY & SEARCH', const Color(0xFF34D399)),
+                      _buildDrawerTile(
+                        context: context,
+                        icon: Icons.search_rounded,
+                        title: 'Staff Directory Search',
+                        accentColor: const Color(0xFF38BDF8),
+                        isSelected: false,
                         onTap: () {
                           Navigator.pop(context);
                           StaffSearchDialog.show(
                             context,
                             onSelectEmployee: (emp) {
-                              MockDataService.switchActiveUser(emp);
-                              EmployeeService.currentEmployeeNotifier.value = emp;
-                              _onTabSelected(0);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Switched Active Profile: ${emp.name} (${emp.jobTitle})')),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EmployeeProfileScreen(initialEmployee: emp),
+                                ),
                               );
                             },
                           );
@@ -545,14 +577,20 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                   ],
                 ),
               ),
-              // Bottom Drawer Actions (Logout)
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.logout_rounded, color: AppTheme.odooRed),
-                title: const Text(
-                  'Logout Session',
-                  style: TextStyle(color: AppTheme.odooRed, fontWeight: FontWeight.bold),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Divider(
+                  height: 1,
+                  color: isDark ? const Color(0xFF334155).withValues(alpha: 0.6) : const Color(0xFFE2E8F0),
                 ),
+              ),
+              const SizedBox(height: 6),
+              _buildDrawerTile(
+                context: context,
+                icon: Icons.logout_rounded,
+                title: 'Logout Session',
+                accentColor: const Color(0xFFEF4444),
+                isSelected: false,
                 onTap: () {
                   Navigator.pop(context);
                   _showLogoutDialog();
@@ -638,14 +676,19 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                           size: isSelected ? 22 : 20,
                         ),
                         const SizedBox(height: 3),
-                        Text(
-                          item.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: isSelected ? 11 : 10.5,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              item.label,
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: isSelected ? 11 : 10,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -654,6 +697,285 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                 ),
               );
             }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerHeader(BuildContext context) {
+    return ValueListenableBuilder<EmployeeModel>(
+      valueListenable: EmployeeService.currentEmployeeNotifier,
+      builder: (context, activeEmp, _) {
+        final displayName = ApiClient.currentEmployeeName ?? activeEmp.name;
+        final displayEmail = ApiClient.currentEmail ?? activeEmp.email;
+        final initials = displayName
+            .split(' ')
+            .where((e) => e.isNotEmpty)
+            .map((e) => e[0])
+            .take(2)
+            .join();
+        final role = widget.userRole.toUpperCase();
+
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 20,
+            right: 20,
+            bottom: 22,
+          ),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF2C1929), Color(0xFF1E293B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(2.5),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFA27B99), Color(0xFF38BDF8)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF714B67).withValues(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 26,
+                      backgroundColor: const Color(0xFF1E293B),
+                      child: Text(
+                        initials.isNotEmpty ? initials : 'U',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.5,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF714B67).withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFA27B99).withValues(alpha: 0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            role,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: const Color(0xFFF1F5F9),
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(Icons.email_outlined, size: 14, color: Color(0xFF94A3B8)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      displayEmail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: const Color(0xFF94A3B8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDrawerCategoryHeader(String title, Color accentColor) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              height: 1,
+              color: const Color(0xFF334155).withValues(alpha: 0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required Color accentColor,
+    required bool isSelected,
+    required VoidCallback onTap,
+    Widget? trailing,
+    String? badgeText,
+    Color? badgeColor,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseTextColor = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155);
+    final selectedBg = isDark
+        ? accentColor.withValues(alpha: 0.18)
+        : accentColor.withValues(alpha: 0.12);
+    final activeBorderColor = accentColor.withValues(alpha: 0.4);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: isSelected ? selectedBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? activeBorderColor : Colors.transparent,
+            width: 1,
+          ),
+          boxShadow: isSelected && isDark
+              ? [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : [],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: isSelected ? accentColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? accentColor.withValues(alpha: 0.25)
+                          : accentColor.withValues(alpha: isDark ? 0.14 : 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: isSelected
+                          ? (isDark ? Colors.white : accentColor)
+                          : accentColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected
+                            ? (isDark ? Colors.white : accentColor)
+                            : baseTextColor,
+                      ),
+                    ),
+                  ),
+                  if (badgeText != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: badgeColor ?? accentColor.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        badgeText,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: badgeColor != null ? Colors.white : accentColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  if (trailing != null) trailing,
+                ],
+              ),
+            ),
           ),
         ),
       ),

@@ -23,7 +23,7 @@ class PayrunService {
       },
     );
 
-    if (response.isSuccess && response.data != null && response.data!.isNotEmpty) {
+    if (response.isSuccess && response.data != null) {
       return response;
     }
 
@@ -48,6 +48,52 @@ class PayrunService {
   static Future<ApiResponse<Map<String, dynamic>>> getPayrun(String id) async {
     return await ApiClient.get<Map<String, dynamic>>(
       '/payruns/$id',
+      parser: (json) => json as Map<String, dynamic>,
+    );
+  }
+
+  static Future<ApiResponse<Map<String, dynamic>>> step1Validate({
+    required String salaryStructureId,
+    required String dateStart,
+    required String dateEnd,
+    List<String>? departmentIds,
+    List<String>? employeeIds,
+  }) async {
+    final body = <String, dynamic>{
+      'salary_structure_id': salaryStructureId,
+      'date_start': dateStart,
+      'date_end': dateEnd,
+      if (departmentIds != null && departmentIds.isNotEmpty) 'department_ids': departmentIds,
+      if (employeeIds != null && employeeIds.isNotEmpty) 'employee_ids': employeeIds,
+    };
+
+    return await ApiClient.post<Map<String, dynamic>>(
+      '/payruns/step1-validate',
+      body: body,
+      parser: (json) => json as Map<String, dynamic>,
+    );
+  }
+
+  static Future<ApiResponse<Map<String, dynamic>>> createPayrunBatch({
+    required String name,
+    required String salaryStructureId,
+    required String dateStart,
+    required String dateEnd,
+    required List<String> employeeIds,
+    bool skipBlocked = false,
+  }) async {
+    final body = <String, dynamic>{
+      'name': name,
+      'salary_structure_id': salaryStructureId,
+      'date_start': dateStart,
+      'date_end': dateEnd,
+      'employee_ids': employeeIds,
+      'skip_blocked': skipBlocked,
+    };
+
+    return await ApiClient.post<Map<String, dynamic>>(
+      '/payruns',
+      body: body,
       parser: (json) => json as Map<String, dynamic>,
     );
   }
@@ -114,7 +160,7 @@ class PayrunService {
       },
     );
 
-    if (response.isSuccess && response.data != null && response.data!.isNotEmpty) {
+    if (response.isSuccess && response.data != null) {
       return response;
     }
 

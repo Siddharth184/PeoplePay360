@@ -183,6 +183,8 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
       orElse: () => _availableRoles[2],
     )['title'] as String;
 
+    final empName = _selectedEmployee;
+
     widget.onSave?.call({
       'employee': _selectedEmployee,
       'email': _workEmail,
@@ -192,14 +194,15 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
       'isActive': _isAccountActive,
     });
 
-    Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: const Color(0xFF004A31),
         behavior: SnackBarBehavior.floating,
-        content: Text('✓ User access permissions saved for $_selectedEmployee'),
+        content: Text('✓ User access permissions saved for $empName'),
       ),
     );
+
+    Navigator.pop(context);
   }
 
   @override
