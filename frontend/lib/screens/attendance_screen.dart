@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/attendance_punch_sheet.dart';
 
 class AttendanceScreen extends StatefulWidget {
-  const AttendanceScreen({super.key});
+  final void Function(int index)? onNavigateTab;
+  const AttendanceScreen({super.key, this.onNavigateTab});
 
   @override
   State<AttendanceScreen> createState() => _AttendanceScreenState();
@@ -613,7 +614,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                         Row(
                           children: [
                             InkWell(
-                              onTap: () => Navigator.maybePop(context),
+                              onTap: () {
+                                if (Navigator.canPop(context)) {
+                                  Navigator.pop(context);
+                                } else if (widget.onNavigateTab != null) {
+                                  widget.onNavigateTab!(0);
+                                }
+                              },
                               borderRadius: BorderRadius.circular(20),
                               child: Container(
                                 width: 40,

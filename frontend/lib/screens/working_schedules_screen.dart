@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class WorkingSchedulesScreen extends StatefulWidget {
-  const WorkingSchedulesScreen({super.key});
+  final void Function(int index)? onNavigateTab;
+  const WorkingSchedulesScreen({super.key, this.onNavigateTab});
 
   @override
   State<WorkingSchedulesScreen> createState() => _WorkingSchedulesScreenState();
@@ -252,7 +253,13 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
           Row(
             children: [
               InkWell(
-                onTap: () => Navigator.maybePop(context),
+                onTap: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else if (widget.onNavigateTab != null) {
+                    widget.onNavigateTab!(0);
+                  }
+                },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   width: 38,

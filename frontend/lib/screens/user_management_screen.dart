@@ -5,7 +5,8 @@ import '../services/user_management_service.dart';
 import '../services/api_client.dart';
 
 class UserManagementScreen extends StatefulWidget {
-  const UserManagementScreen({super.key});
+  final void Function(int index)? onNavigateTab;
+  const UserManagementScreen({super.key, this.onNavigateTab});
 
   @override
   State<UserManagementScreen> createState() => _UserManagementScreenState();
@@ -645,7 +646,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 children: [
                   // Back Button
                   InkWell(
-                    onTap: () => Navigator.maybePop(context),
+                    onTap: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else if (widget.onNavigateTab != null) {
+                        widget.onNavigateTab!(0);
+                      }
+                    },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 38,

@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/contract_service.dart';
 
 class ContractsScreen extends StatefulWidget {
-  const ContractsScreen({super.key});
+  final void Function(int index)? onNavigateTab;
+  const ContractsScreen({super.key, this.onNavigateTab});
 
   @override
   State<ContractsScreen> createState() => _ContractsScreenState();
@@ -354,7 +355,13 @@ class _ContractsScreenState extends State<ContractsScreen> {
           Row(
             children: [
               InkWell(
-                onTap: () => Navigator.maybePop(context),
+                onTap: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else if (widget.onNavigateTab != null) {
+                    widget.onNavigateTab!(0);
+                  }
+                },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   width: 38,

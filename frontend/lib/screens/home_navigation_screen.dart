@@ -26,11 +26,45 @@ class HomeNavigationScreen extends StatefulWidget {
 
 class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
   int _currentIndex = 0;
+  final List<int> _tabHistory = [0];
+  DateTime? _lastBackPressTime;
 
   void _onTabSelected(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+    if (_currentIndex != index) {
+      setState(() {
+        _tabHistory.add(index);
+        _currentIndex = index;
+      });
+    }
+  }
+
+  void _handleBack() {
+    if (_tabHistory.length > 1) {
+      setState(() {
+        _tabHistory.removeLast();
+        _currentIndex = _tabHistory.last;
+      });
+    } else if (_currentIndex != 0) {
+      setState(() {
+        _currentIndex = 0;
+        _tabHistory.clear();
+        _tabHistory.add(0);
+      });
+    } else {
+      final now = DateTime.now();
+      if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+        _lastBackPressTime = now;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Press back again to exit PeoplePay 360'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   void _showLogoutDialog() {
@@ -80,34 +114,50 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
   Widget build(BuildContext context) {
     final screens = [
       EmployeeProfileScreen(onNavigateTab: _onTabSelected),
-      const AttendanceScreen(),
+      AttendanceScreen(onNavigateTab: _onTabSelected),
       const TimeOffScreen(),
-      const ContractsScreen(),
+      ContractsScreen(onNavigateTab: _onTabSelected),
       const PayrunScreen(),
       const AnalyticsScreen(),
       const AiCopilotScreen(),
       EmployeeDirectoryScreen(onNavigateTab: _onTabSelected),
-      const WorkingSchedulesScreen(),
+      WorkingSchedulesScreen(onNavigateTab: _onTabSelected),
       const TimeOffSetupScreen(),
       const PayrollConfigScreen(),
-      const UserManagementScreen(),
+      UserManagementScreen(onNavigateTab: _onTabSelected),
     ];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            const Icon(Icons.hub_rounded, color: Colors.white, size: 24),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'PeoplePay 360 (${widget.userRole})',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _handleBack();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: _currentIndex != 0
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: 'Back to Previous Screen',
+                  onPressed: _handleBack,
+                )
+              : null,
+          title: Row(
+            children: [
+              if (_currentIndex == 0) ...[
+                const Icon(Icons.hub_rounded, color: Colors.white, size: 24),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  'PeoplePay 360 (${widget.userRole})',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search_rounded),
@@ -318,6 +368,7 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Copilot'),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
