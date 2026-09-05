@@ -2,6 +2,24 @@ import 'api_client.dart';
 import 'mock_data_service.dart';
 
 class AuthService {
+  /// Offline / dev credential store. Lets a changed password be enforced on the
+  /// next login within the running app session when no backend is reachable.
+  /// Seeded with the demo accounts (all share the same demo password).
+  static const String _defaultDemoPassword = 'PeoplePay@360';
+  static final Map<String, String> _localCredentials = {
+    'admin@oxp.com': _defaultDemoPassword,
+    'sara.khan@oxp.com': _defaultDemoPassword,
+    'vikram.nair@oxp.com': _defaultDemoPassword,
+    'aarav.mehta@oxp.com': _defaultDemoPassword,
+    'rohan.desai@oxp.com': _defaultDemoPassword,
+  };
+
+  static void _rememberCredential(String email, String password) {
+    final key = email.toLowerCase().trim();
+    if (key.isEmpty || password.isEmpty) return;
+    _localCredentials[key] = password;
+  }
+
   static Future<ApiResponse<Map<String, dynamic>>> login({
     required String email,
     required String password,
@@ -13,6 +31,7 @@ class AuthService {
     );
 
     if (response.isSuccess && response.data != null) {
+      _rememberCredential(email, password);
       final data = response.data!;
       ApiClient.setSession(
         accessToken: data['access_token']?.toString() ?? '',
@@ -28,8 +47,18 @@ class AuthService {
 
     // If backend connection fails (e.g. offline dev mode), provide clean fallback
     if (!ApiClient.isBackendOnline || response.statusCode == 0) {
-      String fallbackRole = 'EMPLOYEE';
       final cleanEmail = email.toLowerCase().trim();
+
+      // Enforce a locally changed password: if we have a stored credential for
+      // this account, the entered password must match it. This makes a reset
+      // done via "Forgot Password" actually take effect on the next login.
+      final knownPassword = _localCredentials[cleanEmail];
+      if (knownPassword != null && password != knownPassword) {
+        return ApiResponse.failure('Incorrect email or password.', statusCode: 401);
+      }
+      _rememberCredential(email, password);
+
+      String fallbackRole = 'EMPLOYEE';
       if (cleanEmail.contains('admin')) {
         fallbackRole = 'ADMIN';
       } else if (cleanEmail.contains('sara') || cleanEmail.contains('hr')) {
@@ -103,22 +132,72 @@ class AuthService {
     return response;
   }
 
+  /// Verifies the user's *current* password before allowing a reset.
+  /// Online it probes /auth/login (then discards the session); offline it
+  /// checks the local credential store.
+  static Future<ApiResponse<bool>> verifyCurrentPassword({
+    required String email,
+    required String password,
+  }) async {
+    final response = await ApiClient.post<Map<String, dynamic>>(
+      '/auth/login',
+      body: {'email': email.trim(), 'password': password},
+      parser: (json) => json as Map<String, dynamic>,
+    );
+
+    if (response.isSuccess) {
+      // This was only a verification probe; do not keep the session.
+      ApiClient.clearSession();
+      _rememberCredential(email, password);
+      return ApiResponse.success(true);
+    }
+
+    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
+      final known = _localCredentials[email.toLowerCase().trim()] ?? _defaultDemoPassword;
+      if (password == known) {
+        return ApiResponse.success(true);
+      }
+      return ApiResponse.failure('Current password is incorrect.', statusCode: 401);
+    }
+
+    return ApiResponse.failure(
+      response.errorMessage ?? 'Current password is incorrect.',
+      statusCode: response.statusCode,
+    );
+  }
+
+  /// Resets the password after the previous password has been verified.
+  /// Sends both current + new to the backend, which re-verifies ownership.
   static Future<ApiResponse<Map<String, dynamic>>> resetPassword({
     required String email,
+    required String currentPassword,
     required String newPassword,
   }) async {
     final response = await ApiClient.post<Map<String, dynamic>>(
       '/auth/reset-password',
       body: {
         'email': email.trim(),
+        'current_password': currentPassword,
         'new_password': newPassword,
       },
       parser: (json) => json as Map<String, dynamic>,
     );
 
+    if (response.isSuccess) {
+      // Persist locally so the next login (online or offline) uses the new one.
+      _rememberCredential(email, newPassword);
+      return response;
+    }
+
     if (!ApiClient.isBackendOnline || response.statusCode == 0) {
+      final key = email.toLowerCase().trim();
+      final known = _localCredentials[key] ?? _defaultDemoPassword;
+      if (currentPassword != known) {
+        return ApiResponse.failure('Current password is incorrect.', statusCode: 401);
+      }
+      _rememberCredential(email, newPassword);
       return ApiResponse.success({
-        'detail': 'Password has been reset successfully. Please sign in with your new password.',
+        'detail': 'Password updated successfully. Please sign in with your new password.',
       });
     }
 

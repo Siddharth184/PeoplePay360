@@ -366,12 +366,16 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                                 ),
                               ),
                               const SizedBox(width: 5),
-                              Text(
-                                'Grounded in verified HR knowledge base',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  color: const Color(0xFF4E444A),
-                                  fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Text(
+                                  'Grounded in verified HR knowledge base',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: const Color(0xFF4E444A),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ],
