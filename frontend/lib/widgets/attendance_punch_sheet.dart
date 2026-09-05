@@ -720,46 +720,56 @@ class _AttendancePunchSheetState extends State<AttendancePunchSheet> with Single
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.flag_outlined, size: 18, color: Color(0xFF95F1F8)),
-                              const SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Target: 8h 00m',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.flag_outlined, size: 18, color: Color(0xFF95F1F8)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Target: 8h 00m',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Est. Departure: 06:05 PM',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 10.5,
+                                          color: const Color(0xFFDAE2FD).withValues(alpha: 0.7),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    'Est. Departure: 06:05 PM',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 10.5,
-                                      color: const Color(0xFFDAE2FD).withValues(alpha: 0.7),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                             decoration: BoxDecoration(
                               color: const Color(0xFF006443).withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.trending_up, size: 14, color: Color(0xFF6FFBBE)),
-                                const SizedBox(width: 4),
+                                const Icon(Icons.trending_up, size: 13, color: Color(0xFF6FFBBE)),
+                                const SizedBox(width: 3),
                                 Text(
                                   '+0.50h OT Projected',
                                   style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 10.5,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     color: const Color(0xFF6FFBBE),
                                   ),
