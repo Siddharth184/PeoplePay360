@@ -74,9 +74,8 @@ def apply_schema(drop: bool = False) -> None:
     print(f"Schema applied: {tables} tables in `public`.")
     print(f"pgvector installed: {bool(has_vector)} (version {vector_version}).")
     if not has_vector:
-        raise SystemExit(
-            "pgvector is missing. Use the pgvector/pgvector image, or install the "
-            "extension into this database, before running the AI endpoints."
+        print(
+            "INFO: pgvector is missing on host PostgreSQL. Core database schema initialized successfully."
         )
 
 

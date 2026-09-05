@@ -333,13 +333,16 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                             children: [
                               GestureDetector(
                                 behavior: HitTestBehavior.opaque,
-                                onTap: () {
-                                  if (Navigator.canPop(context)) {
-                                    Navigator.pop(context);
-                                  } else if (widget.onNavigateTab != null) {
-                                    widget.onNavigateTab!(-1);
-                                  }
-                                },
+                                 onTap: () {
+                                   final route = ModalRoute.of(context);
+                                   if (route != null && !route.isFirst) {
+                                     Navigator.pop(context);
+                                   } else if (widget.onNavigateTab != null) {
+                                     widget.onNavigateTab!(-1);
+                                   } else if (Navigator.canPop(context)) {
+                                     Navigator.pop(context);
+                                   }
+                                 },
                                 child: Container(
                                   width: 34,
                                   height: 34,

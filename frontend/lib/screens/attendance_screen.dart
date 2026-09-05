@@ -656,10 +656,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                               GestureDetector(
                                 behavior: HitTestBehavior.opaque,
                                 onTap: () {
-                                  if (Navigator.canPop(context)) {
+                                  final route = ModalRoute.of(context);
+                                  if (route != null && !route.isFirst) {
                                     Navigator.pop(context);
                                   } else if (widget.onNavigateTab != null) {
                                     widget.onNavigateTab!(-1);
+                                  } else if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
                                   }
                                 },
                                 child: Container(

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/create_edit_user_sheet.dart';
 import '../services/user_management_service.dart';
 import '../services/api_client.dart';
+import '../services/mock_data_service.dart';
 
 class UserManagementScreen extends StatefulWidget {
   final void Function(int index)? onNavigateTab;
@@ -66,7 +67,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   List<_UserManagementItem> _defaultUsers() {
-    return [
+    final list = <_UserManagementItem>[
       _UserManagementItem(
         id: 'usr_1',
         name: 'Alex Morgan',
@@ -154,6 +155,83 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         roleIcon: Icons.admin_panel_settings_outlined,
       ),
     ];
+
+    final existingNames = list.map((u) => u.name.toLowerCase()).toSet();
+    final existingEmails = list.map((u) => u.email.toLowerCase()).toSet();
+
+    int idSeq = 6;
+    for (final emp in MockDataService.allEmployees) {
+      final eNameLower = emp.name.toLowerCase();
+      final eEmailLower = emp.email.toLowerCase();
+      if (existingNames.contains(eNameLower) || existingEmails.contains(eEmailLower)) {
+        continue;
+      }
+      existingNames.add(eNameLower);
+      existingEmails.add(eEmailLower);
+
+      final title = emp.jobTitle.toLowerCase();
+      final dept = emp.department.toLowerCase();
+
+      String roleName = 'Employee';
+      String roleCat = 'Employee';
+      IconData icon = Icons.person_outline;
+      Color roleBg = const Color(0xFFE2E7FF);
+      Color roleText = const Color(0xFF131B2E);
+
+      if (title.contains('admin') || title.contains('director') || title.contains('vp') || title.contains('head')) {
+        roleName = 'System Admin';
+        roleCat = 'Admin';
+        icon = Icons.shield_outlined;
+        roleBg = const Color(0xFFFFD7F1);
+        roleText = const Color(0xFF2F1029);
+      } else if (title.contains('payroll') && (title.contains('lead') || title.contains('manager') || title.contains('controller'))) {
+        roleName = 'Payroll Admin';
+        roleCat = 'Payroll Admin';
+        icon = Icons.admin_panel_settings_outlined;
+        roleBg = const Color(0xFFFFD7F1);
+        roleText = const Color(0xFF2F1029);
+      } else if (title.contains('payroll') || title.contains('finance') || dept.contains('fin')) {
+        roleName = 'Payroll User';
+        roleCat = 'Payroll User';
+        icon = Icons.payments_outlined;
+        roleBg = const Color(0xFFCCF7FA);
+        roleText = const Color(0xFF006E73);
+      } else if (dept.contains('hr') || dept.contains('people') || title.contains('hr')) {
+        roleName = 'Time Off Admin';
+        roleCat = 'Time Off Admin';
+        icon = Icons.event_available;
+        roleBg = const Color(0xFFE2E7FF);
+        roleText = const Color(0xFF131B2E);
+      }
+
+      final parts = emp.name.trim().split(RegExp(r'\s+'));
+      final inits = parts.length > 1
+          ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
+          : (parts.isNotEmpty ? parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase() : 'U');
+
+      list.add(
+        _UserManagementItem(
+          id: 'usr_$idSeq',
+          name: emp.name,
+          email: emp.email,
+          role: roleName,
+          roleCategory: roleCat,
+          linkedEmployee: emp.name,
+          department: emp.department,
+          status: emp.status != null && emp.status!.toLowerCase().contains('inactive') ? 'Disabled' : 'Active',
+          extraBadge: emp.badgeId != null && emp.badgeId!.isNotEmpty ? 'Badge: ${emp.badgeId}' : '2FA Enforced',
+          initials: inits,
+          avatarBg: const Color(0xFF92EFF5),
+          avatarText: const Color(0xFF006E73),
+          roleBg: roleBg,
+          roleText: roleText,
+          roleIcon: icon,
+        ),
+      );
+      idSeq++;
+    }
+
+    return list;
   }
 
   Future<void> _loadUsers() async {
@@ -645,12 +723,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   Widget _buildHeader() {
     final filters = [
-      {'label': 'All', 'count': '5'},
-      {'label': 'Admin', 'count': '1'},
-      {'label': 'Payroll Admin', 'count': '1'},
-      {'label': 'Payroll User', 'count': '1'},
-      {'label': 'Time Off Admin', 'count': '1'},
-      {'label': 'Employee', 'count': '1'},
+      {'label': 'All', 'count': '${_users.length}'},
+      {
+        'label': 'Admin',
+        'count': '${_users.where((u) => u.roleCategory.toLowerCase() == 'admin' || u.role.toLowerCase().contains('admin')).length}'
+      },
+      {
+        'label': 'Payroll Admin',
+        'count': '${_users.where((u) => u.roleCategory.toLowerCase().contains('payroll admin') || u.role.toLowerCase().contains('payroll admin')).length}'
+      },
+      {
+        'label': 'Payroll User',
+        'count': '${_users.where((u) => u.roleCategory.toLowerCase().contains('payroll user') || u.role.toLowerCase().contains('payroll user')).length}'
+      },
+      {
+        'label': 'Time Off Admin',
+        'count': '${_users.where((u) => u.roleCategory.toLowerCase().contains('time off admin') || u.role.toLowerCase().contains('time off admin')).length}'
+      },
+      {
+        'label': 'Employee',
+        'count': '${_users.where((u) => u.roleCategory.toLowerCase() == 'employee' || u.role.toLowerCase().contains('employee')).length}'
+      },
     ];
 
     return Container(
@@ -683,10 +776,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () {
-                        if (Navigator.canPop(context)) {
+                        final route = ModalRoute.of(context);
+                        if (route != null && !route.isFirst) {
                           Navigator.pop(context);
                         } else if (widget.onNavigateTab != null) {
                           widget.onNavigateTab!(-1);
+                        } else if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
                         }
                       },
                       child: Container(
@@ -886,6 +982,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Widget _buildDirectorySummaryBanner() {
+    final activeCount = _users.where((u) => u.status.toLowerCase() == 'active').length;
+    final suspendedCount = _users.where((u) => u.status.toLowerCase() != 'active').length;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF2F3FF),
@@ -933,10 +1032,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    '5 Active • 0 Suspended • 1 Pending 2FA',
+                    '$activeCount Active • $suspendedCount Suspended • 1 Pending 2FA',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
+                      fontWeight: FontWeight.w500,
                       color: const Color(0xFF4E444A),
                     ),
                   ),

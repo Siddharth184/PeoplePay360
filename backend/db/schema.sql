@@ -8,7 +8,9 @@
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "btree_gist"; -- overlapping date exclusion support
-CREATE EXTENSION IF NOT EXISTS "vector";     -- RAG vector search
+DO $$ BEGIN
+    CREATE EXTENSION IF NOT EXISTS "vector";     -- RAG vector search
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- ============================================================================
 -- 1. AUTHENTICATION & RBAC
@@ -463,17 +465,24 @@ CREATE TABLE IF NOT EXISTS document_chunks (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}',
-    embedding vector(384), -- 384 dims: BAAI/bge-small-en-v1.5
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+DO $$ BEGIN
+    ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS embedding vector(384);
+EXCEPTION WHEN OTHERS THEN
+    ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS embedding FLOAT[];
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_document_chunks_collection
     ON document_chunks (collection_name);
 
 -- Fast Approximate Nearest Neighbor Index (HNSW)
-CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding
-ON document_chunks USING hnsw (embedding vector_cosine_ops)
-WITH (m = 16, ef_construction = 64);
+DO $$ BEGIN
+    CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding
+    ON document_chunks USING hnsw (embedding vector_cosine_ops)
+    WITH (m = 16, ef_construction = 64);
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- Auditability: which chunks were retrieved, and which provider answered
 CREATE TABLE IF NOT EXISTS rag_retrieval_log (
@@ -554,7 +563,6 @@ CREATE TABLE IF NOT EXISTS rag_escalations (
 
     -- WHAT WAS ASKED
     question_text TEXT NOT NULL,
-    question_embedding vector(384),
     category escalation_category_enum NOT NULL DEFAULT 'OTHER',
 
     -- WHY IT ESCALATED (auditable evidence, never a black box)
@@ -602,6 +610,12 @@ CREATE TABLE IF NOT EXISTS rag_escalations (
     CONSTRAINT chk_not_own_duplicate CHECK (duplicate_of_id IS NULL OR duplicate_of_id <> id)
 );
 
+DO $$ BEGIN
+    ALTER TABLE rag_escalations ADD COLUMN IF NOT EXISTS question_embedding vector(384);
+EXCEPTION WHEN OTHERS THEN
+    ALTER TABLE rag_escalations ADD COLUMN IF NOT EXISTS question_embedding FLOAT[];
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_escalations_queue
     ON rag_escalations (status, priority DESC, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_escalations_assignee
@@ -610,8 +624,10 @@ CREATE INDEX IF NOT EXISTS idx_escalations_employee
     ON rag_escalations (employee_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_escalations_overdue
     ON rag_escalations (sla_due_at) WHERE status IN ('OPEN', 'ASSIGNED');
-CREATE INDEX IF NOT EXISTS idx_escalations_embedding ON rag_escalations
+DO $$ BEGIN
+    CREATE INDEX IF NOT EXISTS idx_escalations_embedding ON rag_escalations
     USING hnsw (question_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS idx_escalations_open_per_emp
     ON rag_escalations (employee_id) WHERE status IN ('OPEN', 'ASSIGNED');
 

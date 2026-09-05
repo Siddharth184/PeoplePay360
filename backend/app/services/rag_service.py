@@ -59,25 +59,49 @@ def ingest_hr_policy_document(
     base_meta = dict(metadata or {})
     chunk_ids: List[uuid.UUID] = []
 
+    has_vector = False
+    try:
+        has_vector = bool(db.execute(text("SELECT COUNT(*) FROM pg_type WHERE typname = 'vector'")).scalar_one())
+    except Exception:
+        db.rollback()
+
     for index, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
         meta = {**base_meta, "chunk_index": index, "chunk_count": len(chunks)}
-        chunk_id = db.execute(
-            text(
-                """
-                INSERT INTO document_chunks
-                    (collection_name, title, content, metadata, embedding)
-                VALUES (:col, :title, :content, CAST(:meta AS jsonb), CAST(:emb AS vector))
-                RETURNING id
-                """
-            ),
-            {
-                "col": collection,
-                "title": title,
-                "content": chunk,
-                "meta": json.dumps(meta),
-                "emb": _vector_literal(embedding),
-            },
-        ).scalar_one()
+        if has_vector:
+            chunk_id = db.execute(
+                text(
+                    """
+                    INSERT INTO document_chunks
+                        (collection_name, title, content, metadata, embedding)
+                    VALUES (:col, :title, :content, CAST(:meta AS jsonb), CAST(:emb AS vector))
+                    RETURNING id
+                    """
+                ),
+                {
+                    "col": collection,
+                    "title": title,
+                    "content": chunk,
+                    "meta": json.dumps(meta),
+                    "emb": f"[{','.join(f'{v:.8f}' for v in embedding)}]",
+                },
+            ).scalar_one()
+        else:
+            chunk_id = db.execute(
+                text(
+                    """
+                    INSERT INTO document_chunks
+                        (collection_name, title, content, metadata)
+                    VALUES (:col, :title, :content, CAST(:meta AS jsonb))
+                    RETURNING id
+                    """
+                ),
+                {
+                    "col": collection,
+                    "title": title,
+                    "content": chunk,
+                    "meta": json.dumps(meta),
+                },
+            ).scalar_one()
         chunk_ids.append(chunk_id)
 
     db.commit()

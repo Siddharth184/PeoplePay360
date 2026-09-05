@@ -113,6 +113,27 @@ class MockDataService {
     bankAccountNumber: '3391-4455-8822',
   );
 
+  static final EmployeeModel priyaEmployee = EmployeeModel(
+    id: 'emp-008',
+    name: 'Priya Sharma',
+    email: 'priya.sharma@oxp.com',
+    jobTitle: 'Senior Software Engineer',
+    department: 'Engineering',
+    workPhone: '+91 98765 99001',
+    managerName: 'Rohan Desai',
+    avatarUrl: '',
+    timeOffBalance: 16,
+    activeContractsCount: 1,
+    attendancesCount: 22,
+    payslipsCount: 12,
+    badgeId: 'EMP-4098',
+    employeeType: 'Full-time',
+    status: 'ACTIVE',
+    dateOfJoining: '2023-01-15',
+    bankName: 'HDFC Bank',
+    bankAccountNumber: '5010-8822-1199',
+  );
+
   static EmployeeModel currentEmployee = hrManagerEmployee;
 
   static void switchActiveUser(EmployeeModel emp) {
@@ -136,7 +157,10 @@ class MockDataService {
     if (cleanEmail.contains('aarav') || cleanRole == 'HR_PAYROLL_USER' || cleanName.contains('aarav')) {
       return payrollUserEmployee;
     }
-    if (cleanEmail.contains('rohan') || cleanRole == 'EMPLOYEE' || cleanName.contains('rohan')) {
+    if (cleanEmail.contains('priya') || cleanEmail.contains('sharma') || cleanName.contains('priya')) {
+      return priyaEmployee;
+    }
+    if (cleanEmail.contains('rohan') || cleanName.contains('rohan')) {
       return regularEmployee;
     }
 
@@ -147,6 +171,10 @@ class MockDataService {
       }
     }
 
+    if (cleanRole == 'EMPLOYEE') {
+      return priyaEmployee;
+    }
+
     return hrManagerEmployee;
   }
 
@@ -155,6 +183,7 @@ class MockDataService {
     hrManagerEmployee,
     payrollManagerEmployee,
     payrollUserEmployee,
+    priyaEmployee,
     regularEmployee,
     EmployeeModel(
       id: 'emp-002',

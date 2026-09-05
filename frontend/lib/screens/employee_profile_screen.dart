@@ -23,7 +23,12 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   @override
   void initState() {
     super.initState();
-    emp = widget.initialEmployee ?? MockDataService.currentEmployee;
+    emp = widget.initialEmployee ??
+        MockDataService.getEmployeeForUser(
+          email: ApiClient.currentEmail,
+          role: ApiClient.activeRole,
+          name: ApiClient.currentEmployeeName,
+        );
     EmployeeService.currentEmployeeNotifier.addListener(_onEmployeeNotifierChanged);
     _refreshProfile();
   }
@@ -571,10 +576,13 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
-                    if (Navigator.canPop(context)) {
+                    final route = ModalRoute.of(context);
+                    if (route != null && !route.isFirst) {
                       Navigator.pop(context);
                     } else if (widget.onNavigateTab != null) {
                       widget.onNavigateTab!(-1);
+                    } else if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
                     }
                   },
                   child: Container(
