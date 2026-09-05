@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/attendance_punch_sheet.dart';
 import '../services/attendance_service.dart';
+import '../services/mock_data_service.dart';
 
 class AttendanceScreen extends StatefulWidget {
   final void Function(int index)? onNavigateTab;
@@ -221,7 +222,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Aarav Mehta (EMP-4092)', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
+                  Flexible(
+                    child: Text(
+                      '${MockDataService.currentEmployee.name} (${MockDataService.currentEmployee.badgeId ?? "EMP-4091"})',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                  ),
                   const Icon(Icons.arrow_drop_down, color: Color(0xFF4E444A)),
                 ],
               ),
@@ -1037,16 +1045,23 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.verified_user_outlined, size: 16, color: Color(0xFF00696E)),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Compliant with India Shops & Est. Act',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF4E444A)),
-                        ),
-                      ],
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified_user_outlined, size: 16, color: Color(0xFF00696E)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Compliant with India Shops & Est. Act',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF4E444A)),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => _openInspector(_records[0]),
                       child: Text(
@@ -1179,92 +1194,108 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
               // Top Row: Avatar, Name, Status, Hours
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      // Avatar with badge
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: record['avatarBg'] as Color,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                record['initials'] as String,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: record['avatarFg'] as Color,
+                  // Left: Avatar + Details
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Avatar with badge
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: record['avatarBg'] as Color,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  record['initials'] as String,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: record['avatarFg'] as Color,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          Positioned(
-                            bottom: -2,
-                            right: -2,
-                            child: _buildAvatarBadge(record['statusType'] as String),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                            Positioned(
+                              bottom: -2,
+                              right: -2,
+                              child: _buildAvatarBadge(record['statusType'] as String),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                record['name'] as String,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF131B2E),
-                                ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      record['name'] as String,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF131B2E),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  _buildStatusPill(record['status'] as String, record['statusType'] as String),
+                                ],
                               ),
-                              const SizedBox(width: 6),
-                              _buildStatusPill(record['status'] as String, record['statusType'] as String),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      record['role'] as String,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11.5,
+                                        color: const Color(0xFF4E444A),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text('•', style: TextStyle(color: Colors.grey[400], fontSize: 10)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    record['empId'] as String,
+                                    style: GoogleFonts.jetBrainsMono(
+                                      fontSize: 10.5,
+                                      color: const Color(0xFF80747A),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Text(
-                                record['role'] as String,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  color: const Color(0xFF4E444A),
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              Text('•', style: TextStyle(color: Colors.grey[400])),
-                              const SizedBox(width: 5),
-                              Text(
-                                record['empId'] as String,
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 11,
-                                  color: const Color(0xFF80747A),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
 
                   // Right: Worked Hours & Sub-tag
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       RichText(
                         text: TextSpan(
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 15,
+                            fontSize: 14.5,
                             fontWeight: FontWeight.bold,
                             color: isTracking ? const Color(0xFF00696E) : const Color(0xFF131B2E),
                           ),
@@ -1273,7 +1304,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                             TextSpan(
                               text: ' hrs',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.normal,
                                 color: const Color(0xFF4E444A),
                               ),
@@ -1283,7 +1314,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                       ),
                       const SizedBox(height: 2),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: (record['subTagBg'] as Color).withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(4),
@@ -1291,7 +1322,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                         child: Text(
                           record['subTag'] as String,
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                             color: record['subTagColor'] as Color,
                           ),
@@ -1307,89 +1338,95 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
               // Bottom Row: Time Interval Track
               if (!hasActions)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF2F3FF),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            record['startTime'] as String,
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 12.5,
-                              fontWeight: isStartLate ? FontWeight.bold : FontWeight.w500,
-                              color: isStartLate ? const Color(0xFFBA1A1A) : const Color(0xFF131B2E),
+                      // Left: Time Interval
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Text(
+                              record['startTime'] as String,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 11.5,
+                                fontWeight: isStartLate ? FontWeight.bold : FontWeight.w500,
+                                color: isStartLate ? const Color(0xFFBA1A1A) : const Color(0xFF131B2E),
+                              ),
                             ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 6),
-                            child: Icon(Icons.arrow_forward, size: 14, color: Color(0xFF00696E)),
-                          ),
-                          if (isTracking) ...[
-                            Row(
-                              children: [
-                                const SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00696E)),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              child: Icon(Icons.arrow_forward, size: 12, color: Color(0xFF00696E)),
+                            ),
+                            if (isTracking) ...[
+                              const SizedBox(
+                                width: 10,
+                                height: 10,
+                                child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF00696E)),
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
                                   'Tracking...',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     color: const Color(0xFF00696E),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ] else ...[
-                            Text(
-                              record['endTime'] as String,
-                              style: GoogleFonts.jetBrainsMono(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF131B2E),
                               ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          if (isPendingExit) ...[
-                            Row(
-                              children: [
-                                const Icon(Icons.notification_important, size: 14, color: Color(0xFFBA1A1A)),
-                                const SizedBox(width: 3),
-                                Text(
-                                  'Pending Exit',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFFBA1A1A),
+                            ] else ...[
+                              Flexible(
+                                child: Text(
+                                  record['endTime'] as String,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF131B2E),
                                   ),
                                 ),
-                              ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+
+                      // Right: Location / Pending Exit
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isPendingExit) ...[
+                            const Icon(Icons.notification_important, size: 13, color: Color(0xFFBA1A1A)),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Pending Exit',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFFBA1A1A),
+                              ),
                             ),
                           ] else ...[
-                            Icon(record['locationIcon'] as IconData, size: 14, color: const Color(0xFF00696E)),
-                            const SizedBox(width: 4),
+                            Icon(record['locationIcon'] as IconData, size: 13, color: const Color(0xFF00696E)),
+                            const SizedBox(width: 3),
                             Text(
                               record['location'] as String,
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
+                                fontSize: 10.5,
                                 color: const Color(0xFF4E444A),
                               ),
                             ),
                           ],
-                          const SizedBox(width: 4),
-                          const Icon(Icons.chevron_right, size: 16, color: Color(0xFF80747A)),
+                          const SizedBox(width: 2),
+                          const Icon(Icons.chevron_right, size: 14, color: Color(0xFF80747A)),
                         ],
                       ),
                     ],

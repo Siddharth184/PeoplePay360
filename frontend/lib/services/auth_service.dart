@@ -1,5 +1,6 @@
 import 'api_client.dart';
 import 'mock_data_service.dart';
+import 'employee_service.dart';
 
 class AuthService {
   /// Offline / dev credential store. Lets a changed password be enforced on the
@@ -39,13 +40,25 @@ class AuthService {
     if (response.isSuccess && response.data != null) {
       _rememberCredential(email, password);
       final data = response.data!;
+      final backendRole = data['role']?.toString() ?? 'EMPLOYEE';
+      final backendName = data['employee_name']?.toString();
+      final backendEmpId = data['employee_id']?.toString();
+
+      final resolvedEmp = MockDataService.getEmployeeForUser(
+        email: email,
+        role: backendRole,
+        name: backendName,
+      );
+      MockDataService.switchActiveUser(resolvedEmp);
+      EmployeeService.currentEmployeeNotifier.value = resolvedEmp;
+
       ApiClient.setSession(
         accessToken: data['access_token']?.toString() ?? '',
         userId: data['user_id']?.toString() ?? '',
         email: email,
-        role: data['role']?.toString() ?? 'EMPLOYEE',
-        employeeId: data['employee_id']?.toString(),
-        employeeName: data['employee_name']?.toString(),
+        role: backendRole,
+        employeeId: backendEmpId ?? resolvedEmp.id,
+        employeeName: backendName ?? resolvedEmp.name,
         permissions: (data['permissions'] as List?)?.map((e) => e.toString()).toList() ?? [],
       );
       return response;
@@ -75,13 +88,20 @@ class AuthService {
         fallbackRole = 'HR_PAYROLL_USER';
       }
 
+      final resolvedEmp = MockDataService.getEmployeeForUser(
+        email: cleanEmail,
+        role: fallbackRole,
+      );
+      MockDataService.switchActiveUser(resolvedEmp);
+      EmployeeService.currentEmployeeNotifier.value = resolvedEmp;
+
       ApiClient.setSession(
         accessToken: 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}',
         userId: 'usr_mock_01',
         email: email,
         role: fallbackRole,
-        employeeId: 'emp-001',
-        employeeName: MockDataService.currentEmployee.name,
+        employeeId: resolvedEmp.id,
+        employeeName: resolvedEmp.name,
         permissions: ['*'],
       );
 
@@ -89,8 +109,8 @@ class AuthService {
         'access_token': 'mock_jwt_token',
         'role': fallbackRole,
         'user_id': 'usr_mock_01',
-        'employee_id': 'emp-001',
-        'employee_name': MockDataService.currentEmployee.name,
+        'employee_id': resolvedEmp.id,
+        'employee_name': resolvedEmp.name,
         'permissions': ['*'],
       });
     }

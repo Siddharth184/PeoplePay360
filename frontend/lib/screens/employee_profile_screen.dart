@@ -376,7 +376,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Send Internal Message to Aarav Mehta',
+              'Send Internal Message to ${emp.name}',
               style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
@@ -414,10 +414,10 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 onPressed: () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      backgroundColor: Color(0xFF004A31),
+                    SnackBar(
+                      backgroundColor: const Color(0xFF004A31),
                       behavior: SnackBarBehavior.floating,
-                      content: Text('✓ Message dispatched to Aarav Mehta on Odoo Discuss'),
+                      content: Text('✓ Message dispatched to ${emp.name} on Odoo Discuss'),
                     ),
                   );
                 },
@@ -431,6 +431,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   void _openManagerProfileDialog() {
+    final manager = emp.managerName.isNotEmpty ? emp.managerName : 'Sara Khan';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -443,18 +444,25 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               child: Icon(Icons.person, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 10),
-            Text('Sara Khan', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+            Flexible(
+              child: Text(
+                manager,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Direct Manager • Executive Director', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey[700])),
+            Text('Reporting Manager • Executive Lead', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey[700])),
             const SizedBox(height: 8),
-            Text('Department: Finance & Global Operations', style: GoogleFonts.plusJakartaSans(fontSize: 13)),
+            Text('Department: ${emp.department}', style: GoogleFonts.plusJakartaSans(fontSize: 13)),
             const SizedBox(height: 4),
-            Text('Email: sara.khan@oxp.com', style: GoogleFonts.jetBrainsMono(fontSize: 12, color: const Color(0xFF00696E))),
+            Text('Status: Active in Hierarchy', style: GoogleFonts.jetBrainsMono(fontSize: 12, color: const Color(0xFF00696E))),
           ],
         ),
         actions: [
@@ -722,12 +730,16 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          emp.name,
-                          style: GoogleFonts.outfit(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF131B2E),
+                        Flexible(
+                          child: Text(
+                            emp.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF131B2E),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -738,7 +750,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            'EMP-4092',
+                            emp.badgeId ?? 'EMP-4092',
                             style: GoogleFonts.jetBrainsMono(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -751,6 +763,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '${emp.jobTitle} • ${emp.department}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         color: const Color(0xFF4E444A),

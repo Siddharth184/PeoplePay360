@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/contract_service.dart';
+import '../services/employee_service.dart';
+import '../services/mock_data_service.dart';
+import '../models/models.dart';
 
 class ContractsScreen extends StatefulWidget {
   final void Function(int index)? onNavigateTab;
@@ -17,11 +20,28 @@ class _ContractsScreenState extends State<ContractsScreen> {
   String _schedule = '40 Hours / Week (Standard)';
   String _contractType = 'Permanent / Full-Time';
   String _contractRef = 'CON/2026/0042';
+  late EmployeeModel _emp;
 
   @override
   void initState() {
     super.initState();
+    _emp = MockDataService.currentEmployee;
+    EmployeeService.currentEmployeeNotifier.addListener(_onEmployeeChanged);
     _fetchContracts();
+  }
+
+  void _onEmployeeChanged() {
+    if (mounted) {
+      setState(() {
+        _emp = EmployeeService.currentEmployeeNotifier.value;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    EmployeeService.currentEmployeeNotifier.removeListener(_onEmployeeChanged);
+    super.dispose();
   }
 
   Future<void> _fetchContracts() async {
@@ -638,10 +658,10 @@ class _ContractsScreenState extends State<ContractsScreen> {
                       color: const Color(0xFF4E444A),
                       height: 1.4,
                     ),
-                    children: const [
-                      TextSpan(text: 'This is the single active running contract for '),
-                      TextSpan(text: 'Aarav Mehta', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF131B2E))),
-                      TextSpan(text: ' for the current payroll cycle. Superseded or historical contracts are archived automatically.'),
+                    children: [
+                      const TextSpan(text: 'This is the single active running contract for '),
+                      TextSpan(text: _emp.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF131B2E))),
+                      const TextSpan(text: ' for the current payroll cycle. Superseded or historical contracts are archived automatically.'),
                     ],
                   ),
                 ),
@@ -692,7 +712,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'EMP-99201',
+                  _emp.badgeId ?? 'EMP-4091',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 10.5,
                     fontWeight: FontWeight.bold,
@@ -723,11 +743,10 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     color: Color(0xFF714B67),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.network(
-                    'https://lh3.googleusercontent.com/aida-public/AB6AXuBdEf-4m50kA9OQg_t2t8GxE1b98fcDAfowAdYJ8MlFe2-FodUaYVIicVZP9sfZvbbS-7awB34cXKZKWL7nf1l2EblaMBQ2oWhPKulk2tSVM6fSnwK0dl4fjR5bIXjGgLrM_ZSM2ZaI-D0wXBsAzBEAizPLuUXKKNlRRR1JqN8TkQ-p35yGHlZw-2Q3FctrECb8YUVdxSXIPddbzmTKEdV9NUCFqtMm8LV7NmbemGjgyWI3FKQXQiKS',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Center(
-                      child: Text('AM', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Center(
+                    child: Text(
+                      _emp.name.split(' ').where((e) => e.isNotEmpty).map((e) => e[0]).take(2).join(),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
                 ),
@@ -738,12 +757,16 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            'Aarav Mehta',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF131B2E),
+                          Flexible(
+                            child: Text(
+                              _emp.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF131B2E),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -754,7 +777,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'FINANCE',
+                              _emp.department.toUpperCase(),
                               style: GoogleFonts.jetBrainsMono(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
@@ -765,7 +788,9 @@ class _ContractsScreenState extends State<ContractsScreen> {
                         ],
                       ),
                       Text(
-                        'Payroll Specialist · Dept. of Accounts',
+                        '${_emp.jobTitle} · ${_emp.department}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           color: const Color(0xFF4E444A),
@@ -1109,44 +1134,52 @@ class _ContractsScreenState extends State<ContractsScreen> {
       ),
       padding: const EdgeInsets.all(12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFDAE2FD),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(Icons.draw_outlined, color: Color(0xFF714B67), size: 18),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Digitally Signed via PeoplePay e-Sign',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF131B2E),
-                    ),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFDAE2FD),
+                    shape: BoxShape.circle,
                   ),
-                  Text(
-                    'Hash: 8f9b...a12c · 02-Jan-2026',
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 10.5,
-                      color: const Color(0xFF4E444A),
-                    ),
+                  child: const Center(
+                    child: Icon(Icons.draw_outlined, color: Color(0xFF714B67), size: 18),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Digitally Signed via PeoplePay e-Sign',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF131B2E),
+                        ),
+                      ),
+                      Text(
+                        'Hash: 8f9b...a12c · 02-Jan-2026',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 10.5,
+                          color: const Color(0xFF4E444A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           const Icon(Icons.check_circle, color: Color(0xFF006443), size: 20),
         ],
       ),

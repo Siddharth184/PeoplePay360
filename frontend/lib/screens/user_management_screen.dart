@@ -70,7 +70,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       _UserManagementItem(
         id: 'usr_1',
         name: 'Alex Morgan',
-        email: 'admin@oxp.com',
+        email: 'alex.morgan@enterprise.odoo.com',
         role: 'System Admin',
         roleCategory: 'Admin',
         linkedEmployee: 'Alex Morgan',
@@ -83,29 +83,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         avatarText: Colors.white,
         roleBg: const Color(0xFFFFD7F1),
         roleText: const Color(0xFF2F1029),
-        roleIcon: Icons.shield,
+        roleIcon: Icons.shield_outlined,
       ),
       _UserManagementItem(
         id: 'usr_2',
-        name: 'Sara Khan',
-        email: 'sara.khan@oxp.com',
-        role: 'HR Manager',
-        roleCategory: 'HR Manager',
-        linkedEmployee: 'Sara Khan',
-        department: 'Human Resources',
-        status: 'Active',
-        extraBadge: 'Dept Lead',
-        initials: 'SK',
-        avatarBg: const Color(0xFFDAE2FD),
-        avatarText: const Color(0xFF57344F),
-        roleBg: const Color(0xFFFFD7F1),
-        roleText: const Color(0xFF2F1029),
-        roleIcon: Icons.admin_panel_settings_outlined,
-      ),
-      _UserManagementItem(
-        id: 'usr_3',
         name: 'Aarav Mehta',
-        email: 'aarav.mehta@oxp.com',
+        email: 'aarav@company.com',
         role: 'Payroll User',
         roleCategory: 'Payroll User',
         linkedEmployee: 'Aarav Mehta',
@@ -118,6 +101,57 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         roleBg: const Color(0xFFCCF7FA),
         roleText: const Color(0xFF006E73),
         roleIcon: Icons.payments_outlined,
+      ),
+      _UserManagementItem(
+        id: 'usr_3',
+        name: 'Maya Shah',
+        email: 'maya@company.com',
+        role: 'Time Off Admin',
+        roleCategory: 'Time Off Admin',
+        linkedEmployee: 'Maya Shah',
+        department: 'People Ops',
+        status: 'Active',
+        extraBadge: 'Dept Approver',
+        initials: 'MS',
+        avatarBg: const Color(0xFFE9B8D9),
+        avatarText: const Color(0xFF2F1029),
+        roleBg: const Color(0xFFE2E7FF),
+        roleText: const Color(0xFF131B2E),
+        roleIcon: Icons.event_available,
+      ),
+      _UserManagementItem(
+        id: 'usr_4',
+        name: 'Rohan Patel',
+        email: 'rohan@company.com',
+        role: 'Time Off User',
+        roleCategory: 'Employee',
+        linkedEmployee: 'Rohan Patel',
+        department: 'Logistics',
+        status: 'Active',
+        extraBadge: 'Self Service Only',
+        initials: 'RP',
+        avatarBg: const Color(0xFF95F1F8),
+        avatarText: const Color(0xFF002022),
+        roleBg: const Color(0xFFE2E7FF),
+        roleText: const Color(0xFF131B2E),
+        roleIcon: Icons.schedule,
+      ),
+      _UserManagementItem(
+        id: 'usr_5',
+        name: 'Nisha Rao',
+        email: 'nisha@company.com',
+        role: 'Payroll Admin',
+        roleCategory: 'Payroll Admin',
+        linkedEmployee: 'Nisha Rao',
+        department: 'Payroll Lead',
+        status: 'Active',
+        extraBadge: 'Signer 1',
+        initials: 'NR',
+        avatarBg: const Color(0xFFE2E7FF),
+        avatarText: const Color(0xFF714B67),
+        roleBg: const Color(0xFFFFD7F1),
+        roleText: const Color(0xFF2F1029),
+        roleIcon: Icons.admin_panel_settings_outlined,
       ),
     ];
   }
@@ -1309,24 +1343,28 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: item.extraBadge == '2FA Enforced'
-                    ? const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5)
-                    : EdgeInsets.zero,
-                decoration: item.extraBadge == '2FA Enforced'
-                    ? BoxDecoration(
-                        color: const Color(0xFF6FFBBE).withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(20),
-                      )
-                    : null,
-                child: Text(
-                  item.extraBadge,
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: item.extraBadge == '2FA Enforced'
-                        ? const Color(0xFF004A31)
-                        : const Color(0xFF80747A),
+              Flexible(
+                child: Container(
+                  padding: item.extraBadge == '2FA Enforced'
+                      ? const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5)
+                      : EdgeInsets.zero,
+                  decoration: item.extraBadge == '2FA Enforced'
+                      ? BoxDecoration(
+                          color: const Color(0xFF6FFBBE).withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(20),
+                        )
+                      : null,
+                  child: Text(
+                    item.extraBadge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: item.extraBadge == '2FA Enforced'
+                          ? const Color(0xFF004A31)
+                          : const Color(0xFF80747A),
+                    ),
                   ),
                 ),
               ),
@@ -1418,7 +1456,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    'Synced',
+                    'Directory Synced',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(

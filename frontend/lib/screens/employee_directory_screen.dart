@@ -384,8 +384,17 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                   style: const TextStyle(color: AppTheme.odooAubergine, fontWeight: FontWeight.bold),
                 ),
               ),
-              title: Text(emp.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('${emp.jobTitle} • ${emp.department}'),
+              title: Text(
+                emp.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                '${emp.jobTitle} • ${emp.department}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
               onTap: () {
                 Navigator.push(

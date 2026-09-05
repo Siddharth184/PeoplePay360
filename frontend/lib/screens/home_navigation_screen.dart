@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/notifications_drawer.dart';
 import '../widgets/staff_search_dialog.dart';
+import '../services/api_client.dart';
+import '../services/mock_data_service.dart';
+import '../services/employee_service.dart';
+import '../models/models.dart';
 import 'employee_profile_screen.dart';
 import 'attendance_screen.dart';
 import 'time_off_screen.dart';
@@ -170,9 +174,11 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
               StaffSearchDialog.show(
                 context,
                 onSelectEmployee: (emp) {
+                  MockDataService.switchActiveUser(emp);
+                  EmployeeService.currentEmployeeNotifier.value = emp;
                   _onTabSelected(0);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Selected Employee: ${emp.name} (${emp.jobTitle})')),
+                    SnackBar(content: Text('Switched Active Profile: ${emp.name} (${emp.jobTitle})')),
                   );
                 },
               );
@@ -219,25 +225,33 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  UserAccountsDrawerHeader(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppTheme.odooAubergine, Color(0xFF57344F)],
-                      ),
-                    ),
-                    accountName: const Text('Aarav Mehta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    accountEmail: Text('aarav@oxp.com • ${widget.userRole}'),
-                    currentAccountPicture: CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: Text(
-                        'AM',
-                        style: TextStyle(
-                          color: AppTheme.odooAubergine,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
+                  ValueListenableBuilder<EmployeeModel>(
+                    valueListenable: EmployeeService.currentEmployeeNotifier,
+                    builder: (context, activeEmp, _) {
+                      final displayName = ApiClient.currentEmployeeName ?? activeEmp.name;
+                      final displayEmail = ApiClient.currentEmail ?? activeEmp.email;
+                      final initials = displayName.split(' ').where((e) => e.isNotEmpty).map((e) => e[0]).take(2).join();
+                      return UserAccountsDrawerHeader(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppTheme.odooAubergine, Color(0xFF57344F)],
+                          ),
                         ),
-                      ),
-                    ),
+                        accountName: Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        accountEmail: Text('$displayEmail • ${widget.userRole}'),
+                        currentAccountPicture: CircleAvatar(
+                          backgroundColor: Colors.white,
+                          child: Text(
+                            initials.isNotEmpty ? initials : 'U',
+                            style: const TextStyle(
+                              color: AppTheme.odooAubergine,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   ListTile(
                     leading: const Icon(Icons.person_outline, color: AppTheme.odooAubergine),
@@ -325,9 +339,11 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                       StaffSearchDialog.show(
                         context,
                         onSelectEmployee: (emp) {
+                          MockDataService.switchActiveUser(emp);
+                          EmployeeService.currentEmployeeNotifier.value = emp;
                           _onTabSelected(0);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Selected Employee: ${emp.name}')),
+                            SnackBar(content: Text('Switched Active Profile: ${emp.name} (${emp.jobTitle})')),
                           );
                         },
                       );

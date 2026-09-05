@@ -8,11 +8,74 @@ import '../models/models.dart';
 /// attendance, leave and payroll all reference the same people) so the UI
 /// looks fully populated during a demo even with no backend running.
 class MockDataService {
-  static EmployeeModel currentEmployee = EmployeeModel(
+  static final EmployeeModel adminEmployee = EmployeeModel(
+    id: 'emp-admin',
+    name: 'Admin User',
+    email: 'admin@oxp.com',
+    jobTitle: 'System Administrator & IT Director',
+    department: 'Executive Management',
+    workPhone: '+91 98765 00001',
+    managerName: 'Board of Directors',
+    avatarUrl: '',
+    timeOffBalance: 25,
+    activeContractsCount: 1,
+    attendancesCount: 22,
+    payslipsCount: 12,
+    badgeId: 'ADM-001',
+    employeeType: 'Full-time',
+    status: 'ACTIVE',
+    dateOfJoining: '2020-01-01',
+    bankName: 'HDFC Bank',
+    bankAccountNumber: '5010-0001-9900',
+  );
+
+  static final EmployeeModel hrManagerEmployee = EmployeeModel(
+    id: 'emp-004',
+    name: 'Sara Khan',
+    email: 'sara.khan@oxp.com',
+    jobTitle: 'HR Manager & People Director',
+    department: 'Human Resources',
+    workPhone: '+91 90210 33445',
+    managerName: 'Board of Directors',
+    avatarUrl: '',
+    timeOffBalance: 22,
+    activeContractsCount: 1,
+    attendancesCount: 23,
+    payslipsCount: 12,
+    badgeId: 'EMP-4091',
+    employeeType: 'Full-time',
+    status: 'ACTIVE',
+    dateOfJoining: '2021-01-04',
+    bankName: 'Axis Bank',
+    bankAccountNumber: '7720-5541-0098',
+  );
+
+  static final EmployeeModel payrollManagerEmployee = EmployeeModel(
+    id: 'emp-005',
+    name: 'Vikram Nair',
+    email: 'vikram.nair@oxp.com',
+    jobTitle: 'Finance Controller & Payroll Lead',
+    department: 'Finance & Operations',
+    workPhone: '+91 99887 66554',
+    managerName: 'Sara Khan',
+    avatarUrl: '',
+    timeOffBalance: 16,
+    activeContractsCount: 1,
+    attendancesCount: 21,
+    payslipsCount: 12,
+    badgeId: 'EMP-4093',
+    employeeType: 'Full-time',
+    status: 'ACTIVE',
+    dateOfJoining: '2022-03-15',
+    bankName: 'ICICI Bank',
+    bankAccountNumber: '4412-6690-3388',
+  );
+
+  static final EmployeeModel payrollUserEmployee = EmployeeModel(
     id: 'emp-001',
-    name: 'Aarav Sharma',
-    email: 'aarav.sharma@peoplepay360.io',
-    jobTitle: 'Senior Software Architect',
+    name: 'Aarav Mehta',
+    email: 'aarav.mehta@oxp.com',
+    jobTitle: 'Payroll Officer',
     department: 'Finance & Tech Ops',
     workPhone: '+91 98765 43210',
     managerName: 'Sara Khan (HR Director)',
@@ -21,7 +84,7 @@ class MockDataService {
     activeContractsCount: 1,
     attendancesCount: 22,
     payslipsCount: 12,
-    badgeId: 'EMP-001',
+    badgeId: 'EMP-4092',
     employeeType: 'Full-time',
     status: 'ACTIVE',
     dateOfJoining: '2024-04-01',
@@ -29,31 +92,74 @@ class MockDataService {
     bankAccountNumber: '5010-2288-4471',
   );
 
+  static final EmployeeModel regularEmployee = EmployeeModel(
+    id: 'emp-007',
+    name: 'Rohan Desai',
+    email: 'rohan.desai@oxp.com',
+    jobTitle: 'Engineering Manager',
+    department: 'Engineering',
+    workPhone: '+91 98765 77889',
+    managerName: 'Sara Khan',
+    avatarUrl: '',
+    timeOffBalance: 18,
+    activeContractsCount: 1,
+    attendancesCount: 20,
+    payslipsCount: 12,
+    badgeId: 'EMP-4095',
+    employeeType: 'Full-time',
+    status: 'ACTIVE',
+    dateOfJoining: '2023-08-01',
+    bankName: 'SBI',
+    bankAccountNumber: '3391-4455-8822',
+  );
+
+  static EmployeeModel currentEmployee = hrManagerEmployee;
+
+  static void switchActiveUser(EmployeeModel emp) {
+    currentEmployee = emp;
+  }
+
+  static EmployeeModel getEmployeeForUser({String? email, String? role, String? name}) {
+    final cleanEmail = (email ?? '').toLowerCase().trim();
+    final cleanRole = (role ?? '').toUpperCase().trim();
+    final cleanName = (name ?? '').toLowerCase().trim();
+
+    if (cleanEmail.contains('admin') || cleanRole == 'ADMIN' || cleanName.contains('admin')) {
+      return adminEmployee;
+    }
+    if (cleanEmail.contains('sara') || cleanRole == 'HR_MANAGER' || cleanName.contains('sara')) {
+      return hrManagerEmployee;
+    }
+    if (cleanEmail.contains('vikram') || cleanRole == 'HR_PAYROLL_MANAGER' || cleanEmail.contains('payroll_mgr')) {
+      return payrollManagerEmployee;
+    }
+    if (cleanEmail.contains('aarav') || cleanRole == 'HR_PAYROLL_USER' || cleanName.contains('aarav')) {
+      return payrollUserEmployee;
+    }
+    if (cleanEmail.contains('rohan') || cleanRole == 'EMPLOYEE' || cleanName.contains('rohan')) {
+      return regularEmployee;
+    }
+
+    // Try matching in allEmployees
+    for (final emp in allEmployees) {
+      if (emp.email.toLowerCase() == cleanEmail || emp.name.toLowerCase() == cleanName) {
+        return emp;
+      }
+    }
+
+    return hrManagerEmployee;
+  }
+
   static List<EmployeeModel> allEmployees = [
-    EmployeeModel(
-      id: 'emp-001',
-      name: 'Aarav Sharma',
-      email: 'aarav.sharma@peoplepay360.io',
-      jobTitle: 'Senior Software Architect',
-      department: 'Finance & Tech Ops',
-      workPhone: '+91 98765 43210',
-      managerName: 'Sara Khan',
-      avatarUrl: '',
-      timeOffBalance: 14,
-      activeContractsCount: 1,
-      attendancesCount: 22,
-      payslipsCount: 12,
-      badgeId: 'EMP-001',
-      employeeType: 'Full-time',
-      status: 'ACTIVE',
-      dateOfJoining: '2024-04-01',
-      bankName: 'HDFC Bank',
-      bankAccountNumber: '5010-2288-4471',
-    ),
+    adminEmployee,
+    hrManagerEmployee,
+    payrollManagerEmployee,
+    payrollUserEmployee,
+    regularEmployee,
     EmployeeModel(
       id: 'emp-002',
       name: 'Priya Patel',
-      email: 'priya.patel@peoplepay360.io',
+      email: 'priya.patel@oxp.com',
       jobTitle: 'Lead Payroll Analyst',
       department: 'Finance & Tech Ops',
       workPhone: '+91 98765 12345',
@@ -73,7 +179,7 @@ class MockDataService {
     EmployeeModel(
       id: 'emp-003',
       name: 'Rajesh Kumar',
-      email: 'rajesh.kumar@peoplepay360.io',
+      email: 'rajesh.kumar@oxp.com',
       jobTitle: 'Senior HR Operations Manager',
       department: 'Human Resources',
       workPhone: '+91 98765 67890',
@@ -91,53 +197,13 @@ class MockDataService {
       bankAccountNumber: '3391-0087-5512',
     ),
     EmployeeModel(
-      id: 'emp-004',
-      name: 'Sara Khan',
-      email: 'sara.khan@peoplepay360.io',
-      jobTitle: 'HR Director',
-      department: 'Human Resources',
-      workPhone: '+91 90210 33445',
-      managerName: 'Board of Directors',
-      avatarUrl: '',
-      timeOffBalance: 22,
-      activeContractsCount: 1,
-      attendancesCount: 23,
-      payslipsCount: 12,
-      badgeId: 'EMP-004',
-      employeeType: 'Full-time',
-      status: 'ACTIVE',
-      dateOfJoining: '2021-01-04',
-      bankName: 'Axis Bank',
-      bankAccountNumber: '7720-5541-0098',
-    ),
-    EmployeeModel(
-      id: 'emp-005',
-      name: 'Vikram Singh',
-      email: 'vikram.singh@peoplepay360.io',
-      jobTitle: 'Backend Engineer',
-      department: 'Engineering',
-      workPhone: '+91 99887 66554',
-      managerName: 'Aarav Sharma',
-      avatarUrl: '',
-      timeOffBalance: 12,
-      activeContractsCount: 1,
-      attendancesCount: 19,
-      payslipsCount: 8,
-      badgeId: 'EMP-005',
-      employeeType: 'Full-time',
-      status: 'ACTIVE',
-      dateOfJoining: '2024-09-16',
-      bankName: 'Kotak Mahindra',
-      bankAccountNumber: '4412-6690-3388',
-    ),
-    EmployeeModel(
       id: 'emp-006',
       name: 'Neha Verma',
-      email: 'neha.verma@peoplepay360.io',
+      email: 'neha.verma@oxp.com',
       jobTitle: 'UX Designer',
       department: 'Design',
       workPhone: '+91 97654 32109',
-      managerName: 'Aarav Sharma',
+      managerName: 'Sara Khan',
       avatarUrl: '',
       timeOffBalance: 16,
       activeContractsCount: 1,
