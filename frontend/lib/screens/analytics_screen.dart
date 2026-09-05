@@ -722,184 +722,196 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
   Widget _buildOperationalDualCards() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Card Left: Attendance Split
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0D000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 360;
+          final leftCard = Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0D000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Attendance',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF4EDEA3),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: _buildAttendanceMiniBox('Present', '94', const Color(0xFF131B2E))),
+                    const SizedBox(width: 6),
+                    Expanded(child: _buildAttendanceMiniBox('Late', '18', const Color(0xFF131B2E))),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(child: _buildAttendanceMiniBox('Absent', '09', const Color(0xFFBA1A1A))),
+                    const SizedBox(width: 6),
+                    Expanded(child: _buildAttendanceMiniBox('Overtime', '22', const Color(0xFF00696E))),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E7FF),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Attendance',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF131B2E),
+                      const Icon(Icons.warning_amber_rounded, size: 15, color: Color(0xFFBA1A1A)),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          '5 missing punches require approval',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF131B2E),
+                          ),
                         ),
                       ),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF4EDEA3),
-                          shape: BoxShape.circle,
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          final rightCard = Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0D000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Pre-Flight Audit',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFDAD6),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'ALERT',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF93000A),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(child: _buildAttendanceMiniBox('Present', '94', const Color(0xFF131B2E))),
-                      const SizedBox(width: 6),
-                      Expanded(child: _buildAttendanceMiniBox('Late', '18', const Color(0xFF131B2E))),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(child: _buildAttendanceMiniBox('Absent', '09', const Color(0xFFBA1A1A))),
-                      const SizedBox(width: 6),
-                      Expanded(child: _buildAttendanceMiniBox('Overtime', '22', const Color(0xFF00696E))),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(8),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _buildAnomalyBullet(const Color(0xFFBA1A1A), '2 missing bank details'),
+                const SizedBox(height: 6),
+                _buildAnomalyBullet(const Color(0xFF79526F), '1 duplicate entry'),
+                const SizedBox(height: 6),
+                _buildAnomalyBullet(const Color(0xFF00696E), '4 unvalidated drafts'),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('🔍 Inspecting payrun anomaly batch...')),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE2E7FF),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.warning_amber_rounded, size: 15, color: Color(0xFFBA1A1A)),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            '5 missing punches require approval',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF131B2E),
-                            ),
+                        Text(
+                          'Inspect Batch',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF57344F),
                           ),
                         ),
+                        const Icon(Icons.arrow_forward_rounded, size: 16, color: Color(0xFF57344F)),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 12),
+          );
 
-          // Card Right: Pre-Flight Audit
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0D000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Pre-Flight Audit',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF131B2E),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFDAD6),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'ALERT',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF93000A),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  _buildAnomalyBullet(const Color(0xFFBA1A1A), '2 missing bank details'),
-                  const SizedBox(height: 6),
-                  _buildAnomalyBullet(const Color(0xFF79526F), '1 duplicate entry'),
-                  const SizedBox(height: 6),
-                  _buildAnomalyBullet(const Color(0xFF00696E), '4 unvalidated drafts'),
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('🔍 Inspecting payrun anomaly batch...')),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE2E7FF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Inspect Batch',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF57344F),
-                            ),
-                          ),
-                          const Icon(Icons.arrow_forward_rounded, size: 16, color: Color(0xFF57344F)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+          if (isNarrow) {
+            return Column(
+              children: [
+                leftCard,
+                const SizedBox(height: 12),
+                rightCard,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: leftCard),
+              const SizedBox(width: 12),
+              Expanded(child: rightCard),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1051,30 +1063,37 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: barColor,
-                    shape: BoxShape.circle,
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: barColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  dept,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF131B2E),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      dept,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   amount,
@@ -1225,14 +1244,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
             const SizedBox(height: 8),
             // X-Axis Labels & Data values
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildTrendMonthItem('Apr', '₹14.8L', isPeak: false),
-                _buildTrendMonthItem('May', '₹15.2L', isPeak: false),
-                _buildTrendMonthItem('Jun', '₹14.3L', isPeak: false),
-                _buildTrendMonthItem('Jul', '₹15.0L', isPeak: false),
-                _buildTrendMonthItem('Aug', '₹17.1L', isPeak: false),
-                _buildTrendMonthItem('Sep', '₹18.4L', isPeak: true),
+                Expanded(child: _buildTrendMonthItem('Apr', '₹14.8L', isPeak: false)),
+                Expanded(child: _buildTrendMonthItem('May', '₹15.2L', isPeak: false)),
+                Expanded(child: _buildTrendMonthItem('Jun', '₹14.3L', isPeak: false)),
+                Expanded(child: _buildTrendMonthItem('Jul', '₹15.0L', isPeak: false)),
+                Expanded(child: _buildTrendMonthItem('Aug', '₹17.1L', isPeak: false)),
+                Expanded(child: _buildTrendMonthItem('Sep', '₹18.4L', isPeak: true)),
               ],
             ),
           ],
@@ -1244,21 +1262,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
   Widget _buildTrendMonthItem(String month, String value, {required bool isPeak}) {
     return Column(
       children: [
-        Text(
-          month,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 11,
-            fontWeight: isPeak ? FontWeight.w800 : FontWeight.w600,
-            color: isPeak ? const Color(0xFF57344F) : const Color(0xFF131B2E),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            month,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 11,
+              fontWeight: isPeak ? FontWeight.w800 : FontWeight.w600,
+              color: isPeak ? const Color(0xFF57344F) : const Color(0xFF131B2E),
+            ),
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 10,
-            fontWeight: isPeak ? FontWeight.w700 : FontWeight.w500,
-            color: isPeak ? const Color(0xFF57344F) : const Color(0xFF4E444A),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 10,
+              fontWeight: isPeak ? FontWeight.w700 : FontWeight.w500,
+              color: isPeak ? const Color(0xFF57344F) : const Color(0xFF4E444A),
+            ),
           ),
         ),
       ],
@@ -1354,71 +1378,81 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE2E7FF),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  initials,
-                  style: GoogleFonts.outfit(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF57344F),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE2E7FF),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initials,
+                    style: GoogleFonts.outfit(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF57344F),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        deptName,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF131B2E),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF92EFF5).withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          staffCount,
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF006E73),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              deptName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF131B2E),
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF92EFF5).withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              staffCount,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF006E73),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        avgPerEmp,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 11,
+                          color: const Color(0xFF4E444A),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    avgPerEmp,
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 11,
-                      color: const Color(0xFF4E444A),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -1539,17 +1573,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                   backgroundColor: const Color(0xFF714B67),
                   foregroundColor: Colors.white,
                   elevation: 2,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
                 ),
                 onPressed: _showExportPdfSuccess,
                 icon: const Icon(Icons.download_rounded, size: 18),
-                label: Text(
-                  'Download Report (PDF)',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Download Report (PDF)',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -1559,8 +1597,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
           Container(
             height: 48,
             width: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAEDFF),
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAEDFF),
               shape: BoxShape.circle,
             ),
             child: IconButton(
