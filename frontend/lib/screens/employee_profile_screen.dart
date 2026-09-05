@@ -573,10 +573,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
 
                         const SizedBox(height: 18),
 
-                        // Linked Operations Ribbon
-                        _buildLinkedOperationsRibbon(),
-
-                        const SizedBox(height: 18),
+                        // Linked Operations Ribbon (Commented out for HR view: bottom navbar already provides direct navigation to Attendance, Time Off, Contracts)
+                        // _buildLinkedOperationsRibbon(),
+                        // const SizedBox(height: 18),
 
                         // Segmented Navigation Tabs
                         _buildSegmentedTabs(),
@@ -982,6 +981,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildLinkedOperationsRibbon() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

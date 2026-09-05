@@ -458,12 +458,13 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
               child: _buildToastNotification(),
             ),
 
-          // Floating Action Button
-          Positioned(
-            bottom: 24,
-            right: 16,
-            child: _buildFab(),
-          ),
+          // Floating Action Button (Only for regular employees requesting leave; removed for HR login)
+          if (!isHrView)
+            Positioned(
+              bottom: 24,
+              right: 16,
+              child: _buildFab(),
+            ),
         ],
       ),
     );
