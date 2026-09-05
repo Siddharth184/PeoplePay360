@@ -1644,46 +1644,55 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: hasPending ? const Color(0xFFFFD7F1).withValues(alpha: 0.2) : const Color(0xFFFFD7F1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.admin_panel_settings_outlined,
-                            size: 18,
-                            color: hasPending ? const Color(0xFFFFD7F1) : const Color(0xFF714B67),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'HR Punch Approval Desk',
-                              style: GoogleFonts.outfit(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: hasPending ? Colors.white : const Color(0xFF131B2E),
-                              ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: hasPending ? const Color(0xFFFFD7F1).withValues(alpha: 0.2) : const Color(0xFFFFD7F1),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            Text(
-                              hasPending
-                                  ? '${pendingRequests.length} pending punch request(s) need review'
-                                  : 'All employee punches approved & up to date',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10.5,
-                                color: hasPending ? const Color(0xFF95F1F8) : const Color(0xFF4E444A),
-                              ),
+                            child: Icon(
+                              Icons.admin_panel_settings_outlined,
+                              size: 18,
+                              color: hasPending ? const Color(0xFFFFD7F1) : const Color(0xFF714B67),
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'HR Punch Approval Desk',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: hasPending ? Colors.white : const Color(0xFF131B2E),
+                                  ),
+                                ),
+                                Text(
+                                  hasPending
+                                      ? '${pendingRequests.length} pending punch request(s) need review'
+                                      : 'All employee punches approved & up to date',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10.5,
+                                    color: hasPending ? const Color(0xFF95F1F8) : const Color(0xFF4E444A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
@@ -1716,20 +1725,27 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF00696E)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Active: ${punchState.activeApprovedRequest?.employeeName ?? 'Aarav Mehta'} (${punchState.status == PunchStatus.punchedIn ? 'Punched In' : punchState.status == PunchStatus.onBreak ? 'On Break' : 'Checked Out'})',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF131B2E),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF00696E)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Active: ${punchState.activeApprovedRequest?.employeeName ?? 'Aarav Mehta'} (${punchState.status == PunchStatus.punchedIn ? 'Punched In' : punchState.status == PunchStatus.onBreak ? 'On Break' : 'Checked Out'})',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF131B2E),
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       InkWell(
                         onTap: () => AttendancePunchSheet.show(context),
                         borderRadius: BorderRadius.circular(12),

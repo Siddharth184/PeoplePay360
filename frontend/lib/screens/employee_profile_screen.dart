@@ -46,7 +46,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   void _onEmployeeNotifierChanged() {
     if (mounted) {
       final updated = EmployeeService.currentEmployeeNotifier.value;
-      if (updated.id == emp.id) {
+      if (updated.id == emp.id || widget.initialEmployee == null) {
         setState(() {
           emp = updated;
         });
@@ -137,7 +137,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
 
   void _openEditEmployeeSheet() {
     if (!ApiClient.hasHrAccess) {
-      _toast('Only HR personnel can edit employee profiles');
+      _toast('Access restricted: Only HR Manager and Admin can edit employee profiles.');
       return;
     }
     final nameCtrl = TextEditingController(text: emp.name);
@@ -1701,10 +1701,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               ),
             ),
           ),
+
           if (canEdit) ...[
             const SizedBox(width: 10),
 
-            // Edit Employee Primary Button (HR Only)
+            // Edit Employee Primary Button (HR+ only)
             Expanded(
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(

@@ -69,11 +69,11 @@ class EmployeeService {
 
     if (response.isSuccess && response.data != null) {
       final emp = response.data!;
-      if (employeeId == MockDataService.currentEmployee.id) {
+      if (employeeId == MockDataService.currentEmployee.id || employeeId == 'emp-001') {
         MockDataService.currentEmployee = emp;
         currentEmployeeNotifier.value = emp;
       }
-      final idx = MockDataService.allEmployees.indexWhere((e) => e.id == employeeId || e.badgeId == employeeId);
+      final idx = MockDataService.allEmployees.indexWhere((e) => e.id == employeeId);
       if (idx != -1) {
         MockDataService.allEmployees[idx] = emp;
       } else {
@@ -82,29 +82,18 @@ class EmployeeService {
       return response;
     }
 
-    final found = MockDataService.allEmployees.firstWhere(
-      (e) => e.id == employeeId || e.badgeId == employeeId || e.name.toLowerCase() == employeeId.toLowerCase(),
-      orElse: () => EmployeeModel(
-        id: employeeId,
-        name: employeeId.startsWith('emp-') ? 'Employee ${employeeId.replaceAll('emp-', '')}' : employeeId,
-        email: 'employee@oxp.com',
-        jobTitle: 'Staff Member',
-        department: 'General',
-        workPhone: '',
-        managerName: 'Sara Khan',
-        avatarUrl: '',
-        timeOffBalance: 14,
-        activeContractsCount: 1,
-        attendancesCount: 20,
-        payslipsCount: 12,
-        employeeType: 'Full-time',
-        status: 'ACTIVE',
-      ),
-    );
-    if (employeeId == MockDataService.currentEmployee.id) {
-      currentEmployeeNotifier.value = found;
+    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
+      final found = MockDataService.allEmployees.firstWhere(
+        (e) => e.id == employeeId,
+        orElse: () => MockDataService.currentEmployee,
+      );
+      if (employeeId == MockDataService.currentEmployee.id || employeeId == 'emp-001') {
+        currentEmployeeNotifier.value = found;
+      }
+      return ApiResponse.success(found);
     }
-    return ApiResponse.success(found);
+
+    return response;
   }
 
   static Future<ApiResponse<EmployeeModel>> createEmployee(Map<String, dynamic> data) async {
@@ -159,10 +148,10 @@ class EmployeeService {
     if (response.isSuccess && response.data != null) {
       updated = response.data!;
     } else {
-      final existingIdx = MockDataService.allEmployees.indexWhere((e) => e.id == id || e.badgeId == id);
-      final existing = existingIdx != -1
-          ? MockDataService.allEmployees[existingIdx]
-          : MockDataService.currentEmployee;
+      final existing = MockDataService.allEmployees.firstWhere(
+        (e) => e.id == id,
+        orElse: () => MockDataService.currentEmployee,
+      );
       updated = existing.copyWith(
         name: data['name']?.toString() ?? existing.name,
         jobTitle: data['job_position_name']?.toString() ?? data['job_position']?.toString() ?? data['jobTitle']?.toString() ?? existing.jobTitle,
@@ -173,11 +162,11 @@ class EmployeeService {
     }
 
     // Synchronize local caches and reactive listeners
-    if (id == MockDataService.currentEmployee.id) {
+    if (id == MockDataService.currentEmployee.id || id == 'emp-001') {
       MockDataService.currentEmployee = updated;
       currentEmployeeNotifier.value = updated;
     }
-    final idx = MockDataService.allEmployees.indexWhere((e) => e.id == id || e.badgeId == id);
+    final idx = MockDataService.allEmployees.indexWhere((e) => e.id == id);
     if (idx != -1) {
       MockDataService.allEmployees[idx] = updated;
     } else {
