@@ -1084,44 +1084,46 @@ def seed_routing_rules(db) -> None:
     db.commit()
 
 
-def seed_payrun(db, people: dict, structure: SalaryStructure) -> Payrun | None:
-    print("Creating the February 2026 payrun ...")
+def seed_payrun(db, people: dict, structure: SalaryStructure) -> List[Payrun]:
+    print("Creating historical payruns (Sept 2026, Aug 2026, Jul 2026, Jun 2026, May 2026, Feb 2026) ...")
 
-    scope = payrun_service.validate_payrun_scope(
-        db,
-        structure_id=structure.id,
-        date_start=PERIOD_START,
-        date_end=PERIOD_END,
-    )
-    eligible_ids = [c["employee_id"] for c in scope["candidates"] if c["eligible"]]
-    blocked = [c for c in scope["candidates"] if not c["eligible"]]
+    payruns = []
+    periods = [
+        ("September 2026", date(2026, 9, 1), date(2026, 9, 30)),
+        ("August 2026", date(2026, 8, 1), date(2026, 8, 31)),
+        ("July 2026", date(2026, 7, 1), date(2026, 7, 31)),
+        ("June 2026", date(2026, 6, 1), date(2026, 6, 30)),
+        ("May 2026", date(2026, 5, 1), date(2026, 5, 31)),
+        ("February 2026", date(2026, 2, 1), date(2026, 2, 28)),
+    ]
 
-    print(
-        f"  Step 1 (read-only): {scope['eligible_count']} eligible, "
-        f"{scope['blocked_count']} blocked, {scope['warning_count']} warning(s)."
-    )
-    for candidate in blocked:
-        print(f"    blocked: {candidate['name']} - {'; '.join(candidate['blocking_issues'])}")
+    for name, p_start, p_end in periods:
+        scope = payrun_service.validate_payrun_scope(
+            db,
+            structure_id=structure.id,
+            date_start=p_start,
+            date_end=p_end,
+        )
+        eligible_ids = [c["employee_id"] for c in scope["candidates"] if c["eligible"]]
+        if not eligible_ids:
+            continue
 
-    if not eligible_ids:
-        print("  No eligible employees; skipping payrun creation.")
-        return None
+        payrun = payrun_service.create_payrun_batch(
+            db,
+            name=name,
+            structure_id=structure.id,
+            date_start=p_start,
+            date_end=p_end,
+            selected_employee_ids=eligible_ids,
+            user_id=people["admin"].id,
+        )
+        payrun = payrun_service.compute_payrun(db, payrun.id)
+        payrun.status = "PAID"
+        db.commit()
+        payruns.append(payrun)
+        print(f"  Batch {name} ({payrun.reference_code}): {payrun.employee_count} payslips created & marked PAID.")
 
-    payrun = payrun_service.create_payrun_batch(
-        db,
-        name="February 2026",
-        structure_id=structure.id,
-        date_start=PERIOD_START,
-        date_end=PERIOD_END,
-        selected_employee_ids=eligible_ids,
-        user_id=people["admin"].id,
-    )
-    payrun = payrun_service.compute_payrun(db, payrun.id)
-    print(
-        f"  Step 2: {payrun.reference_code} created with {payrun.employee_count} "
-        f"payslips. Gross {payrun.total_gross}, Net {payrun.total_net}."
-    )
-    return payrun
+    return payruns
 
 
 def seed_knowledge_base(db) -> None:

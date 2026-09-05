@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/employee_service.dart';
 import '../services/mock_data_service.dart';
+import '../services/payrun_service.dart';
 import '../widgets/payslip_pdf_dialog.dart';
 
 class EmployeeProfileScreen extends StatefulWidget {
@@ -20,6 +21,19 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   int _selectedTabIndex = 0;
   late EmployeeModel emp;
 
+  String _selectedPayMonth = 'September 2026';
+  List<PayslipModel> _employeePayslips = [];
+  bool _isLoadingPayslips = false;
+
+  final List<String> _availableMonths = [
+    'September 2026',
+    'August 2026',
+    'July 2026',
+    'June 2026',
+    'May 2026',
+    'February 2026',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +45,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
         );
     EmployeeService.currentEmployeeNotifier.addListener(_onEmployeeNotifierChanged);
     _refreshProfile();
+    _loadPayslipsForEmployee();
   }
 
   @override
@@ -67,6 +82,45 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
         emp = res.data!;
       });
     }
+  }
+
+  Future<void> _loadPayslipsForEmployee() async {
+    if (_isLoadingPayslips) return;
+    setState(() => _isLoadingPayslips = true);
+    final res = await PayrunService.getPayslips(employeeId: emp.id);
+    if (mounted) {
+      setState(() {
+        _isLoadingPayslips = false;
+        if (res.isSuccess && res.data != null && res.data!.isNotEmpty) {
+          _employeePayslips = res.data!;
+        } else {
+          _employeePayslips = MockDataService.payslips;
+        }
+      });
+    }
+  }
+
+  PayslipModel _getActivePayslip() {
+    String monthPrefix = '2026-09';
+    if (_selectedPayMonth.contains('August')) monthPrefix = '2026-08';
+    if (_selectedPayMonth.contains('July')) monthPrefix = '2026-07';
+    if (_selectedPayMonth.contains('June')) monthPrefix = '2026-06';
+    if (_selectedPayMonth.contains('May')) monthPrefix = '2026-05';
+    if (_selectedPayMonth.contains('February')) monthPrefix = '2026-02';
+
+    if (_employeePayslips.isNotEmpty) {
+      final found = _employeePayslips.firstWhere(
+        (p) => p.periodStart.startsWith(monthPrefix),
+        orElse: () => _employeePayslips.first,
+      );
+      return found;
+    }
+
+    final mockList = MockDataService.payslips;
+    return mockList.firstWhere(
+      (p) => p.periodStart.startsWith(monthPrefix),
+      orElse: () => mockList.first,
+    );
   }
 
   PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color iconColor = const Color(0xFF714B67)}) {
@@ -112,14 +166,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
         _toast('Employee ID copied to clipboard');
         break;
       case 'print_payslip':
-        if (MockDataService.payslips.isNotEmpty) {
-          showDialog(
-            context: context,
-            builder: (context) => PayslipPdfDialog(payslip: MockDataService.payslips.first),
-          );
-        } else {
-          _toast('No payslip available to print yet');
-        }
+        final activeSlip = _getActivePayslip();
+        showDialog(
+          context: context,
+          builder: (context) => PayslipPdfDialog(payslip: activeSlip),
+        );
         break;
     }
   }
@@ -1467,47 +1518,205 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildPayrollTab() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Active Salary Structure',
-                style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: const Color(0xFFCCF7FA), borderRadius: BorderRadius.circular(16)),
-                child: Text('RULE-IND-REG-01', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006E73))),
+    final activeSlip = _getActivePayslip();
+    final basicLine = activeSlip.lines.firstWhere(
+      (l) => l.category == 'BASIC',
+      orElse: () => PayslipLineModel(ruleName: 'Basic Salary', ruleCode: 'BASIC', category: 'BASIC', amount: activeSlip.grossAmount * 0.65),
+    );
+    final allowanceTotal = activeSlip.lines
+        .where((l) => l.category == 'ALLOWANCE')
+        .fold(0.0, (sum, l) => sum + l.amount);
+    final deductionTotal = activeSlip.lines
+        .where((l) => l.category == 'DEDUCTION')
+        .fold(0.0, (sum, l) => sum + l.amount.abs());
+
+    return Column(
+      children: [
+        // Pay Period Month Selector Card
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildOrgRow(icon: Icons.currency_rupee, iconColor: const Color(0xFF006443), title: 'Monthly Base Salary', value: '₹ 85,000.00 / Mo'),
-          const Divider(height: 20),
-          _buildOrgRow(icon: Icons.add_circle_outline, iconColor: const Color(0xFF00696E), title: 'Allowances (HRA + Special)', value: '₹ 28,500.00 / Mo'),
-          const Divider(height: 20),
-          _buildOrgRow(icon: Icons.remove_circle_outline, iconColor: const Color(0xFFBA1A1A), title: 'Statutory Deductions (PF + TDS)', value: '- ₹ 12,400.00 / Mo'),
-          const Divider(height: 20),
-          _buildOrgRow(icon: Icons.account_balance_wallet_outlined, iconColor: const Color(0xFF714B67), title: 'Estimated Net Monthly', value: '₹ 1,01,100.00', trailing: const Text('Gross: ₹ 1.13L', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF714B67)))),
-        ],
-      ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF714B67)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Select Salary Month',
+                        style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFA5D6A7)),
+                    ),
+                    child: Text(
+                      'STATUS: ${activeSlip.status}',
+                      style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF2E7D32)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F3FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFD6DAFE)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedPayMonth,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF714B67)),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF131B2E),
+                    ),
+                    items: _availableMonths.map((String m) {
+                      return DropdownMenuItem<String>(
+                        value: m,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.receipt_long_outlined, size: 16, color: Color(0xFF714B67)),
+                            const SizedBox(width: 8),
+                            Text(m, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedPayMonth = val;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // Salary Breakdown Card for Selected Month
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Payroll Breakdown ($_selectedPayMonth)',
+                    style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: const Color(0xFFCCF7FA), borderRadius: BorderRadius.circular(16)),
+                    child: Text(
+                      activeSlip.refCode,
+                      style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006E73)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildOrgRow(
+                icon: Icons.currency_rupee,
+                iconColor: const Color(0xFF006443),
+                title: 'Basic Salary',
+                value: '₹ ${basicLine.amount.toStringAsFixed(2)} / Mo',
+              ),
+              const Divider(height: 20),
+              _buildOrgRow(
+                icon: Icons.add_circle_outline,
+                iconColor: const Color(0xFF00696E),
+                title: 'Allowances (HRA + Special)',
+                value: '₹ ${(allowanceTotal > 0 ? allowanceTotal : 28500.0).toStringAsFixed(2)} / Mo',
+              ),
+              const Divider(height: 20),
+              _buildOrgRow(
+                icon: Icons.remove_circle_outline,
+                iconColor: const Color(0xFFBA1A1A),
+                title: 'Statutory Deductions (PF + PT)',
+                value: '- ₹ ${(deductionTotal > 0 ? deductionTotal : 12400.0).toStringAsFixed(2)} / Mo',
+              ),
+              const Divider(height: 20),
+              _buildOrgRow(
+                icon: Icons.account_balance_wallet_outlined,
+                iconColor: const Color(0xFF714B67),
+                title: 'Net Monthly Dispatched',
+                value: '₹ ${activeSlip.netAmount.toStringAsFixed(2)}',
+                trailing: Text(
+                  'Gross: ₹ ${activeSlip.grossAmount.toStringAsFixed(0)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF714B67)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF714B67),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => PayslipPdfDialog(payslip: activeSlip),
+                    );
+                  },
+                  icon: const Icon(Icons.picture_as_pdf, size: 18),
+                  label: Text(
+                    'View & Download $_selectedPayMonth Payslip PDF',
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1672,9 +1881,10 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
           // PDF Export Button
           InkWell(
             onTap: () {
+              final activeSlip = _getActivePayslip();
               showDialog(
                 context: context,
-                builder: (context) => PayslipPdfDialog(payslip: MockDataService.payslips.first),
+                builder: (context) => PayslipPdfDialog(payslip: activeSlip),
               );
             },
             borderRadius: BorderRadius.circular(24),
