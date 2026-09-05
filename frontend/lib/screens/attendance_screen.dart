@@ -386,62 +386,70 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFD7F1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'Odoo TimeClocks v18',
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF2F1029),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFD7F1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Odoo TimeClocks v18',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF2F1029),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF006443).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            record['status'] as String,
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF004A31),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF006443).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              record['status'] as String,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF004A31),
+                              ),
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        record['name'] as String,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF131B2E),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      record['name'] as String,
-                      style: GoogleFonts.outfit(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF131B2E),
                       ),
-                    ),
-                    Text(
-                      '${record['empId']} • ${record['role']} Dept',
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 11,
-                        color: const Color(0xFF4E444A),
+                      Text(
+                        '${record['empId']} • ${record['role']} Dept',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 11,
+                          color: const Color(0xFF4E444A),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 InkWell(
                   onTap: () => Navigator.pop(ctx),
                   borderRadius: BorderRadius.circular(16),
@@ -522,19 +530,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF2F3FF),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      side: const BorderSide(color: Color(0xFF714B67)),
+                      foregroundColor: const Color(0xFF714B67),
                       padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     ),
                     onPressed: () {
                       Navigator.pop(ctx);
                       _openManualPunchModal();
                     },
-                    icon: const Icon(Icons.history_edu, size: 18, color: Color(0xFF131B2E)),
+                    icon: const Icon(Icons.edit_calendar, size: 18),
                     label: Text(
                       'Manual Correction',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -544,9 +552,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF714B67),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     ),
                     onPressed: () {
                       Navigator.pop(ctx);
@@ -576,17 +583,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
   Widget _buildBentoRow(String label, String value, {bool isValueBold = false, Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF4E444A)),
         ),
-        Text(
-          value,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 12,
-            fontWeight: isValueBold ? FontWeight.bold : FontWeight.w500,
-            color: valueColor ?? const Color(0xFF131B2E),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 11.5,
+              fontWeight: isValueBold ? FontWeight.bold : FontWeight.w500,
+              color: valueColor ?? const Color(0xFF131B2E),
+            ),
           ),
         ),
       ],
