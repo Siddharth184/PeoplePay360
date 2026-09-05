@@ -222,10 +222,9 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
         BottomNavigationBarItem(icon: Icon(Icons.people_outline), label: 'Employees'),
         BottomNavigationBarItem(icon: Icon(Icons.fingerprint), label: 'Attendance'),
         BottomNavigationBarItem(icon: Icon(Icons.flight_takeoff), label: 'Time Off'),
-        BottomNavigationBarItem(icon: Icon(Icons.description_outlined), label: 'Contracts'),
         BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Copilot'),
       ];
-      bottomNavIndices = [0, 7, 1, 2, 3, 6];
+      bottomNavIndices = [0, 7, 1, 2, 6];
     } else {
       bottomNavItems = const [
         BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),

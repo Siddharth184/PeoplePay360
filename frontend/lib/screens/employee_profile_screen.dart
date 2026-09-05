@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -7,6 +6,7 @@ import '../services/employee_service.dart';
 import '../services/mock_data_service.dart';
 import '../services/payrun_service.dart';
 import '../widgets/payslip_pdf_dialog.dart';
+import 'contracts_screen.dart';
 
 class EmployeeProfileScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
@@ -154,16 +154,13 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
 
   void _onProfileAction(String action) {
     switch (action) {
-      case 'edit':
-        _openEditEmployeeSheet();
-        break;
-      case 'copy_email':
-        Clipboard.setData(ClipboardData(text: emp.email));
-        _toast('Work email copied to clipboard');
-        break;
-      case 'copy_id':
-        Clipboard.setData(ClipboardData(text: emp.badgeId ?? emp.id));
-        _toast('Employee ID copied to clipboard');
+      case 'contracts':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ContractsScreen(onNavigateTab: widget.onNavigateTab),
+          ),
+        );
         break;
       case 'print_payslip':
         final activeSlip = _getActivePayslip();
@@ -713,9 +710,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               onSelected: _onProfileAction,
               itemBuilder: (context) {
                 return [
-                  if (_canEdit) _menuItem('edit', Icons.edit_outlined, 'Edit Profile', iconColor: const Color(0xFF714B67)),
-                  _menuItem('copy_email', Icons.alternate_email_rounded, 'Copy Work Email', iconColor: const Color(0xFF00696E)),
-                  _menuItem('copy_id', Icons.badge_outlined, 'Copy Employee ID', iconColor: const Color(0xFF714B67)),
+                  _menuItem('contracts', Icons.description_outlined, 'Contracts', iconColor: const Color(0xFF714B67)),
                   _menuItem('print_payslip', Icons.receipt_long_rounded, 'Print Latest Payslip', iconColor: const Color(0xFF00696E)),
                 ];
               },
@@ -1644,10 +1639,14 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Payroll Breakdown ($_selectedPayMonth)',
-                    style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Text(
+                      'Payroll Breakdown ($_selectedPayMonth)',
+                      style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(color: const Color(0xFFCCF7FA), borderRadius: BorderRadius.circular(16)),
