@@ -1,6 +1,6 @@
 # 🏛️ PeoplePay360: Enterprise Backend & Database Architecture
 > **System**: Enterprise HR & Payroll Platform with Local AI/RAG Assistant  
-> **Target Stack**: Python 3.11+ / FastAPI, PostgreSQL 16 with `pgvector`, SQLAlchemy 2.0 / Alembic, WeasyPrint / ReportLab (PDF), Celery / Redis (Optional async jobs), Ollama / FastEmbed (Local RAG)  
+> **Target Stack**: Python 3.11+ / FastAPI, PostgreSQL 18 with `pgvector` 0.8+, SQLAlchemy 2.0 / Alembic, WeasyPrint / ReportLab (PDF), Celery / Redis (Optional async jobs), Ollama / FastEmbed (Local RAG)  
 > **Standards**: Odoo 18-grade Relational Model, Zero-Loopholes Integrity, Complete RBAC Security, Period-Based Contract Matching, and AST-Safe Python Salary Rule Engine.
 
 ---
@@ -15,6 +15,7 @@
    - 3.4 AST-Safe Python Salary Rule Computation Engine
    - 3.5 Payrun 2-Step Workflow & Pre-Flight Anomaly Detection
 4. [Local Vector DB & Hybrid RAG System (24-Hour Hackathon Feasible)](#4-local-vector-db--hybrid-rag-system-24-hour-hackathon-feasible)
+   - 4.1 Human-in-the-Loop Escalation Loop (RAG → Admin → Employee → Knowledge Base)
 5. [Role-Based Access Control (RBAC) & Security Middleware](#5-role-based-access-control-rbac--security-middleware)
 6. [Complete RESTful API Endpoint Matrix](#6-complete-restful-api-endpoint-matrix)
 7. [Automated Database Seeders & Testing Blueprint](#7-automated-database-seeders--testing-blueprint)
@@ -43,22 +44,26 @@
 |  | - Leave Allocation & Request Ledger                   |  | - LangChain / LlamaIndex Agent Router   | |
 |  | - 2-Step Payrun & Anomaly Pre-Flight Inspector        |  | - Hybrid SQL-Tool + Vector Document     | |
 |  | - AST-Safe Python Salary Computation Sandbox          |  | - Local Ollama (Llama 3.2) / Cloud API  | |
-|  | - WeasyPrint PDF & Email Dispatcher                   |  +-----------------------------------------+ |
-|  +-------------------------------------------------------+                       |                      |
+|  | - WeasyPrint PDF & Email Dispatcher                   |  | - Confidence Gate (refuse, never guess) | |
+|  | - Escalation Router + SLA Sweeper                     |  | - Human-in-Loop Escalation -> Admin     | |
+|  |                                                       |  | - Answer -> KB Flywheel (self-learning) | |
+|  +-------------------------------------------------------+  +-----------------------------------------+ |
+|                                    |                                              |                      |
 +----------------------------------------------------------------------------------|----------------------+
                                                       |                            |
                               SQLAlchemy 2.0 (Pool)   |                            | pgvector similarity
                                                       v                            v
 +---------------------------------------------------------------------------------------------------------+
-|                               POSTGRESQL 16 (Unified Enterprise Database)                               |
+|                               POSTGRESQL 18 (Unified Enterprise Database)                               |
 |                                                                                                         |
 |  +------------------------------------------------------+  +------------------------------------------+ |
 |  |          Relational OLTP Tables (Schema: public)     |  |    Knowledge Vector Store (pgvector)     | |
 |  | - auth_users, employees, departments, job_positions  |  | - document_chunks                        | |
 |  | - working_schedules, schedule_lines, attendances     |  |   (id, collection, content, metadata,    | |
 |  | - hr_contracts, timeoff_types, allocations, requests |  |    embedding vector(384))                | |
-|  | - salary_structures, salary_rules                    |  |                                          | |
-|  | - payruns, payslips, payslip_lines                   |  | HNSW Index for <2ms semantic retrieval   | |
+|  | - salary_structures, salary_rules                    |  | - rag_escalations (+ events, routing)    | |
+|  | - payruns, payslips, payslip_lines                   |  |   question_embedding vector(384)         | |
+|  | - rag_escalations, notifications                     |  | HNSW Index for <2ms semantic retrieval   | |
 |  +------------------------------------------------------+  +------------------------------------------+ |
 +---------------------------------------------------------------------------------------------------------+
 ```
@@ -70,6 +75,7 @@
    - **Personal HR Data Queries** $\to$ Dynamic SQL Tool Calling (scoped strictly to the authenticated `employee_id`).
 3. **AST-Safe Python Execution**: Odoo’s most famous feature is dynamic Python code evaluation for salary rules. We build an AST-verified sandbox preventing dangerous calls (`import os`, `eval`, `open`) while giving 100% calculation flexibility.
 4. **Financial Numeric Integrity**: All wages, calculations, allocations, and rule outputs use `NUMERIC(12, 2)` (never IEEE floating-point numbers).
+5. **A Chatbot That Refuses To Lie, Then Learns**: A confidence gate stops the assistant from answering on weak retrieval. Instead it opens an escalation ticket routed to the right Admin/HR role, the human answers directly, the employee is notified, and the verified answer is embedded back into the vector store — so the same question is answered automatically next time. A self-improving loop with **zero model training** (see §4.1).
 
 ---
 
@@ -206,7 +212,7 @@ CREATE TABLE hr_contracts (
 
 -- CRITICAL ZERO-LOOPHOLE CONSTRAINT:
 -- An employee CANNOT have multiple RUNNING contracts with overlapping date ranges.
-CREATE EXTENSION IF NOT EXISTS btree_gist;
+-- (btree_gist extension already enabled at the top of this script.)
 CREATE INDEX idx_contracts_employee_running ON hr_contracts(employee_id, status);
 
 -- Trigger to validate single running contract in date span
@@ -424,6 +430,147 @@ CREATE TABLE document_chunks (
 CREATE INDEX idx_document_chunks_embedding 
 ON document_chunks USING hnsw (embedding vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
+
+-- ============================================================================
+-- 10. AI ESCALATION LOOP (Human-in-the-Loop fallback when RAG cannot answer)
+--     Flow: Employee asks -> RAG confidence too low -> ticket routed to Admin/HR
+--           -> Admin answers directly -> Employee notified -> answer optionally
+--           promoted into the knowledge base so RAG answers it itself next time.
+-- ============================================================================
+CREATE TYPE escalation_status_enum AS ENUM (
+    'OPEN',        -- created, awaiting triage / assignment
+    'ASSIGNED',    -- routed to a specific Admin / HR responder
+    'ANSWERED',    -- responder posted the answer; employee notified
+    'CLOSED',      -- loop closed (employee satisfied or auto-closed)
+    'REJECTED'     -- out of scope / duplicate / spam
+);
+
+CREATE TYPE escalation_priority_enum AS ENUM ('LOW', 'NORMAL', 'HIGH', 'URGENT');
+
+CREATE TYPE escalation_category_enum AS ENUM (
+    'LEAVE_POLICY', 'PAYROLL_SALARY', 'ATTENDANCE', 'CONTRACT',
+    'TAX_STATUTORY', 'IT_ACCESS', 'OTHER'
+);
+
+CREATE SEQUENCE escalation_seq START 1;
+
+CREATE TABLE rag_escalations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ticket_no VARCHAR(30) UNIQUE NOT NULL,              -- ESC/2026/0001
+
+    -- ORIGIN: exactly which chat turn failed
+    conversation_id UUID,
+    source_message_id UUID,
+
+    -- WHO ASKED
+    employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE RESTRICT,
+    asked_by_user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE RESTRICT,
+
+    -- WHAT WAS ASKED
+    question_text TEXT NOT NULL,
+    question_embedding vector(384),                     -- enables semantic dedup + reuse
+    category escalation_category_enum NOT NULL DEFAULT 'OTHER',
+
+    -- WHY IT ESCALATED (auditable evidence, never a black box)
+    escalation_reason VARCHAR(40) NOT NULL
+        CHECK (escalation_reason IN ('LOW_CONFIDENCE', 'NO_CONTEXT', 'NO_TOOL_MATCH', 'USER_REQUESTED')),
+    retrieval_confidence NUMERIC(4, 3),                 -- top cosine score at moment of failure
+    ai_draft_answer TEXT,                               -- low-confidence attempt; responder may edit & approve
+
+    -- WORKFLOW
+    status escalation_status_enum NOT NULL DEFAULT 'OPEN',
+    priority escalation_priority_enum NOT NULL DEFAULT 'NORMAL',
+    assigned_to_user_id UUID REFERENCES auth_users(id) ON DELETE SET NULL,
+    assigned_at TIMESTAMPTZ,
+
+    -- RESOLUTION (authored by a human -> zero hallucination risk)
+    answer_text TEXT,
+    answered_by_user_id UUID REFERENCES auth_users(id) ON DELETE SET NULL,
+    answered_at TIMESTAMPTZ,
+
+    -- SLA TRACKING
+    sla_due_at TIMESTAMPTZ NOT NULL,
+    first_response_at TIMESTAMPTZ,
+
+    -- KNOWLEDGE FLYWHEEL: promote the human answer back into the vector store
+    publish_to_kb BOOLEAN NOT NULL DEFAULT FALSE,
+    kb_chunk_id UUID REFERENCES document_chunks(id) ON DELETE SET NULL,
+    duplicate_of_id UUID REFERENCES rag_escalations(id) ON DELETE SET NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    -- ZERO-LOOPHOLE: an ANSWERED ticket must carry answer + author + timestamp
+    CONSTRAINT chk_answer_completeness CHECK (
+        status <> 'ANSWERED' OR
+        (answer_text IS NOT NULL AND answered_by_user_id IS NOT NULL AND answered_at IS NOT NULL)
+    ),
+    -- ZERO-LOOPHOLE: an ASSIGNED ticket must have an assignee
+    CONSTRAINT chk_assignment_completeness CHECK (
+        status <> 'ASSIGNED' OR assigned_to_user_id IS NOT NULL
+    ),
+    -- ZERO-LOOPHOLE: confidence must be a valid probability when recorded
+    CONSTRAINT chk_confidence_range CHECK (
+        retrieval_confidence IS NULL OR (retrieval_confidence >= 0 AND retrieval_confidence <= 1)
+    )
+);
+
+-- Admin queue: "show me OPEN tickets, most urgent and oldest first"
+CREATE INDEX idx_escalations_queue      ON rag_escalations (status, priority DESC, created_at ASC);
+CREATE INDEX idx_escalations_assignee   ON rag_escalations (assigned_to_user_id, status);
+CREATE INDEX idx_escalations_employee   ON rag_escalations (employee_id, created_at DESC);
+-- Partial index: SLA breach monitor only scans live tickets
+CREATE INDEX idx_escalations_overdue    ON rag_escalations (sla_due_at) WHERE status IN ('OPEN', 'ASSIGNED');
+-- Semantic dedup: "has a human already answered this exact question?"
+CREATE INDEX idx_escalations_embedding  ON rag_escalations
+USING hnsw (question_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- Anti-spam support: cap concurrent open tickets per employee
+CREATE INDEX idx_escalations_open_per_emp ON rag_escalations (employee_id) WHERE status IN ('OPEN', 'ASSIGNED');
+
+-- Append-only thread + audit trail in one table (who did what, when)
+CREATE TABLE rag_escalation_events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    escalation_id UUID NOT NULL REFERENCES rag_escalations(id) ON DELETE CASCADE,
+    actor_user_id UUID REFERENCES auth_users(id) ON DELETE SET NULL,
+    event_type VARCHAR(30) NOT NULL CHECK (event_type IN (
+        'CREATED', 'ASSIGNED', 'REASSIGNED', 'COMMENTED', 'ANSWERED',
+        'ANSWER_EDITED', 'CLOSED', 'REOPENED', 'REJECTED', 'PUBLISHED_TO_KB'
+    )),
+    body TEXT,
+    -- INTERNAL notes are visible to Admin/HR only, never to the asking employee
+    visibility VARCHAR(10) NOT NULL DEFAULT 'PUBLIC' CHECK (visibility IN ('PUBLIC', 'INTERNAL')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_escalation_events_thread ON rag_escalation_events (escalation_id, created_at ASC);
+
+-- Configurable routing: which role owns which question category, and its SLA
+CREATE TABLE escalation_routing_rules (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    category escalation_category_enum NOT NULL,
+    target_role user_role_enum NOT NULL,
+    department_id UUID REFERENCES departments(id) ON DELETE CASCADE, -- NULL = global default
+    sla_hours INT NOT NULL DEFAULT 24 CHECK (sla_hours > 0),
+    priority escalation_priority_enum NOT NULL DEFAULT 'NORMAL',
+    sequence INT NOT NULL DEFAULT 10,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    UNIQUE (category, department_id)
+);
+
+-- In-app notification feed (drives the Flutter badge counters)
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    recipient_user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
+    kind VARCHAR(40) NOT NULL,  -- ESCALATION_NEW | ESCALATION_ANSWERED | ESCALATION_OVERDUE | PAYSLIP_SENT
+    title VARCHAR(160) NOT NULL,
+    body TEXT,
+    deep_link VARCHAR(200),     -- e.g. /copilot/escalations/:id
+    escalation_id UUID REFERENCES rag_escalations(id) ON DELETE CASCADE,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_unread ON notifications (recipient_user_id, is_read, created_at DESC);
 ```
 
 ---
@@ -673,6 +820,7 @@ def execute_salary_computation(contract, worked_days_count: float, ordered_rules
 # app/services/payrun_service.py
 from datetime import date
 from decimal import Decimal
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.models.payrun import Payrun, Payslip, PayslipLine
 from app.models.employee import Employee
@@ -870,26 +1018,534 @@ Response:"""
 
 ---
 
+## 4.1 Human-in-the-Loop Escalation Loop (RAG → Admin → Employee → Knowledge Base)
+
+### The Problem This Solves
+Every RAG system hits questions it cannot answer: the policy isn't documented, the question is about an edge case, or retrieval simply returns weak matches. Most demos hallucinate a confident-sounding wrong answer. **Ours refuses, escalates to a human, and then permanently learns the answer.**
+
+### The Four-Stage Loop
+```
+   STAGE 1: DETECT                 STAGE 2: ROUTE                STAGE 3: ANSWER               STAGE 4: LEARN
++---------------------+       +---------------------+       +---------------------+       +---------------------+
+| Employee asks the   |       | Ticket ESC/2026/    |       | Admin / HR opens    |       | Answer promoted to  |
+| AI Copilot          |       | 0001 auto-created   |       | the Escalation      |       | document_chunks as  |
+|                     | ----> |                     | ----> | Inbox and replies   | ----> | 'hr_faq_resolved'   |
+| Confidence < 0.45   |       | Routed by category  |       | directly            |       |                     |
+| OR no context found |       | to the owning role  |       |                     |       | Next identical ask  |
+| OR user taps        |       | + SLA clock starts  |       | Employee gets a     |       | is answered by RAG  |
+| "Ask HR instead"    |       |                     |       | push + in-app card  |       | instantly, no human |
++---------------------+       +---------------------+       +---------------------+       +---------------------+
+```
+
+**Stage 4 is the differentiator.** The assistant gets measurably smarter every time a human answers, with **zero model training** — we are only growing the retrieval corpus. This is exactly how production RAG systems improve, and it is fully achievable in a hackathon timebox.
+
+### Escalation Triggers (all recorded in `escalation_reason` for auditability)
+| Reason | Condition | Why we escalate rather than guess |
+| :--- | :--- | :--- |
+| `LOW_CONFIDENCE` | Top cosine similarity `< 0.45` | Weak retrieval means the answer would be invented |
+| `NO_CONTEXT` | Vector search returned zero chunks | Nothing to ground on at all |
+| `NO_TOOL_MATCH` | Question needs data no SQL tool exposes | Better to ask a human than to fabricate a number |
+| `USER_REQUESTED` | Employee taps *"This didn't help — Ask HR"* | Human judgement always overrides the bot |
+
+### Stage 1 + 2: Detection, Semantic Dedup, and Routing
+
+```python
+# app/services/escalation_service.py
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
+from typing import Optional, Dict, Any
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.services.rag_service import embedding_model, semantic_search_policies
+
+# Tuned on the golden question set. Below this, retrieval is not trustworthy.
+CONFIDENCE_THRESHOLD = 0.45
+# Above this, two questions are semantically the same question.
+DEDUP_THRESHOLD = 0.90
+# Anti-spam: an employee may not hold more than this many live tickets.
+MAX_OPEN_TICKETS_PER_EMPLOYEE = 5
+
+
+def classify_category(question: str) -> str:
+    """
+    Lightweight deterministic categoriser. Runs BEFORE any LLM call so routing
+    still works when the model is offline (demo-proofing).
+    """
+    q = question.lower()
+    if any(k in q for k in ["leave", "time off", "vacation", "holiday", "allocation", "pto"]):
+        return "LEAVE_POLICY"
+    if any(k in q for k in ["salary", "payslip", "payroll", "wage", "deduction", "pf", "bonus", "net pay"]):
+        return "PAYROLL_SALARY"
+    if any(k in q for k in ["attendance", "check in", "check out", "overtime", "punch", "late"]):
+        return "ATTENDANCE"
+    if any(k in q for k in ["contract", "notice period", "probation", "appraisal"]):
+        return "CONTRACT"
+    if any(k in q for k in ["tax", "tds", "professional tax", "esic", "form 16", "statutory"]):
+        return "TAX_STATUTORY"
+    if any(k in q for k in ["login", "password", "access", "permission", "account locked"]):
+        return "IT_ACCESS"
+    return "OTHER"
+
+
+def find_previously_answered(db: Session, question_embedding: list) -> Optional[Dict[str, Any]]:
+    """
+    STAGE 2 SHORT-CIRCUIT: before bothering a human, check whether another employee
+    already asked this and an admin already answered it. Costs one index scan and
+    eliminates most duplicate tickets.
+    """
+    row = db.execute(text("""
+        SELECT id, ticket_no, answer_text, answered_at,
+               (1 - (question_embedding <=> :emb::vector)) AS similarity
+        FROM rag_escalations
+        WHERE status IN ('ANSWERED', 'CLOSED')
+          AND answer_text IS NOT NULL
+          AND question_embedding IS NOT NULL
+        ORDER BY question_embedding <=> :emb::vector
+        LIMIT 1
+    """), {"emb": question_embedding}).fetchone()
+
+    if row and float(row.similarity) >= DEDUP_THRESHOLD:
+        return {
+            "escalation_id": str(row.id),
+            "ticket_no": row.ticket_no,
+            "answer_text": row.answer_text,
+            "similarity": float(row.similarity),
+        }
+    return None
+
+
+def resolve_route(db: Session, category: str, department_id: Optional[str]) -> Dict[str, Any]:
+    """
+    Resolves WHO owns this category and WHAT the SLA is, using configurable
+    routing rules. Department-specific rule wins over the global default.
+    """
+    row = db.execute(text("""
+        SELECT target_role, sla_hours, priority
+        FROM escalation_routing_rules
+        WHERE category = :cat
+          AND is_active = TRUE
+          AND (department_id = :dept OR department_id IS NULL)
+        ORDER BY department_id NULLS LAST, sequence ASC
+        LIMIT 1
+    """), {"cat": category, "dept": department_id}).fetchone()
+
+    if not row:
+        # Safe fallback: never drop a question on the floor.
+        return {"target_role": "ADMIN", "sla_hours": 24, "priority": "NORMAL"}
+    return {"target_role": row.target_role, "sla_hours": row.sla_hours, "priority": row.priority}
+
+
+def create_escalation(
+    db: Session,
+    employee_id: str,
+    asked_by_user_id: str,
+    question_text: str,
+    reason: str,
+    retrieval_confidence: Optional[float] = None,
+    ai_draft_answer: Optional[str] = None,
+    conversation_id: Optional[str] = None,
+    source_message_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Creates the escalation ticket, auto-routes it, starts the SLA clock, writes the
+    audit event, and notifies every eligible responder. Idempotent-friendly:
+    semantically duplicate questions return the existing human answer instantly.
+    """
+    # --- Anti-spam guard -----------------------------------------------------
+    open_count = db.execute(text("""
+        SELECT COUNT(*) FROM rag_escalations
+        WHERE employee_id = :emp AND status IN ('OPEN', 'ASSIGNED')
+    """), {"emp": employee_id}).scalar()
+
+    if open_count >= MAX_OPEN_TICKETS_PER_EMPLOYEE:
+        raise ValueError(
+            f"You already have {open_count} open questions with HR. "
+            "Please wait for a reply before submitting another."
+        )
+
+    question_embedding = list(embedding_model.embed([question_text]))[0].tolist()
+
+    # --- Stage 2 short-circuit: reuse an existing human answer ---------------
+    prior = find_previously_answered(db, question_embedding)
+    if prior:
+        return {
+            "escalated": False,
+            "reused_prior_answer": True,
+            "answer": prior["answer_text"],
+            "source": f"Previously answered by HR (ticket {prior['ticket_no']})",
+            "similarity": prior["similarity"],
+        }
+
+    # --- Route + SLA ---------------------------------------------------------
+    category = classify_category(question_text)
+    dept_id = db.execute(
+        text("SELECT department_id FROM employees WHERE id = :id"), {"id": employee_id}
+    ).scalar()
+    route = resolve_route(db, category, str(dept_id) if dept_id else None)
+
+    seq = db.execute(text("SELECT nextval('escalation_seq')")).scalar()
+    ticket_no = f"ESC/{datetime.now(timezone.utc).year}/{seq:04d}"
+    sla_due_at = datetime.now(timezone.utc) + timedelta(hours=route["sla_hours"])
+
+    escalation_id = db.execute(text("""
+        INSERT INTO rag_escalations (
+            ticket_no, conversation_id, source_message_id, employee_id, asked_by_user_id,
+            question_text, question_embedding, category, escalation_reason,
+            retrieval_confidence, ai_draft_answer, status, priority, sla_due_at
+        ) VALUES (
+            :ticket_no, :conv, :msg, :emp, :user,
+            :q, :emb::vector, :cat, :reason,
+            :conf, :draft, 'OPEN', :prio, :sla
+        ) RETURNING id
+    """), {
+        "ticket_no": ticket_no, "conv": conversation_id, "msg": source_message_id,
+        "emp": employee_id, "user": asked_by_user_id, "q": question_text,
+        "emb": question_embedding, "cat": category, "reason": reason,
+        "conf": Decimal(str(round(retrieval_confidence, 3))) if retrieval_confidence is not None else None,
+        "draft": ai_draft_answer, "prio": route["priority"], "sla": sla_due_at,
+    }).scalar()
+
+    # --- Audit trail ---------------------------------------------------------
+    db.execute(text("""
+        INSERT INTO rag_escalation_events (escalation_id, actor_user_id, event_type, body, visibility)
+        VALUES (:esc, :user, 'CREATED', :body, 'PUBLIC')
+    """), {
+        "esc": escalation_id, "user": asked_by_user_id,
+        "body": f"Auto-escalated ({reason}); retrieval confidence "
+                f"{retrieval_confidence if retrieval_confidence is not None else 'n/a'}",
+    })
+
+    # --- Notify every responder holding the owning role ----------------------
+    db.execute(text("""
+        INSERT INTO notifications (recipient_user_id, kind, title, body, deep_link, escalation_id)
+        SELECT u.id, 'ESCALATION_NEW',
+               :title, :body, :link, :esc
+        FROM auth_users u
+        WHERE u.is_active = TRUE
+          AND (u.role = :target_role OR u.role = 'ADMIN')
+    """), {
+        "title": f"New HR question needs your answer ({ticket_no})",
+        "body": question_text[:200],
+        "link": f"/copilot/escalations/{escalation_id}",
+        "esc": escalation_id,
+        "target_role": route["target_role"],
+    })
+
+    db.commit()
+
+    return {
+        "escalated": True,
+        "reused_prior_answer": False,
+        "escalation_id": str(escalation_id),
+        "ticket_no": ticket_no,
+        "category": category,
+        "routed_to_role": route["target_role"],
+        "sla_due_at": sla_due_at.isoformat(),
+        "message": (
+            f"I don't have a verified answer for that, so I've forwarded it to your "
+            f"HR team as ticket {ticket_no}. You'll be notified as soon as they reply."
+        ),
+    }
+```
+
+### Confidence Gate: wiring detection into the Copilot endpoint
+
+```python
+# app/services/copilot_service.py
+from typing import Dict, Any
+from sqlalchemy.orm import Session
+from app.services.rag_service import semantic_search_policies, build_grounded_prompt
+from app.services.escalation_service import CONFIDENCE_THRESHOLD, create_escalation
+
+
+def ask_copilot(
+    db: Session,
+    employee_id: str,
+    user_id: str,
+    prompt: str,
+    conversation_id: str = None,
+    force_escalate: bool = False,
+) -> Dict[str, Any]:
+    """
+    Single entry point for POST /api/v1/ai/assistant.
+    NEVER answers from a weak retrieval — escalates to a human instead.
+    """
+    # Employee explicitly pressed "This didn't help - Ask HR"
+    if force_escalate:
+        return {
+            "mode": "ESCALATED",
+            **create_escalation(
+                db, employee_id, user_id, prompt,
+                reason="USER_REQUESTED", conversation_id=conversation_id,
+            ),
+        }
+
+    chunks = semantic_search_policies(db, prompt, top_k=3)
+
+    # TRIGGER: nothing indexed / nothing relevant at all
+    if not chunks:
+        return {
+            "mode": "ESCALATED",
+            **create_escalation(
+                db, employee_id, user_id, prompt,
+                reason="NO_CONTEXT", retrieval_confidence=0.0,
+                conversation_id=conversation_id,
+            ),
+        }
+
+    top_score = chunks[0]["score"]
+
+    # TRIGGER: retrieval too weak to ground an answer -> refuse + escalate.
+    # We still store the low-confidence attempt as ai_draft_answer so the admin
+    # can simply edit and approve it instead of typing from scratch.
+    if top_score < CONFIDENCE_THRESHOLD:
+        draft = build_grounded_prompt(prompt, chunks, employee_id=employee_id)
+        return {
+            "mode": "ESCALATED",
+            **create_escalation(
+                db, employee_id, user_id, prompt,
+                reason="LOW_CONFIDENCE", retrieval_confidence=top_score,
+                ai_draft_answer=draft, conversation_id=conversation_id,
+            ),
+        }
+
+    # Confident path: answer with citations as normal
+    answer = build_grounded_prompt(prompt, chunks, employee_id=employee_id)
+    return {
+        "mode": "ANSWERED",
+        "answer": answer,
+        "confidence": round(top_score, 3),
+        "citations": [{"title": c["title"], "score": round(c["score"], 3)} for c in chunks],
+        "escalation_available": True,  # employee can still ask a human
+    }
+```
+
+### Stage 3 + 4: Admin answers, employee is notified, knowledge base grows
+
+```python
+# app/services/escalation_service.py  (continued)
+
+def assign_escalation(db: Session, escalation_id: str, assignee_user_id: str, actor_user_id: str):
+    """Triage: claim or delegate a ticket. Records first_response_at for SLA metrics."""
+    db.execute(text("""
+        UPDATE rag_escalations
+        SET status = 'ASSIGNED',
+            assigned_to_user_id = :assignee,
+            assigned_at = NOW(),
+            first_response_at = COALESCE(first_response_at, NOW()),
+            updated_at = NOW()
+        WHERE id = :esc AND status IN ('OPEN', 'ASSIGNED')
+    """), {"assignee": assignee_user_id, "esc": escalation_id})
+
+    db.execute(text("""
+        INSERT INTO rag_escalation_events (escalation_id, actor_user_id, event_type, body, visibility)
+        VALUES (:esc, :actor, 'ASSIGNED', 'Ticket assigned for response.', 'INTERNAL')
+    """), {"esc": escalation_id, "actor": actor_user_id})
+    db.commit()
+
+
+def answer_escalation(
+    db: Session,
+    escalation_id: str,
+    responder_user_id: str,
+    answer_text: str,
+    publish_to_kb: bool = True,
+) -> Dict[str, Any]:
+    """
+    STAGE 3: Admin/HR replies directly to the employee.
+    STAGE 4: If publish_to_kb, the Q&A pair is embedded into document_chunks so the
+             Copilot answers this question itself from now on. No model training.
+    """
+    row = db.execute(text("""
+        SELECT ticket_no, question_text, asked_by_user_id, category, status
+        FROM rag_escalations WHERE id = :esc FOR UPDATE
+    """), {"esc": escalation_id}).fetchone()
+
+    if not row:
+        raise ValueError("Escalation ticket not found.")
+    if row.status in ("CLOSED", "REJECTED"):
+        raise ValueError(f"Cannot answer a ticket in status '{row.status}'.")
+
+    kb_chunk_id = None
+
+    # ---- STAGE 4: KNOWLEDGE FLYWHEEL -------------------------------------
+    if publish_to_kb:
+        # Store the verified Q&A as a single retrievable unit. Prefixing with the
+        # question massively improves future retrieval hit rate.
+        kb_text = f"Question: {row.question_text}\n\nOfficial HR answer: {answer_text}"
+        kb_embedding = list(embedding_model.embed([kb_text]))[0].tolist()
+
+        kb_chunk_id = db.execute(text("""
+            INSERT INTO document_chunks (collection_name, title, content, metadata, embedding)
+            VALUES ('hr_faq_resolved', :title, :content, :meta::jsonb, :emb::vector)
+            RETURNING id
+        """), {
+            "title": f"HR Answer - {row.ticket_no}",
+            "content": kb_text,
+            "meta": f'{{"source":"escalation","ticket_no":"{row.ticket_no}",'
+                    f'"category":"{row.category}","human_verified":true}}',
+            "emb": kb_embedding,
+        }).scalar()
+
+    db.execute(text("""
+        UPDATE rag_escalations
+        SET status = 'ANSWERED',
+            answer_text = :ans,
+            answered_by_user_id = :responder,
+            answered_at = NOW(),
+            first_response_at = COALESCE(first_response_at, NOW()),
+            publish_to_kb = :pub,
+            kb_chunk_id = :chunk,
+            updated_at = NOW()
+        WHERE id = :esc
+    """), {
+        "ans": answer_text, "responder": responder_user_id, "pub": publish_to_kb,
+        "chunk": kb_chunk_id, "esc": escalation_id,
+    })
+
+    db.execute(text("""
+        INSERT INTO rag_escalation_events (escalation_id, actor_user_id, event_type, body, visibility)
+        VALUES (:esc, :actor, 'ANSWERED', :body, 'PUBLIC')
+    """), {"esc": escalation_id, "actor": responder_user_id, "body": answer_text})
+
+    if kb_chunk_id:
+        db.execute(text("""
+            INSERT INTO rag_escalation_events (escalation_id, actor_user_id, event_type, body, visibility)
+            VALUES (:esc, :actor, 'PUBLISHED_TO_KB',
+                    'Answer indexed into the knowledge base; the assistant can now answer this directly.',
+                    'INTERNAL')
+        """), {"esc": escalation_id, "actor": responder_user_id})
+
+    # ---- Notify the employee who asked -----------------------------------
+    db.execute(text("""
+        INSERT INTO notifications (recipient_user_id, kind, title, body, deep_link, escalation_id)
+        VALUES (:user, 'ESCALATION_ANSWERED', :title, :body, :link, :esc)
+    """), {
+        "user": str(row.asked_by_user_id),
+        "title": f"HR answered your question ({row.ticket_no})",
+        "body": answer_text[:200],
+        "link": f"/copilot/escalations/{escalation_id}",
+        "esc": escalation_id,
+    })
+
+    db.commit()
+
+    return {
+        "ticket_no": row.ticket_no,
+        "status": "ANSWERED",
+        "published_to_kb": bool(kb_chunk_id),
+        "kb_chunk_id": str(kb_chunk_id) if kb_chunk_id else None,
+    }
+
+
+def sla_breach_sweep(db: Session):
+    """
+    Scheduled job (Celery beat / cron, every 15 min). Escalates priority and pings
+    admins about tickets past their SLA. Uses the partial index idx_escalations_overdue.
+    """
+    db.execute(text("""
+        INSERT INTO notifications (recipient_user_id, kind, title, body, deep_link, escalation_id)
+        SELECT u.id, 'ESCALATION_OVERDUE',
+               'Overdue HR question: ' || e.ticket_no,
+               LEFT(e.question_text, 200),
+               '/copilot/escalations/' || e.id, e.id
+        FROM rag_escalations e
+        CROSS JOIN auth_users u
+        WHERE e.status IN ('OPEN', 'ASSIGNED')
+          AND e.sla_due_at < NOW()
+          AND u.role = 'ADMIN' AND u.is_active = TRUE
+          AND NOT EXISTS (
+              SELECT 1 FROM notifications n
+              WHERE n.escalation_id = e.id AND n.kind = 'ESCALATION_OVERDUE'
+                AND n.recipient_user_id = u.id
+          )
+    """))
+    db.execute(text("""
+        UPDATE rag_escalations SET priority = 'URGENT', updated_at = NOW()
+        WHERE status IN ('OPEN', 'ASSIGNED') AND sla_due_at < NOW() AND priority <> 'URGENT'
+    """))
+    db.commit()
+```
+
+### Default routing seed (drop into `scripts/seed_db.py`)
+
+| Category | Routed To | SLA | Rationale |
+| :--- | :--- | :--- | :--- |
+| `LEAVE_POLICY` | `HR_MANAGER` | 8h | Owns time off types and allocations |
+| `ATTENDANCE` | `HR_MANAGER` | 8h | Owns attendance corrections |
+| `CONTRACT` | `HR_MANAGER` | 24h | Owns contract master data |
+| `PAYROLL_SALARY` | `HR_PAYROLL_MANAGER` | 4h | Money questions are time-critical |
+| `TAX_STATUTORY` | `HR_PAYROLL_MANAGER` | 24h | Statutory interpretation |
+| `IT_ACCESS` | `ADMIN` | 4h | Account and permission control |
+| `OTHER` | `ADMIN` | 24h | Catch-all so nothing is ever dropped |
+
+### Security Guarantees
+- **The employee never picks the responder.** Routing is server-side from `escalation_routing_rules`; a user cannot direct their question to an arbitrary account.
+- **`INTERNAL` events are never serialised to the asking employee.** The API filters `visibility = 'PUBLIC'` for non-admin callers.
+- **Answers are human-authored**, so escalated replies carry zero hallucination risk. They are labelled `human_verified: true` in KB metadata and the UI shows *"Answered by Sara Khan, HR Manager"*.
+- **Anti-spam cap** (`MAX_OPEN_TICKETS_PER_EMPLOYEE`) plus the partial index prevents ticket flooding.
+- **Row scoping**: `GET /escalations` returns only `employee_id = self` for the `EMPLOYEE` role. Enforced in the repository layer, not the client.
+- **Promoting to the KB is an explicit admin decision** (`publish_to_kb`), so private or person-specific answers are never indexed for everyone.
+
+### Why Judges Will Remember This
+Most teams will demo a chatbot that confidently makes something up. In the five-minute walkthrough you can show a question the bot **correctly refuses**, watch it land in the Admin Inbox, have the admin reply, see the employee receive it, then **ask the same question again and watch the bot answer it itself** — a closed learning loop, built without training a single model.
+
+---
+
 ## 5. Role-Based Access Control (RBAC) & Security Middleware
 
 Strictly aligns with the PDF's 5-Tier Authorization Matrix:
 
 ```python
 # app/core/security.py
+import os
 from fastapi import HTTPException, Security, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 
 security_scheme = HTTPBearer()
-JWT_SECRET = "HACKATHON_SUPER_SECRET_KEY_2026"
+# PRODUCTION: never hardcode. Load from environment / secrets manager.
+# e.g. JWT_SECRET = os.environ["JWT_SECRET"]  (fail fast if missing)
+JWT_SECRET = os.environ.get("JWT_SECRET", "dev-only-insecure-change-me")
 
 ROLE_PERMISSIONS = {
-    "EMPLOYEE": ["read:self", "create:attendance_self", "create:timeoff_self"],
-    "HR_MANAGER": ["read:all_hr", "write:employees", "write:attendance", "write:contracts", "write:schedules", "approve:timeoff"],
-    "HR_PAYROLL_USER": ["read:all_hr", "write:employees", "write:attendance", "write:contracts", "write:schedules", "approve:timeoff", "crud:payruns", "crud:payslips", "read:structures"],
-    "HR_PAYROLL_MANAGER": ["all_hr_payroll_features", "crud:structures", "crud:rules"],
-    "ADMIN": ["all_access", "manage:users", "system:admin"]
+    "EMPLOYEE": [
+        "read:self", "create:attendance_self", "create:timeoff_self",
+        # AI Copilot: may ask and may escalate, but only sees OWN tickets
+        "ask:copilot", "create:escalation_self", "read:escalation_self",
+    ],
+    "HR_MANAGER": [
+        "read:all_hr", "write:employees", "write:attendance", "write:contracts",
+        "write:schedules", "approve:timeoff",
+        # Owns LEAVE_POLICY / ATTENDANCE / CONTRACT escalation categories
+        "ask:copilot", "read:escalation_queue", "assign:escalation", "answer:escalation",
+    ],
+    "HR_PAYROLL_USER": [
+        "read:all_hr", "write:employees", "write:attendance", "write:contracts",
+        "write:schedules", "approve:timeoff", "crud:payruns", "crud:payslips",
+        "read:structures",
+        "ask:copilot", "read:escalation_queue",
+    ],
+    "HR_PAYROLL_MANAGER": [
+        "all_hr_payroll_features", "crud:structures", "crud:rules",
+        # Owns PAYROLL_SALARY / TAX_STATUTORY categories + may grow the KB
+        "ask:copilot", "read:escalation_queue", "assign:escalation",
+        "answer:escalation", "publish:knowledge_base",
+    ],
+    "ADMIN": [
+        "all_access", "manage:users", "system:admin",
+        # Catch-all responder for OTHER / IT_ACCESS + routing configuration
+        "ask:copilot", "read:escalation_queue", "assign:escalation",
+        "answer:escalation", "publish:knowledge_base", "manage:escalation_routing",
+    ],
 }
+
+# ESCALATION VISIBILITY RULE (enforced in the repository layer, never the client):
+#   EMPLOYEE            -> WHERE employee_id = :self_employee_id
+#   HR_* / ADMIN        -> full queue, plus INTERNAL thread events
+# INTERNAL events are stripped from any response served to an EMPLOYEE caller.
+ESCALATION_RESPONDER_ROLES = {"HR_MANAGER", "HR_PAYROLL_MANAGER", "ADMIN"}
 
 def require_roles(allowed_roles: list):
     def role_checker(credentials: HTTPAuthorizationCredentials = Security(security_scheme)):
@@ -939,7 +1595,26 @@ def require_roles(allowed_roles: list):
 | `GET` | `/api/v1/payslips/:id/pdf` | All (`EMPLOYEE` self only) | Generates and streams official A4 Payslip PDF |
 | `POST` | `/api/v1/payruns/:id/send-payslips` | `HR_PAYROLL_USER`+ | Bulk emails payslip PDFs to all included employees |
 | `GET` | `/api/v1/dashboard/metrics` | `HR_PAYROLL_USER`+ | Aggregated 5-KPI ribbon, department costs, trends |
-| `POST` | `/api/v1/ai/assistant` | All Authenticated | Hybrid RAG endpoint for policy questions & personal balances |
+| `POST` | `/api/v1/ai/assistant` | All Authenticated | Hybrid RAG endpoint. Returns `mode: ANSWERED` with citations, or `mode: ESCALATED` + `ticket_no` when confidence < 0.45 |
+
+### 6.1 AI Escalation Loop Endpoints (Human-in-the-Loop)
+
+| Method | Endpoint | Allowed Roles | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/ai/escalations` | All Authenticated | Manual escalation — *"This didn't help, ask HR"*. Body: `{prompt, conversation_id?}`. Semantic dedup may return a prior human answer instantly |
+| `GET` | `/api/v1/ai/escalations` | All (`EMPLOYEE` scoped to self) | List tickets. Admin/HR filters: `status`, `category`, `priority`, `assignee`, `overdue=true` |
+| `GET` | `/api/v1/ai/escalations/:id` | Owner or Responder roles | Ticket detail + threaded events (`INTERNAL` events stripped for the asking employee) |
+| `POST` | `/api/v1/ai/escalations/:id/assign` | `HR_MANAGER`, `HR_PAYROLL_MANAGER`, `ADMIN` | Claim or delegate the ticket; stamps `first_response_at` for SLA metrics |
+| `POST` | `/api/v1/ai/escalations/:id/answer` | `HR_MANAGER`, `HR_PAYROLL_MANAGER`, `ADMIN` | **The core action.** Body: `{answer_text, publish_to_kb}`. Notifies the employee and optionally indexes the answer into `document_chunks` |
+| `POST` | `/api/v1/ai/escalations/:id/comment` | Responder roles | Add an `INTERNAL` note (never visible to the employee) |
+| `POST` | `/api/v1/ai/escalations/:id/close` | Owner or Responder roles | Close the loop after the employee confirms |
+| `POST` | `/api/v1/ai/escalations/:id/reopen` | Owner or Responder roles | Reopen if the answer was insufficient |
+| `POST` | `/api/v1/ai/escalations/:id/reject` | `ADMIN` | Mark out-of-scope / duplicate / spam |
+| `GET` | `/api/v1/ai/escalations/stats` | Responder roles | Queue KPIs: open count, overdue count, median first-response time, KB articles created |
+| `GET` | `/api/v1/notifications` | All Authenticated | In-app feed for the badge counter |
+| `POST` | `/api/v1/notifications/:id/read` | Owner only | Mark a notification read |
+| `GET` | `/api/v1/ai/escalations/routing-rules` | `ADMIN` | Read category → role → SLA routing configuration |
+| `PUT` | `/api/v1/ai/escalations/routing-rules/:id` | `ADMIN` | Update routing / SLA hours for a category |
 
 ---
 
@@ -980,12 +1655,20 @@ def seed():
     db.flush()
 
     # 4. Salary Rules (Odoo 12-Rule Sequence)
+    # NOTE: These rules + a ₹100,000 contract wage reproduce the SVG mockup payslip EXACTLY:
+    #   BASIC 50% of wage        = ₹50,000
+    #   HRA   40% of basic       = ₹20,000
+    #   STD   fixed              = ₹10,000
+    #   GROSS basic + allowances = ₹80,000
+    #   PF    6% of basic        = -₹3,000
+    #   PT    fixed              = -₹2,000
+    #   NET   gross - deductions = ₹75,000
     rules = [
         SalaryRule(salary_structure_id=struct_reg.id, name="Basic Salary", code="BASIC", sequence=1, category="BASIC", computation_type="PERCENTAGE", percentage_base="WAGE", percentage_rate=Decimal("50.00")),
         SalaryRule(salary_structure_id=struct_reg.id, name="House Rent Allowance", code="HRA", sequence=10, category="ALLOWANCE", computation_type="PERCENTAGE", percentage_base="BASIC", percentage_rate=Decimal("40.00")),
         SalaryRule(salary_structure_id=struct_reg.id, name="Standard Allowance", code="STD", sequence=20, category="ALLOWANCE", computation_type="FIXED", fixed_amount=Decimal("10000.00")),
         SalaryRule(salary_structure_id=struct_reg.id, name="Gross Salary", code="GROSS", sequence=60, category="GROSS", computation_type="PYTHON_CODE", python_code="result = categories['BASIC'] + categories['ALLOWANCE']"),
-        SalaryRule(salary_structure_id=struct_reg.id, name="Provident Fund", code="PF", sequence=80, category="DEDUCTION", computation_type="PERCENTAGE", percentage_base="BASIC", percentage_rate=Decimal("12.00")),
+        SalaryRule(salary_structure_id=struct_reg.id, name="Provident Fund", code="PF", sequence=80, category="DEDUCTION", computation_type="PERCENTAGE", percentage_base="BASIC", percentage_rate=Decimal("6.00")),
         SalaryRule(salary_structure_id=struct_reg.id, name="Professional Tax", code="PT", sequence=100, category="DEDUCTION", computation_type="FIXED", fixed_amount=Decimal("2000.00")),
         SalaryRule(salary_structure_id=struct_reg.id, name="Net Salary", code="NET", sequence=110, category="NET", computation_type="PYTHON_CODE", python_code="result = categories['GROSS'] - categories['DEDUCTION']")
     ]
@@ -1007,7 +1690,7 @@ def seed():
 
     contract_aarav = HrContract(
         reference_code="CON/2026/0042", employee_id=emp_aarav.id, department_id=dept_fin.id,
-        working_schedule_id=sched_40h.id, start_date=date(2026, 1, 1), wage_monthly=Decimal("85000.00"),
+        working_schedule_id=sched_40h.id, start_date=date(2026, 1, 1), wage_monthly=Decimal("100000.00"),
         status="RUNNING"
     )
     db.add(contract_aarav)

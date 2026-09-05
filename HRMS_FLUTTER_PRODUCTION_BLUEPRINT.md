@@ -1,6 +1,6 @@
 # 🚀 Production-Grade HRMS & Payroll Flutter Master Prompt Blueprint
 > **Codename**: *PeoplePay 360* (Odoo Hackathon Winning Edition)  
-> **Target Framework**: Flutter 3.24+ / Dart 3.5+  
+> **Target Framework**: Flutter 3.35+ / Dart 3.9+ (latest stable channel)  
 > **Design Language**: Odoo 18 Next-Gen + Apple Human Interface Guidelines + Glassmorphism  
 > **Source Blueprint**: 100% Strict Alignment to `HRMS OXP - 24 hours.excalidraw.svg`
 
@@ -81,7 +81,12 @@ dependencies:
   intl: ^0.19.0
   uuid: ^4.4.0
   haptic_feedback: ^0.5.1+1
+
+  # AI Copilot (Phase 7)
+  flutter_markdown: ^0.7.4   # render rich RAG answers
+  http: ^1.2.2               # call the /api/v1/ai/assistant endpoint
 ```
+> **Version note**: The pins above are a known-good, mutually compatible baseline. On a fresh checkout run `flutter pub upgrade --major-versions` to pull the current majors for your installed Flutter stable channel, then `flutter pub outdated` to confirm nothing conflicts.
 
 ---
 
@@ -781,6 +786,171 @@ dependencies:
 
 ---
 
+## 🤖 PHASE 7: AI HR & Payroll Copilot (Local RAG — Signature Differentiator)
+
+```
++-------------------------------------------------------------------------------+
+| FLOW 7: AI HR COPILOT (HYBRID RAG)                                            |
+|                                                                               |
+|  [Global Floating Copilot FAB on every screen]                               |
+|       |                                                                       |
+|       v                                                                       |
+|  [7.1 Copilot Chat Drawer]                                                    |
+|     - Suggested starter chips                                                 |
+|     - Streamed answers with source citations                                  |
+|     - Hybrid routing: personal SQL data + policy vector search                |
+|          |                                                                    |
+|          +--> Personal data intent  ---> scoped SQL (self employee_id only)   |
+|          \--> Policy / rules intent  ---> pgvector cosine search over docs     |
++-------------------------------------------------------------------------------+
+```
+
+This phase consumes the backend `POST /api/v1/ai/assistant` endpoint (see `BACKEND_PRODUCTION_ARCHITECTURE.md` §4). The Flutter side is a thin, beautiful conversational client — no model runs on-device. All embedding, retrieval, and generation happen server-side against PostgreSQL + `pgvector`.
+
+### The Escalation Loop (Screens 7.2 – 7.4)
+When the assistant cannot answer confidently it **does not guess**. It opens a ticket, routes it to the right Admin/HR responder, the human replies directly, and the employee is notified in-app. The verified answer is then indexed so the bot answers it itself next time.
+
+```
++-------------------------------------------------------------------------------+
+| FLOW 7B: HUMAN-IN-THE-LOOP ESCALATION                                         |
+|                                                                               |
+|  [7.1 Copilot Chat]                                                           |
+|      | confidence < 0.45  OR  user taps "Ask HR instead"                      |
+|      v                                                                        |
+|  [Escalation Card appears inline: "Forwarded to HR - ESC/2026/0001"]          |
+|      |                                                                        |
+|      +--> [7.3 My Questions] (employee tracks own tickets + reads replies)    |
+|      |                                                                        |
+|      \--> [7.2 Admin Escalation Inbox]  (badge on nav, SLA countdown)         |
+|                   |                                                           |
+|                   v                                                           |
+|            [7.4 Answer Composer]                                              |
+|              - AI draft pre-filled (edit & approve, don't retype)             |
+|              - Internal notes (never shown to employee)                       |
+|              - Toggle: "Publish to Knowledge Base"                            |
+|                   |                                                           |
+|                   v                                                           |
+|            Employee notified -> bot learns the answer                         |
++-------------------------------------------------------------------------------+
+```
+
+---
+
+### Screen 7.1: AI HR & Payroll Copilot Chat Drawer
+- **Screen ID**: `SCR_AI_COPILOT`
+- **Route**: `/copilot` (Global floating FAB + Wolt Modal Sheet / right-side drawer)
+- **Role Visibility**: All Authenticated (answers are always scoped to the caller's own `employee_id`)
+- **Visual Design & UX**:
+  - Persistent gradient Copilot FAB (Aubergine→Teal) bottom-right on every screen with a subtle breathing glow.
+  - Drawer header: **PeoplePay360 AI Assistant**, subtitle *"Powered by Local RAG + PostgreSQL"* with a green active-node dot.
+  - **Suggested starter chips** (shown on empty state):
+    - `"How many PTO days do I have left?"`
+    - `"Explain the deductions on my February payslip"`
+    - `"What is the sick leave medical certificate policy?"`
+  - **Message thread**:
+    - User bubbles right-aligned (Aubergine tint).
+    - AI bubbles left-aligned, rendered with `flutter_markdown` (bold, lists, inline amounts).
+    - **Source citation chip** under each AI answer, e.g. `Source: Regular Salary Rule Engine` or `Policy: Leave Handbook §3.2`.
+    - Typing indicator with three-dot shimmer while the endpoint responds.
+  - **Input bar**: pill text field *"Ask anything about HR policy, salary, or leave…"* with mic icon and Aubergine send button.
+  - **Two response modes must be rendered differently** (the API returns `mode`):
+    - `mode: ANSWERED` $\to$ normal markdown bubble + citation chip + a subtle footer link *"Not what you needed? Ask HR"*.
+    - `mode: ESCALATED` $\to$ render an **Escalation Card** instead of a normal answer:
+      - Amber-tinted card, 🙋 icon, headline *"Forwarded to your HR team"*.
+      - Ticket chip: `ESC/2026/0001` (monospace) + category pill (`Leave Policy`).
+      - Body: *"I don't have a verified answer for that, so I've sent it to HR. You'll be notified as soon as they reply."*
+      - SLA line: *"Expected reply within 8 hours"* with a live countdown.
+      - Action: `[ Track this question → ]` opening Screen 7.3.
+    - When the backend short-circuits via semantic dedup, render a normal answer bubble with a **teal "Human verified" badge** and *"Previously answered by HR (ESC/2026/0007)"*.
+- **On Click & Navigation Actions**:
+  - Tap starter chip $\to$ pre-fills and sends the question.
+  - Tap send $\to$ `POST /api/v1/ai/assistant { prompt }`; JWT identifies the employee, so personal-data answers never leak across users.
+  - Tap a source citation chip $\to$ deep-links to the underlying record (e.g. the specific payslip or the policy document viewer).
+  - Tap **"Ask HR instead"** on any answer $\to$ `POST /api/v1/ai/escalations { prompt }` and swap the bubble for an Escalation Card.
+- **Production Edge Cases**:
+  - Offline / endpoint error: show a graceful retry card, never a raw stack trace.
+  - Empty knowledge base: assistant answers personal-data questions from SQL and clearly states no policy docs are indexed yet.
+  - Anti-spam: if the API returns the open-ticket cap error, show a friendly inline notice (*"You already have 5 open questions with HR"*) rather than a generic failure.
+  - Guardrail: the client sends only the prompt; it never sends another user's `employee_id`. Scope enforcement lives server-side.
+
+---
+
+### Screen 7.2: Admin / HR Escalation Inbox (Responder Queue)
+- **Screen ID**: `SCR_ESCALATION_INBOX`
+- **Route**: `/copilot/escalations`
+- **Role Visibility**: `HR Manager`, `HR Payroll Manager`, `Admin` only (hidden from `Employee` nav entirely)
+- **Visual Design & UX**:
+  - AppBar: **Escalation Inbox** with an unread badge fed by `GET /api/v1/notifications`.
+  - **Queue KPI strip** (from `/escalations/stats`): `Open (7)` · `Overdue (2)` in red · `Median first reply: 3.2h` · `KB articles created: 14`.
+  - Filter chips: `[ All ] [ Unassigned ] [ Mine ] [ Overdue ⏰ ] [ Answered ]` plus a category dropdown.
+  - **Ticket cards**, sorted urgent-and-oldest first:
+    - Ticket no in mono (`ESC/2026/0001`) + priority stripe down the left edge (Urgent = crimson, High = amber, Normal = slate).
+    - Question text, two lines, ellipsised.
+    - Asker row: avatar + `Aarav Mehta • Finance`.
+    - Category pill (`Leave Policy` blue / `Payroll & Salary` teal / `Tax & Statutory` purple).
+    - **Confidence badge**: *"AI confidence 0.31"* — shows judges the gate is real and measured.
+    - **SLA countdown chip**: `Due in 5h 12m` (amber under 2h, crimson red once breached).
+    - Status pill: `Open` / `Assigned` / `Answered`.
+- **On Click & Navigation Actions**:
+  - Tap card $\to$ `SCR_ESCALATION_ANSWER` (7.4).
+  - Swipe right $\to$ `Assign to me` (`POST /escalations/:id/assign`), card animates into the `Mine` filter.
+  - Swipe left $\to$ `Reject` (Admin only) with a reason prompt.
+  - Pull-to-refresh re-polls the queue.
+
+---
+
+### Screen 7.3: My Questions (Employee Ticket Tracker)
+- **Screen ID**: `SCR_MY_ESCALATIONS`
+- **Route**: `/copilot/my-questions`
+- **Role Visibility**: All Authenticated — **always scoped to own tickets by the server**
+- **Visual Design & UX**:
+  - Segmented tabs: `[ Waiting on HR ] [ Answered ]` with a dot indicator on unread replies.
+  - Ticket cards: question text, ticket no, submitted-ago timestamp, status pill, and expected-reply countdown while pending.
+  - **Answered cards expand inline** to reveal:
+    - The HR answer rendered as markdown.
+    - Responder attribution: avatar + *"Answered by Sara Khan, HR Manager"* + timestamp.
+    - A teal **"Human verified"** badge.
+    - Feedback row: `[ 👍 This helped ]` `[ 👎 Still unclear ]` → posts close or reopen.
+- **On Click & Navigation Actions**:
+  - Tap `👍 This helped` $\to$ `POST /escalations/:id/close`, card collapses with a success check.
+  - Tap `👎 Still unclear` $\to$ `POST /escalations/:id/reopen` with an optional note.
+  - Tapping a notification for an answered ticket deep-links straight into this screen with that card pre-expanded.
+- **Production Edge Cases**:
+  - `INTERNAL` thread events must never render here. The API strips them, and the client must not assume otherwise.
+
+---
+
+### Screen 7.4: Answer Composer (Admin Replies Directly)
+- **Screen ID**: `SCR_ESCALATION_ANSWER`
+- **Route**: `/copilot/escalations/:id`
+- **Role Visibility**: Responder roles only
+- **Visual Design & UX**:
+  - Header: ticket no, priority stripe, SLA countdown, status pill, `Assign to me` action if unassigned.
+  - **Context panel (collapsible)** so the responder answers with full context, not blind:
+    - The employee's original question, verbatim, in a quoted block.
+    - Asker identity card: name, department, job position, manager — tappable through to the Employee 360 form.
+    - *Why this escalated*: reason chip (`Low confidence`) + measured score (`0.31`) + the weak chunks that were retrieved.
+  - **AI Draft Answer block (the time-saver)**:
+    - Pre-filled with `ai_draft_answer` in a dashed-border card labelled *"AI draft — unverified, edit before sending"*.
+    - Buttons: `[ Use this draft ]` (copies into the editor) and `[ Discard draft ]`.
+  - **Answer editor**: multiline markdown field with a live preview toggle and a character counter.
+  - **Internal note field**, clearly separated with a lock icon and the caption *"Only Admin/HR can see this. The employee will never see internal notes."*
+  - **Knowledge Base toggle (Stage 4 of the loop)**:
+    - Switch, default ON: *"Publish this answer to the Knowledge Base"*.
+    - Helper text: *"The assistant will answer this question automatically next time. Turn this off for answers specific to one person."*
+  - **Threaded event timeline** at the bottom: created → assigned → commented → answered, with actor avatars and timestamps. `INTERNAL` events carry a lock badge.
+- **On Click & Navigation Actions**:
+  - `[ Send Answer to Employee ]` (solid Aubergine) $\to$ `POST /escalations/:id/answer { answer_text, publish_to_kb }`.
+    - Success state is the demo money shot: a toast reading *"Answer sent to Aarav Mehta • Indexed to Knowledge Base"* plus a small animated flywheel icon.
+  - `[ Add Internal Note ]` $\to$ `POST /escalations/:id/comment`.
+  - `[ Reject Ticket ]` (Admin only) $\to$ confirmation dialog, then `POST /escalations/:id/reject`.
+- **Validation & Guardrails**:
+  - `Send Answer` is disabled until the editor holds meaningful content (trimmed length > 10) — no empty replies.
+  - Optimistic-lock handling: if another responder answered first, show *"Already answered by Nisha Rao"* and refresh rather than overwriting.
+  - Never render an `Answer` action for a ticket in `CLOSED` or `REJECTED` state.
+
+---
+
 ## 🏗️ FLUTTER PROJECT DIRECTORY STRUCTURE
 
 To guarantee clean architecture, separation of concerns, and production standards:
@@ -841,15 +1011,40 @@ lib/
 │   │       ├── payslip_pdf_viewer_screen.dart
 │   │       ├── salary_structures_screen.dart
 │   │       └── salary_rule_editor_screen.dart
-│   └── dashboard/                  # Phase 6: Executive Analytics
-│       ├── presentation/controllers/dashboard_analytics_controller.dart
-│       ├── presentation/widgets/
-│       │   ├── kpi_metric_ribbon.dart
-│       │   ├── department_cost_bar_chart.dart
-│       │   ├── monthly_salary_trend_chart.dart
-│       │   ├── payslip_status_donut_chart.dart
-│       │   └── payroll_alerts_card.dart
-│       └── presentation/screens/executive_dashboard_screen.dart
+│   ├── dashboard/                  # Phase 6: Executive Analytics
+│   │   ├── presentation/controllers/dashboard_analytics_controller.dart
+│   │   ├── presentation/widgets/
+│   │   │   ├── kpi_metric_ribbon.dart
+│   │   │   ├── department_cost_bar_chart.dart
+│   │   │   ├── monthly_salary_trend_chart.dart
+│   │   │   ├── payslip_status_donut_chart.dart
+│   │   │   └── payroll_alerts_card.dart
+│   │   └── presentation/screens/executive_dashboard_screen.dart
+│   ├── copilot/                    # Phase 7: AI HR Copilot (Local RAG client)
+│   │   ├── domain/models/
+│   │   │   ├── chat_message_model.dart
+│   │   │   ├── copilot_response_model.dart   # freezed union: Answered | Escalated
+│   │   │   └── escalation_model.dart         # ticket + threaded events + SLA
+│   │   ├── presentation/controllers/
+│   │   │   ├── copilot_controller.dart       # POST /api/v1/ai/assistant
+│   │   │   └── escalation_controller.dart    # list / assign / answer / close
+│   │   ├── presentation/widgets/
+│   │   │   ├── copilot_fab.dart              # global floating launcher
+│   │   │   ├── chat_bubble.dart              # markdown answer + source chip
+│   │   │   ├── escalation_card.dart          # inline "Forwarded to HR" card
+│   │   │   ├── confidence_badge.dart         # shows the measured gate score
+│   │   │   ├── sla_countdown_chip.dart       # amber < 2h, red once breached
+│   │   │   ├── ai_draft_block.dart           # edit-and-approve draft answer
+│   │   │   └── suggested_prompt_chips.dart
+│   │   └── presentation/screens/
+│   │       ├── copilot_drawer_screen.dart        # 7.1 chat
+│   │       ├── escalation_inbox_screen.dart      # 7.2 admin queue
+│   │       ├── my_escalations_screen.dart        # 7.3 employee tracker
+│   │       └── escalation_answer_screen.dart     # 7.4 answer composer
+│   └── notifications/              # In-app feed powering all badge counters
+│       ├── domain/models/notification_model.dart
+│       ├── presentation/controllers/notification_controller.dart
+│       └── presentation/widgets/notification_badge.dart
 └── main.dart
 ```
 
@@ -876,6 +1071,15 @@ lib/
 | `Salary Structure Row` | Structure List (`5.1`) | Structure Detail (`5.2`) | Push | `structureId` |
 | `Salary Rule Row` | Structure Detail (`5.2`) | Rule Python Editor (`5.4`) | Push | `ruleId` |
 | `Payroll Alert Pill` | Dashboard (`6.1`) | Payruns / Employee Hub | Deep Link Filter | Alert query string |
+| `Copilot FAB` | Any Screen | AI Copilot Drawer (`7.1`) | Wolt Modal Sheet | JWT (self `employee_id`) |
+| `Source Citation Chip` | AI Copilot (`7.1`) | Payslip / Policy Doc | Deep Link | `payslipId` / `docId` |
+| `Ask HR Instead` | AI Copilot (`7.1`) | AI Copilot (`7.1`) | In-Place → Escalation Card | `prompt`, `conversationId` |
+| `Track this question →` | Escalation Card (`7.1`) | My Questions (`7.3`) | Push | `escalationId` |
+| `Nav Badge (Escalations)` | Any Screen (Admin/HR) | Escalation Inbox (`7.2`) | Push | Queue filter: `Unassigned` |
+| `Ticket Card` | Escalation Inbox (`7.2`) | Answer Composer (`7.4`) | Push | `escalationId` |
+| `Swipe → Assign to me` | Escalation Inbox (`7.2`) | Escalation Inbox (`7.2`) | In-Place Update | `escalationId`, `assigneeId` |
+| `Send Answer to Employee` | Answer Composer (`7.4`) | Escalation Inbox (`7.2`) | Pop + Toast | `answerText`, `publishToKb` |
+| `Answered Notification` | Any Screen (Employee) | My Questions (`7.3`) | Deep Link | `escalationId` (card pre-expanded) |
 
 ---
 
@@ -886,3 +1090,5 @@ lib/
 - [x] **Odoo 18 Design Authenticity**: Signature Aubergine (`#714B67`) & Teal (`#017E84`) aesthetics with dark mode glassmorphism.
 - [x] **Enterprise Validation**: Guardrails preventing overlapping running contracts, duplicate payslips, and negative leave balances.
 - [x] **Mobile Optimization**: Pull-to-refresh, swipe-to-approve, responsive sliver app bars, and adaptive bottom sheets.
+- [x] **AI HR Copilot (Local RAG)**: Hybrid PostgreSQL + `pgvector` assistant answering personal-data and policy questions with source citations, scoped per employee — the standout differentiator (Phase 7).
+- [x] **Human-in-the-Loop Escalation**: The bot refuses on low confidence instead of hallucinating, routes the question to the right Admin/HR role with an SLA clock, the human answers directly, the employee is notified, and the verified answer is indexed so the assistant answers it itself next time — a closed learning loop with zero model training.

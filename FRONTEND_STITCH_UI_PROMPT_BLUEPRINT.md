@@ -607,13 +607,180 @@ Chat Message Thread:
     *No penalties or unpaid leave deductions were applied.*"
   - Source Citation Chip: "Verified with Regular Salary Rule Engine & Indian Statutory Tax Slabs".
 
+Escalation State (CRITICAL - the bot refuses instead of hallucinating):
+- When the assistant has no confident answer, DO NOT render a normal answer bubble. Render an "Escalation Card" instead:
+  - Amber-tinted card (#FFFBEB background, #F59E0B left border, 4px).
+  - Icon: 🙋 with headline "Forwarded to your HR team".
+  - Ticket chip in monospace: "ESC/2026/0001" + category pill "Leave Policy" (blue).
+  - Body text: "I don't have a verified answer for that, so I've sent it to HR. You'll be notified as soon as they reply."
+  - SLA row with a clock icon: "Expected reply within 8 hours".
+  - Text button: "Track this question →".
+- Reused-answer state: normal bubble with a teal "✓ Human verified" badge and caption "Previously answered by HR (ESC/2026/0007)".
+- Footer link under every normal answer, small muted text: "Not what you needed? Ask HR".
+
 Input Bar at Bottom:
 - Pill-shaped input: "Ask anything about HR policy, salary, or leave..." with a mic icon and an Aubergine send button (#714B67).
 ```
 
 ---
 
+### Screen 7.2: Admin Escalation Inbox (Responder Queue)
+- **Stitch Screen ID**: `STITCH_ESCALATION_INBOX`
+- **Target Route**: `/copilot/escalations`
+- **Copy-Paste Prompt for Stitch**:
+```text
+Design an "Escalation Inbox" mobile screen for HR/Admin responders in PeoplePay360.
+This is the human-in-the-loop queue where questions the AI could not answer land for a human reply.
+
+Header:
+- Title: "Escalation Inbox" with a red unread count badge showing "7".
+- Subtitle: "Questions the AI Assistant could not answer confidently".
+
+Queue Stats Strip (4 compact metric tiles in a horizontal row):
+- "Open: 7" (Aubergine #714B67)
+- "Overdue: 2" (Crimson Red #EF4444, with a ⏰ icon)
+- "Median first reply: 3.2h" (Slate)
+- "KB articles created: 14" (Teal #017E84, with a small flywheel icon)
+
+Filter Chips (horizontal scroll):
+[ All ] [ Unassigned (4) ] [ Mine (3) ] [ Overdue ⏰ (2) ] [ Answered ]
+Active chip = solid #714B67 fill with white text.
+
+Ticket Cards (each card has a 4px colored priority stripe on its left edge):
+- Card 1 (URGENT - crimson stripe):
+  - Ticket: "ESC/2026/0001" (monospace, 12px muted) + category pill "Payroll & Salary" (Teal).
+  - Question (2 lines, bold 15px): "Why is my February PF deduction different from January if my salary didn't change?"
+  - Asker row: small circular avatar "AM" + "Aarav Mehta • Finance".
+  - Confidence badge: gray pill reading "AI confidence 0.31" (proves the refusal was measured, not random).
+  - SLA chip: "Overdue by 1h 20m" in Crimson Red.
+  - Status pill: "Open" (Amber #F59E0B).
+- Card 2 (NORMAL - slate stripe):
+  - Ticket: "ESC/2026/0002" + category pill "Leave Policy" (Blue).
+  - Question: "Can I carry forward unused Comp Off into next year?"
+  - Asker: "SK" + "Sara Khan • HR".
+  - Confidence badge: "AI confidence 0.38".
+  - SLA chip: "Due in 5h 12m" (Amber).
+  - Status pill: "Assigned to you" (Blue).
+- Card 3 (NORMAL, resolved):
+  - Ticket: "ESC/2026/0003" + category pill "Attendance".
+  - Question: "Does a missed check-out count as absent for payroll?"
+  - Status pill: "Answered" (Emerald Green #10B981) + small teal chip "Published to KB".
+
+Swipe Actions:
+- Swipe right on a card reveals "Assign to me" (Aubergine).
+- Swipe left reveals "Reject" (Crimson, Admin only).
+
+Empty State:
+- Friendly illustration with "Inbox zero. The assistant is handling everything on its own."
+```
+
+---
+
+### Screen 7.3: My Questions (Employee Ticket Tracker)
+- **Stitch Screen ID**: `STITCH_MY_ESCALATIONS`
+- **Target Route**: `/copilot/my-questions`
+- **Copy-Paste Prompt for Stitch**:
+```text
+Design a "My Questions" mobile screen where an employee tracks the questions they escalated to HR.
+
+Header:
+- Title: "My Questions"
+- Subtitle: "Questions you've sent to your HR team".
+- Segmented Tabs: [ Waiting on HR (1) ] [ Answered (2) ] — the Answered tab shows a small teal dot when there is an unread reply.
+
+Pending Card (Waiting on HR):
+- Amber left border.
+- Question in quotes: "Can I carry forward unused Comp Off into next year?"
+- Ticket: "ESC/2026/0002" (monospace) • "Submitted 2 hours ago".
+- Status pill: "Waiting on HR" (Amber #F59E0B).
+- Countdown row with a clock icon: "Expected reply within 6h".
+
+Answered Card (expanded state - the key screen):
+- Emerald left border with a subtle green tint background.
+- Original question in a muted quoted block: "Does a missed check-out count as absent for payroll?"
+- Divider labelled "HR's answer".
+- Answer body rendered as rich markdown:
+  "No. A missing check-out is flagged as an **attendance exception**, not an absence.
+   Payroll still uses your scheduled hours for that day. Your manager must correct the
+   record within 3 working days, otherwise it is auto-closed at your scheduled shift end."
+- Responder attribution row: circular avatar "SK" + "Answered by Sara Khan, HR Manager" + "Today, 11:42 AM".
+- Teal badge: "✓ Human verified".
+- Feedback row (two outline buttons): [ 👍 This helped ] [ 👎 Still unclear ].
+
+Interaction note:
+- Tapping "This helped" closes the ticket with a success checkmark animation.
+- Tapping "Still unclear" reopens it and returns it to the HR queue.
+```
+
+---
+
+### Screen 7.4: Answer Composer (Admin Replies Directly)
+- **Stitch Screen ID**: `STITCH_ESCALATION_ANSWER`
+- **Target Route**: `/copilot/escalations/:id`
+- **Copy-Paste Prompt for Stitch**:
+```text
+Design the "Answer Composer" mobile screen where an HR Admin replies directly to a question the AI could not answer.
+This is the most important screen of the human-in-the-loop feature.
+
+Sticky Header:
+- Ticket: "ESC/2026/0001" (monospace) with a crimson URGENT priority stripe.
+- SLA chip: "Overdue by 1h 20m" (Crimson Red #EF4444).
+- Status pill: "Open" + a small "Assign to me" text action.
+
+1. Context Panel (collapsible card, expanded by default):
+   - Label: "Employee's question"
+   - Quoted block, 16px medium: "Why is my February PF deduction different from January if my salary didn't change?"
+   - Asker card: avatar "AM" + "Aarav Mehta • Payroll Specialist • Finance" + "Manager: Sara Khan" (tappable → employee profile).
+   - "Why this escalated" row: gray chip "Low confidence" + red chip "Score 0.31" + expandable link "View the 3 weak matches retrieved".
+
+2. AI Draft Answer Block (dashed border, light gray background):
+   - Small warning label: "⚠ AI draft — unverified. Edit before sending."
+   - Draft text in muted italic: "Provident Fund is calculated as 6% of Basic Salary. Your February Basic may differ if worked days changed..."
+   - Two small buttons: [ Use this draft ] (Teal outline) and [ Discard ] (gray text).
+
+3. Answer Editor (the primary input):
+   - Label: "Your answer to the employee *"
+   - Large multiline markdown text area, 6 rows minimum, with a "Preview" toggle in the top-right corner and a character counter bottom-right.
+   - Placeholder: "Write a clear, official answer. This is sent directly to the employee."
+
+4. Internal Note Field (visually separated, gray container with a 🔒 lock icon):
+   - Label: "Internal note (Admin/HR only)"
+   - Caption in muted red: "The employee will never see internal notes."
+   - Single-line input.
+
+5. Knowledge Base Toggle (highlighted teal-tinted card — the flywheel):
+   - iOS-style switch, default ON.
+   - Title: "Publish this answer to the Knowledge Base"
+   - Helper text: "The AI Assistant will answer this question automatically next time. Turn this off for answers specific to one person."
+   - Small animated flywheel/recycle icon on the right.
+
+6. Activity Timeline (bottom section):
+   - Vertical timeline with actor avatars and timestamps:
+     - "Created — auto-escalated (low confidence 0.31)" • Today 09:15
+     - "🔒 Assigned to Nisha Rao" • Today 09:40 (lock badge = internal)
+
+Sticky Bottom Action Bar:
+- Primary full-width button: "Send Answer to Employee" (solid Aubergine #714B67), disabled until the editor has content.
+- Secondary row: [ Add Internal Note ] (outline) and [ Reject Ticket ] (crimson text, Admin only).
+
+Success Toast (design this state too):
+- Dark toast with a green check: "Answer sent to Aarav Mehta • Indexed to Knowledge Base" with a small spinning flywheel icon.
+```
+
+---
+
 ## 🚀 How To Feed These Prompts Into Stitch
 1. Paste the **Stitch Master Design System Prompt** into Stitch's global configuration.
-2. Generate screen-by-screen starting from **Screen 0.1 (Login)** through **Screen 6.1 (Dashboard)** and **Screen 7.1 (AI Copilot)**.
+2. Generate screen-by-screen starting from **Screen 0.1 (Login)** through **Screen 6.1 (Dashboard)**, then the AI layer: **7.1 Copilot Chat**, **7.2 Escalation Inbox**, **7.3 My Questions**, **7.4 Answer Composer**.
 3. Every prompt explicitly dictates color codes, typography sizes, interactive states, and business validation messages to produce a **flawless, production-grade mobile app experience**.
+
+### Demo Sequencing Tip (for the 5-minute walkthrough)
+Screens 7.1 → 7.2 → 7.4 → 7.3 → 7.1 tell one complete story, and it is the story judges remember:
+
+1. **7.1** — Ask the Copilot something undocumented. It **refuses honestly** and shows the measured confidence score.
+2. **7.2** — The question is already sitting in the Admin Inbox with an SLA countdown.
+3. **7.4** — The admin edits the AI draft and hits *Send Answer*, leaving *Publish to Knowledge Base* ON.
+4. **7.3** — The employee sees the reply attributed to a real human, marked *Human verified*.
+5. **7.1 again** — Ask the **same question**. The assistant now answers it instantly on its own.
+
+That final beat proves a self-improving system built with **no model training** — the single most memorable moment you can give a judging panel.
