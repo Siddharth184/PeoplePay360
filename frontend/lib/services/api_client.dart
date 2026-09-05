@@ -132,7 +132,7 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 12),
+    Duration timeout = const Duration(seconds: 4),
   }) async {
     try {
       final uri = _buildUri(path, queryParams);
@@ -153,7 +153,7 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 15),
+    Duration timeout = const Duration(seconds: 6),
   }) async {
     try {
       final uri = _buildUri(path, queryParams);
@@ -177,7 +177,7 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 15),
+    Duration timeout = const Duration(seconds: 6),
   }) async {
     try {
       final uri = _buildUri(path, queryParams);
@@ -201,7 +201,7 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 15),
+    Duration timeout = const Duration(seconds: 6),
   }) async {
     try {
       final uri = _buildUri(path, queryParams);
@@ -224,7 +224,7 @@ class ApiClient {
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     T Function(dynamic json)? parser,
-    Duration timeout = const Duration(seconds: 15),
+    Duration timeout = const Duration(seconds: 6),
   }) async {
     try {
       final uri = _buildUri(path, queryParams);

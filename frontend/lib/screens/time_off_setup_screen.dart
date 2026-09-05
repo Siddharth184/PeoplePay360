@@ -328,9 +328,8 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Flexible(
+                        Expanded(
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
                               InkWell(
                                 onTap: () {
@@ -354,7 +353,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Flexible(
+                              Expanded(
                                 child: InkWell(
                                   onTap: () {
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -377,7 +376,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                                       children: [
                                         const Icon(Icons.event_repeat, size: 16, color: Color(0xFF714B67)),
                                         const SizedBox(width: 5),
-                                        Flexible(
+                                        Expanded(
                                           child: Text(
                                             'Cycle: FY 2026',
                                             maxLines: 1,
