@@ -759,41 +759,43 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            InkWell(
-                              onTap: () => AttendancePunchSheet.show(context),
-                              borderRadius: BorderRadius.circular(24),
-                              child: Container(
-                                height: 38,
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF714B67),
-                                  borderRadius: BorderRadius.circular(24),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFF714B67).withValues(alpha: 0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.add_task, size: 16, color: Colors.white),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Punch',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                            if (!ApiClient.isRoleHrManager) ...[
+                              const SizedBox(width: 6),
+                              InkWell(
+                                onTap: () => AttendancePunchSheet.show(context),
+                                borderRadius: BorderRadius.circular(24),
+                                child: Container(
+                                  height: 38,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF714B67),
+                                    borderRadius: BorderRadius.circular(24),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF714B67).withValues(alpha: 0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.add_task, size: 16, color: Colors.white),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Punch',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ],
