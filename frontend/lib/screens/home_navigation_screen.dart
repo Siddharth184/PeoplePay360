@@ -35,6 +35,15 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
   final List<int> _tabHistory = [0];
   DateTime? _lastBackPressTime;
 
+  @override
+  void initState() {
+    super.initState();
+    if (ApiClient.isRoleHrManager) {
+      _currentIndex = 7;
+      _tabHistory[0] = 7;
+    }
+  }
+
   void _onTabSelected(int index) {
     if (index == -1) {
       _handleBack();
@@ -218,13 +227,12 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
       bottomNavIndices = [0, 1, 2, 6];
     } else if (isHrManager) {
       bottomNavItems = const [
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         BottomNavigationBarItem(icon: Icon(Icons.people_outline), label: 'Employees'),
         BottomNavigationBarItem(icon: Icon(Icons.fingerprint), label: 'Attendance'),
         BottomNavigationBarItem(icon: Icon(Icons.flight_takeoff), label: 'Time Off'),
         BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Copilot'),
       ];
-      bottomNavIndices = [0, 7, 1, 2, 6];
+      bottomNavIndices = [7, 1, 2, 6];
     } else {
       bottomNavItems = const [
         BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
