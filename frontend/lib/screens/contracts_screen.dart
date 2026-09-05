@@ -56,7 +56,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: 'Finance & Tech Ops',
+                initialValue: 'Finance & Tech Ops',
                 decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder()),
                 items: const [
                   DropdownMenuItem(value: 'Finance & Tech Ops', child: Text('Finance & Tech Ops')),

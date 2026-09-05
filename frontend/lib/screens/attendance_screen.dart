@@ -107,7 +107,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: MockDataService.attendances.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (context, index) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final item = MockDataService.attendances[index];
                   final isPresent = item.status == 'PRESENT';

@@ -69,7 +69,7 @@ class _DynamicIslandPillState extends State<DynamicIslandPill> {
           ),
           boxShadow: [
             BoxShadow(
-              color: (_isCheckedIn ? AppTheme.emeraldSuccess : AppTheme.crimsonDanger).withOpacity(0.2),
+              color: (_isCheckedIn ? AppTheme.emeraldSuccess : AppTheme.crimsonDanger).withValues(alpha: 0.2),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -115,7 +115,7 @@ class _DynamicIslandPillState extends State<DynamicIslandPill> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: (_isCheckedIn ? AppTheme.emeraldSuccess : AppTheme.crimsonDanger).withOpacity(0.12),
+                color: (_isCheckedIn ? AppTheme.emeraldSuccess : AppTheme.crimsonDanger).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(

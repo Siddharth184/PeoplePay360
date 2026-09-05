@@ -97,7 +97,7 @@ class AnalyticsScreen extends StatelessWidget {
                                 dotData: const FlDotData(show: true),
                                 belowBarData: BarAreaData(
                                   show: true,
-                                  color: AppTheme.odooTeal.withOpacity(0.15),
+                                  color: AppTheme.odooTeal.withValues(alpha: 0.15),
                                 ),
                               ),
                             ],

@@ -36,7 +36,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: 'Paid Time Off (PTO)',
+                initialValue: 'Paid Time Off (PTO)',
                 decoration: const InputDecoration(labelText: 'Time Off Type', border: OutlineInputBorder()),
                 items: const [
                   DropdownMenuItem(value: 'Paid Time Off (PTO)', child: Text('Paid Time Off (PTO)')),
@@ -126,7 +126,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> {
                       LinearPercentIndicator(
                         lineHeight: 12.0,
                         percent: 14.0 / 20.0,
-                        backgroundColor: Colors.grey.withOpacity(0.2),
+                        backgroundColor: Colors.grey.withValues(alpha: 0.2),
                         progressColor: AppTheme.odooTeal,
                         barRadius: const Radius.circular(6),
                       ),
@@ -149,7 +149,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: MockDataService.timeOffRequests.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final req = MockDataService.timeOffRequests[index];
                   final isPending = req.status == 'PENDING';
@@ -157,7 +157,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> {
                   return Card(
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: isPending ? AppTheme.amberWarning.withOpacity(0.2) : AppTheme.emeraldSuccess.withOpacity(0.2),
+                        backgroundColor: isPending ? AppTheme.amberWarning.withValues(alpha: 0.2) : AppTheme.emeraldSuccess.withValues(alpha: 0.2),
                         child: Icon(
                           isPending ? Icons.pending_actions : Icons.check,
                           color: isPending ? AppTheme.amberWarning : AppTheme.emeraldSuccess,
@@ -168,7 +168,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> {
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: (isPending ? AppTheme.amberWarning : AppTheme.emeraldSuccess).withOpacity(0.15),
+                          color: (isPending ? AppTheme.amberWarning : AppTheme.emeraldSuccess).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(

@@ -30,10 +30,10 @@ class SmartButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(isDark ? 0.15 : 0.08),
+            color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: primaryColor.withOpacity(0.3),
+              color: primaryColor.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
