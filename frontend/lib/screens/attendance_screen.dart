@@ -13,10 +13,49 @@ class AttendanceScreen extends StatefulWidget {
 class _AttendanceScreenState extends State<AttendanceScreen> {
   String _filter = 'ALL';
 
+  void _showBiometricScanDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppTheme.emeraldSuccess.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.fingerprint, size: 50, color: AppTheme.emeraldSuccess),
+              ),
+              const SizedBox(height: 20),
+              Text('Biometric Authentication', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 8),
+              const Text('Touch the fingerprint sensor or look at the camera for FaceID verification.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.emeraldSuccess, foregroundColor: Colors.white),
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('⚡ Biometric Verified: Check-in Logged at 09:02 AM')),
+                  );
+                },
+                child: const Text('Simulate Scan Success'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -26,14 +65,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             children: [
               Center(
                 child: DynamicIslandPill(
-                  onPunchTapped: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('⚡ Attendance Status Updated via Biometrics'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
+                  onPunchTapped: _showBiometricScanDialog,
                 ),
               ),
               const SizedBox(height: 20),
@@ -82,8 +114,29 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
                   return Card(
                     child: ListTile(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                          builder: (_) => Container(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Attendance Detail (${item.dateStr})', style: Theme.of(context).textTheme.headlineMedium),
+                                const SizedBox(height: 12),
+                                Text('Check-In Time: ${item.checkInTime}', style: const TextStyle(fontSize: 14)),
+                                Text('Check-Out Time: ${item.checkOutTime ?? "Active Session"}', style: const TextStyle(fontSize: 14)),
+                                Text('Total Worked Hours: ${item.workedHours} hrs', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                                Text('IP Address / Geo-fence: Mumbai HQ WiFi (192.168.1.42)', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                       leading: CircleAvatar(
-                        backgroundColor: (isPresent ? AppTheme.emeraldSuccess : AppTheme.amberWarning).withOpacity(0.15),
+                        backgroundColor: (isPresent ? AppTheme.emeraldSuccess : AppTheme.amberWarning).withValues(alpha: 0.15),
                         child: Icon(
                           isPresent ? Icons.check_circle_outline : Icons.access_time,
                           color: isPresent ? AppTheme.emeraldSuccess : AppTheme.amberWarning,
@@ -103,7 +156,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: (isPresent ? AppTheme.emeraldSuccess : AppTheme.amberWarning).withOpacity(0.15),
+                              color: (isPresent ? AppTheme.emeraldSuccess : AppTheme.amberWarning).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -138,9 +191,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [

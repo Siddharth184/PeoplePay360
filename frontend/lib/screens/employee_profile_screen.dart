@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/models.dart';
 import '../services/mock_data_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/smart_button.dart';
@@ -20,6 +21,69 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+  }
+
+  void _openPayslipsDrawerModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Payslips History (${MockDataService.payslips.length})', style: Theme.of(context).textTheme.headlineMedium),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: MockDataService.payslips.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final slip = MockDataService.payslips[index];
+                    return Card(
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: AppTheme.odooAubergine,
+                          child: Icon(Icons.receipt_long, color: Colors.white),
+                        ),
+                        title: Text('${slip.refCode} (${slip.periodStart} to ${slip.periodEnd})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('Net Pay: ₹${slip.netAmount.toStringAsFixed(2)}'),
+                        trailing: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooTeal, foregroundColor: Colors.white),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            showDialog(
+                              context: context,
+                              builder: (_) => PayslipPdfDialog(payslip: slip),
+                            );
+                          },
+                          icon: const Icon(Icons.picture_as_pdf, size: 16),
+                          label: const Text('View PDF'),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -58,7 +122,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
                             ),
                             Text(
                               emp.jobTitle,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.odooTeal,
@@ -84,7 +148,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
                       icon: Icons.flight_takeoff,
                       label: 'Time Off',
                       count: '${emp.timeOffBalance} Days',
-                      onTap: () => widget.onNavigateTab?.call(2), // Time Off tab
+                      onTap: () => widget.onNavigateTab?.call(2),
                     ),
                     const SizedBox(width: 8),
                     SmartButton(
@@ -92,7 +156,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
                       label: 'Contracts',
                       count: '${emp.activeContractsCount} Active',
                       color: AppTheme.odooAubergine,
-                      onTap: () => widget.onNavigateTab?.call(3), // Contracts tab
+                      onTap: () => widget.onNavigateTab?.call(3),
                     ),
                     const SizedBox(width: 8),
                     SmartButton(
@@ -100,7 +164,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
                       label: 'Attendance',
                       count: '${emp.attendancesCount} Days',
                       color: AppTheme.emeraldSuccess,
-                      onTap: () => widget.onNavigateTab?.call(1), // Attendance tab
+                      onTap: () => widget.onNavigateTab?.call(1),
                     ),
                     const SizedBox(width: 8),
                     SmartButton(
@@ -108,12 +172,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> with Sing
                       label: 'Payslips',
                       count: '${emp.payslipsCount} Slips',
                       color: AppTheme.amberWarning,
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => PayslipPdfDialog(payslip: MockDataService.payslips.first),
-                        );
-                      },
+                      onTap: _openPayslipsDrawerModal,
                     ),
                   ],
                 ),

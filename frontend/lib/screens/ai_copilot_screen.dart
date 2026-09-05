@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../models/models.dart';
 import '../services/mock_data_service.dart';
 import '../theme/app_theme.dart';
 
@@ -37,7 +38,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       _textController.clear();
     });
 
-    // Simulate RAG response / Tier 0 response / Escalation response
     Future.delayed(const Duration(milliseconds: 600), () {
       final lower = text.toLowerCase();
 
@@ -62,7 +62,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           });
         });
       } else {
-        // Low confidence -> Trigger Escalation Ticket
         setState(() {
           _messages.add({
             'isUser': false,
@@ -74,6 +73,111 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         });
       }
     });
+  }
+
+  void _openEscalationInboxModal(EscalationTicketModel ticket) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('HR Escalation Inbox', style: Theme.of(context).textTheme.headlineMedium),
+                      Text('Ticket #${ticket.ticketNo} • ${ticket.category}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.odooTeal)),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: AppTheme.amberWarning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer_outlined, color: AppTheme.amberWarning),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('SLA Due: ${ticket.slaDueAt}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text('Assigned to: ${ticket.answeredBy ?? "Unassigned"}', style: const TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Original Employee Question:', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark ? AppTheme.surfaceDark : AppTheme.surfaceElevatedLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(ticket.questionText, style: const TextStyle(fontSize: 14)),
+              ),
+              const SizedBox(height: 16),
+              Text('HR Manager Answer & Knowledge Base Flywheel:', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 6),
+              Expanded(
+                child: TextField(
+                  maxLines: 6,
+                  decoration: InputDecoration(
+                    hintText: 'Type official verified answer to employee...',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Checkbox(value: true, onChanged: (_) {}),
+                  const Text('Publish answer to Knowledge Base (Self-Learning RAG)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.emeraldSuccess, foregroundColor: Colors.white),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('✅ Ticket ${ticket.ticketNo} Answered & Indexed into Vector DB!')),
+                    );
+                  },
+                  icon: const Icon(Icons.send),
+                  label: const Text('Submit Answer & Notify Employee'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -127,7 +231,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   final msg = _messages[index];
                   final isUser = msg['isUser'] as bool;
                   final citations = msg['citations'] as List;
-                  final escalation = msg['escalation'];
+                  final escalation = msg['escalation'] as EscalationTicketModel?;
 
                   return Align(
                     alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -157,7 +261,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(color: AppTheme.odooTeal.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
+                              decoration: BoxDecoration(color: AppTheme.odooTeal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
                               child: Row(
                                 children: [
                                   const Icon(Icons.source, size: 14, color: AppTheme.odooTeal),
@@ -177,7 +281,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppTheme.amberWarning.withOpacity(0.15),
+                                color: AppTheme.amberWarning.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: AppTheme.amberWarning),
                               ),
@@ -199,11 +303,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                                     height: 34,
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(backgroundColor: AppTheme.amberWarning, foregroundColor: Colors.black),
-                                      onPressed: () {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('⚡ Escalation Ticket ${escalation.ticketNo} Sent to HR Inbox')),
-                                        );
-                                      },
+                                      onPressed: () => _openEscalationInboxModal(escalation),
                                       child: const Text('View Ticket in HR Inbox', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                     ),
                                   ),

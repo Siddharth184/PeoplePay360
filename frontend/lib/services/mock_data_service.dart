@@ -16,12 +16,58 @@ class MockDataService {
     payslipsCount: 12,
   );
 
+  static List<EmployeeModel> allEmployees = [
+    EmployeeModel(
+      id: 'emp-001',
+      name: 'Aarav Sharma',
+      email: 'aarav.sharma@peoplepay360.io',
+      jobTitle: 'Senior Software Architect',
+      department: 'Finance & Tech Ops',
+      workPhone: '+91 98765 43210',
+      managerName: 'Sara Khan',
+      avatarUrl: '',
+      timeOffBalance: 14,
+      activeContractsCount: 1,
+      attendancesCount: 22,
+      payslipsCount: 12,
+    ),
+    EmployeeModel(
+      id: 'emp-002',
+      name: 'Priya Patel',
+      email: 'priya.patel@peoplepay360.io',
+      jobTitle: 'Lead Payroll Analyst',
+      department: 'Finance & Tech Ops',
+      workPhone: '+91 98765 12345',
+      managerName: 'Sara Khan',
+      avatarUrl: '',
+      timeOffBalance: 18,
+      activeContractsCount: 1,
+      attendancesCount: 20,
+      payslipsCount: 12,
+    ),
+    EmployeeModel(
+      id: 'emp-003',
+      name: 'Rajesh Kumar',
+      email: 'rajesh.kumar@peoplepay360.io',
+      jobTitle: 'Senior HR Operations Manager',
+      department: 'Human Resources',
+      workPhone: '+91 98765 67890',
+      managerName: 'Sara Khan',
+      avatarUrl: '',
+      timeOffBalance: 10,
+      activeContractsCount: 1,
+      attendancesCount: 21,
+      payslipsCount: 12,
+    ),
+  ];
+
   static List<AttendanceModel> attendances = [
     AttendanceModel(id: 'att-01', dateStr: '2026-09-05', checkInTime: '09:02 AM', checkOutTime: null, status: 'PRESENT', workedHours: 5.5),
     AttendanceModel(id: 'att-02', dateStr: '2026-09-04', checkInTime: '09:15 AM', checkOutTime: '06:10 PM', status: 'LATE', workedHours: 8.5),
     AttendanceModel(id: 'att-03', dateStr: '2026-09-03', checkInTime: '08:58 AM', checkOutTime: '06:00 PM', status: 'PRESENT', workedHours: 9.0),
     AttendanceModel(id: 'att-04', dateStr: '2026-09-02', checkInTime: '09:00 AM', checkOutTime: '05:55 PM', status: 'PRESENT', workedHours: 8.9),
     AttendanceModel(id: 'att-05', dateStr: '2026-09-01', checkInTime: '09:05 AM', checkOutTime: '06:15 PM', status: 'PRESENT', workedHours: 9.1),
+    AttendanceModel(id: 'att-06', dateStr: '2026-08-31', checkInTime: '08:55 AM', checkOutTime: '06:02 PM', status: 'PRESENT', workedHours: 9.0),
   ];
 
   static List<TimeOffRequestModel> timeOffRequests = [
@@ -65,6 +111,25 @@ class MockDataService {
         PayslipLineModel(ruleName: 'Net Salary', ruleCode: 'NET', category: 'NET', amount: 75000.0),
       ],
     ),
+    PayslipModel(
+      id: 'pay-02',
+      refCode: 'PAY/2026/07',
+      employeeName: 'Aarav Sharma',
+      periodStart: '2026-07-01',
+      periodEnd: '2026-07-31',
+      grossAmount: 80000.0,
+      netAmount: 75000.0,
+      status: 'DONE',
+      lines: [
+        PayslipLineModel(ruleName: 'Basic Salary', ruleCode: 'BASIC', category: 'BASIC', amount: 50000.0),
+        PayslipLineModel(ruleName: 'House Rent Allowance', ruleCode: 'HRA', category: 'ALLOWANCE', amount: 20000.0),
+        PayslipLineModel(ruleName: 'Standard Allowance', ruleCode: 'STD', category: 'ALLOWANCE', amount: 10000.0),
+        PayslipLineModel(ruleName: 'Gross Salary', ruleCode: 'GROSS', category: 'GROSS', amount: 80000.0),
+        PayslipLineModel(ruleName: 'Provident Fund', ruleCode: 'PF', category: 'DEDUCTION', amount: -3000.0),
+        PayslipLineModel(ruleName: 'Professional Tax', ruleCode: 'PT', category: 'DEDUCTION', amount: -2000.0),
+        PayslipLineModel(ruleName: 'Net Salary', ruleCode: 'NET', category: 'NET', amount: 75000.0),
+      ],
+    ),
   ];
 
   static List<EscalationTicketModel> escalationTickets = [
@@ -79,6 +144,18 @@ class MockDataService {
       answerText: null,
       answeredBy: 'Sara Khan (HR Director)',
       retrievalConfidence: 0.38,
+    ),
+    EscalationTicketModel(
+      id: 'esc-02',
+      ticketNo: 'ESC/2026/0038',
+      questionText: 'Is Professional Tax (PT) calculated on gross or basic salary in Maharashtra?',
+      category: 'TAX_STATUTORY',
+      status: 'ANSWERED',
+      priority: 'NORMAL',
+      slaDueAt: '2026-09-04 12:00',
+      answerText: 'Professional Tax in Maharashtra is a fixed statutory deduction of ₹2,000/year (₹200/month except February which is ₹300). It is independent of basic salary.',
+      answeredBy: 'Priya Patel (Payroll Mgr)',
+      retrievalConfidence: 0.41,
     ),
   ];
 }

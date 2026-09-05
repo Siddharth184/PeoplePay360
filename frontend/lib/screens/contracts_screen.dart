@@ -28,11 +28,76 @@ class _ContractsScreenState extends State<ContractsScreen> {
     });
   }
 
+  void _openCreateContractSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            top: 20, left: 20, right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Create New HR Contract', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 16),
+              TextFormField(
+                initialValue: 'CON/2026/0043',
+                decoration: const InputDecoration(labelText: 'Reference Code', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                initialValue: '100000.00',
+                decoration: const InputDecoration(labelText: 'Monthly Wage (INR)', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: 'Finance & Tech Ops',
+                decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 'Finance & Tech Ops', child: Text('Finance & Tech Ops')),
+                  DropdownMenuItem(value: 'Human Resources', child: Text('Human Resources')),
+                ],
+                onChanged: (_) {},
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooAubergine, foregroundColor: Colors.white),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('✅ Contract CON/2026/0043 Created & Set to RUNNING')),
+                    );
+                  },
+                  child: const Text('Save Contract'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeRule = MockDataService.salaryRules[_selectedRuleIndex];
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppTheme.odooAubergine,
+        foregroundColor: Colors.white,
+        onPressed: _openCreateContractSheet,
+        icon: const Icon(Icons.add),
+        label: const Text('New Contract'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -54,7 +119,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           Text('Active Contract: ${MockDataService.contracts.first.refCode}', style: const TextStyle(fontWeight: FontWeight.bold)),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: AppTheme.emeraldSuccess.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                            decoration: BoxDecoration(color: AppTheme.emeraldSuccess.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
                             child: const Text('RUNNING', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.emeraldSuccess)),
                           ),
                         ],
@@ -105,7 +170,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           Text('Rule: ${activeRule.name}', style: const TextStyle(fontWeight: FontWeight.bold)),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(color: AppTheme.odooTeal.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                            decoration: BoxDecoration(color: AppTheme.odooTeal.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                             child: Text(activeRule.computationType, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.odooTeal)),
                           ),
                         ],

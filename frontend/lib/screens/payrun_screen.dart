@@ -13,6 +13,43 @@ class PayrunScreen extends StatefulWidget {
 class _PayrunScreenState extends State<PayrunScreen> {
   int _currentStep = 0;
 
+  void _showAnomalyDetailsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: const [
+              Icon(Icons.shield_outlined, color: AppTheme.emeraldSuccess),
+              SizedBox(width: 8),
+              Text('Pre-Flight Inspector'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text('Audit Checks Verified:', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Text('✔ 100% Active Contracts matched with period date span'),
+              Text('✔ Zero overlapping running contract conflicts found'),
+              Text('✔ Salary structures AST Python expressions safe'),
+              Text('✔ Attendance hours mapped to working schedule'),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.emeraldSuccess, foregroundColor: Colors.white),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Pass All Checks'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +72,7 @@ class _PayrunScreenState extends State<PayrunScreen> {
                         children: [
                           _buildStepIndicator(0, '1. Scope & Period'),
                           const Expanded(child: Divider(indent: 8, endIndent: 8)),
-                          _buildStepIndicator(1, '2. Pre-Flight Anomaly Check'),
+                          _buildStepIndicator(1, '2. Pre-Flight Check'),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -91,7 +128,7 @@ class _PayrunScreenState extends State<PayrunScreen> {
       children: [
         CircleAvatar(
           radius: 12,
-          backgroundColor: isActive ? AppTheme.odooAubergine : Colors.grey.withOpacity(0.3),
+          backgroundColor: isActive ? AppTheme.odooAubergine : Colors.grey.withValues(alpha: 0.3),
           child: Text('${stepIndex + 1}', style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 6),
@@ -107,7 +144,7 @@ class _PayrunScreenState extends State<PayrunScreen> {
         const Text('Select Pay Period: August 2026', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: 'All Departments',
+          initialValue: 'All Departments',
           decoration: const InputDecoration(labelText: 'Department Scope', border: OutlineInputBorder()),
           items: const [
             DropdownMenuItem(value: 'All Departments', child: Text('All Departments (142 Employees)')),
@@ -133,17 +170,20 @@ class _PayrunScreenState extends State<PayrunScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: AppTheme.amberWarning.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-          child: Row(
-            children: const [
-              Icon(Icons.warning_amber_rounded, color: AppTheme.amberWarning),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text('0 Critical Anomalies Found. Ready to compute payroll batch.', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              ),
-            ],
+        InkWell(
+          onTap: _showAnomalyDetailsDialog,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppTheme.emeraldSuccess.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+            child: Row(
+              children: const [
+                Icon(Icons.check_circle_outline, color: AppTheme.emeraldSuccess),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text('0 Critical Anomalies. Tap to view Pre-Flight Inspector Report.', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 16),
