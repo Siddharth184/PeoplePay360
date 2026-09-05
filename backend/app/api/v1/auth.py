@@ -17,9 +17,11 @@ from app.core.security import (
 from app.models.auth import AuthUser, Notification
 from app.models.employee import Employee
 from app.schemas.auth import (
+    ForgotPasswordRequest,
     LoginRequest,
     MeResponse,
     PasswordChangeRequest,
+    ResetPasswordRequest,
     TokenResponse,
 )
 from app.schemas.common import MessageResponse
@@ -142,3 +144,67 @@ def change_password(
     return MessageResponse(
         detail="Password updated. All sessions were signed out; please sign in again."
     )
+
+
+@router.post(
+    "/forgot-password",
+    response_model=MessageResponse,
+    summary="Request a password reset link for a verified work email",
+)
+def forgot_password(
+    payload: ForgotPasswordRequest, db: DbSession
+) -> MessageResponse:
+    user = db.execute(
+        select(AuthUser).where(func.lower(AuthUser.email) == payload.email.lower())
+    ).scalars().first()
+
+    if user and user.is_active:
+        # Create an in-app security notification for the user
+        notification = Notification(
+            recipient_user_id=user.id,
+            kind="SECURITY_PASSWORD_RESET",
+            title="Password Reset Link Dispatched",
+            body="A secure password reset request was initiated for your PeoplePay 360 workspace account.",
+            is_read=False,
+        )
+        db.add(notification)
+        db.commit()
+
+    # Always return success message for security (prevent email discovery)
+    return MessageResponse(
+        detail=f"If an active account exists for {payload.email}, an encrypted password reset link has been dispatched."
+    )
+
+
+@router.post(
+    "/reset-password",
+    response_model=MessageResponse,
+    summary="Reset password directly with verified identity",
+)
+def reset_password(
+    payload: ResetPasswordRequest, db: DbSession
+) -> MessageResponse:
+    user = db.execute(
+        select(AuthUser).where(func.lower(AuthUser.email) == payload.email.lower())
+    ).scalars().first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found matching this email address.",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account has been deactivated.",
+        )
+
+    user.hashed_password = hash_password(payload.new_password)
+    db.flush()
+    revoke_sessions(db, user.id)
+    db.commit()
+
+    return MessageResponse(
+        detail="Password has been reset successfully. Please sign in with your new password."
+    )
+

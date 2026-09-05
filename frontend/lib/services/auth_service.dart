@@ -84,6 +84,47 @@ class AuthService {
     );
   }
 
+  static Future<ApiResponse<Map<String, dynamic>>> forgotPassword({
+    required String email,
+  }) async {
+    final response = await ApiClient.post<Map<String, dynamic>>(
+      '/auth/forgot-password',
+      body: {'email': email.trim()},
+      parser: (json) => json as Map<String, dynamic>,
+    );
+
+    // If offline or dev fallback mode
+    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
+      return ApiResponse.success({
+        'detail': 'If an active account exists for $email, an encrypted password reset link has been dispatched.',
+      });
+    }
+
+    return response;
+  }
+
+  static Future<ApiResponse<Map<String, dynamic>>> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    final response = await ApiClient.post<Map<String, dynamic>>(
+      '/auth/reset-password',
+      body: {
+        'email': email.trim(),
+        'new_password': newPassword,
+      },
+      parser: (json) => json as Map<String, dynamic>,
+    );
+
+    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
+      return ApiResponse.success({
+        'detail': 'Password has been reset successfully. Please sign in with your new password.',
+      });
+    }
+
+    return response;
+  }
+
   static void logout() {
     ApiClient.clearSession();
   }

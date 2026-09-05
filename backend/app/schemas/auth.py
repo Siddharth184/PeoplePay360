@@ -76,6 +76,15 @@ class PasswordChangeRequest(BaseModel):
     new_password: str = Field(min_length=8, max_length=256)
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    new_password: str = Field(min_length=8, max_length=256)
+
+
 class NotificationOut(ORMModel):
     id: uuid.UUID
     kind: str

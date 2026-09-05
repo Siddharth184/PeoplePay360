@@ -152,118 +152,187 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
 
   void _openForgotPasswordDialog() {
     final resetEmailCtrl = TextEditingController(text: _emailController.text);
+    bool isSending = false;
+    String? localError;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: EdgeInsets.only(
-            top: 24,
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 28,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              padding: EdgeInsets.only(
+                top: 24,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Reset Password',
-                    style: GoogleFonts.outfit(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF131B2E),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
-                    onPressed: () => Navigator.pop(context),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Reset Password',
+                        style: GoogleFonts.outfit(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF131B2E),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Enter your verified company work email. We will dispatch an encrypted Odoo password reset link to your inbox.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      color: const Color(0xFF4E444A),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F3FF),
+                      borderRadius: BorderRadius.circular(12),
+                      border: localError != null ? Border.all(color: const Color(0xFFBA1A1A)) : null,
+                    ),
+                    child: TextField(
+                      controller: resetEmailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: const Color(0xFF131B2E),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF00696E), size: 20),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        hintText: 'name@enterprise.odoo.com',
+                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  if (localError != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      localError!,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFFBA1A1A)),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF714B67),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        elevation: 0,
+                      ),
+                      onPressed: isSending
+                          ? null
+                          : () async {
+                              final email = resetEmailCtrl.text.trim();
+                              if (email.isEmpty || !email.contains('@')) {
+                                setSheetState(() {
+                                  localError = 'Please enter a valid work email address.';
+                                });
+                                return;
+                              }
+
+                              setSheetState(() {
+                                isSending = true;
+                                localError = null;
+                              });
+
+                              final response = await AuthService.forgotPassword(email: email);
+
+                              if (!ctx.mounted) return;
+                              Navigator.pop(ctx);
+
+                              if (response.isSuccess) {
+                                final msg = response.data?['detail'] ??
+                                    '✉️ Reset instructions dispatched to $email';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFF004A31),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle, color: Color(0xFF6FFBBE)),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            msg.toString(),
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFFBA1A1A),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    content: Text(
+                                      response.errorMessage ?? 'Unable to process reset request.',
+                                      style: GoogleFonts.plusJakartaSans(color: Colors.white),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                      child: isSending
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : Text(
+                              'Send Reset Link',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.bold),
+                            ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Enter your verified company work email. We will send an encrypted Odoo password reset link to verify your identity.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  color: const Color(0xFF4E444A),
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F3FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: resetEmailCtrl,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: const Color(0xFF131B2E),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF00696E), size: 20),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    hintText: 'name@enterprise.odoo.com',
-                    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF714B67),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: const Color(0xFF004A31),
-                        behavior: SnackBarBehavior.floating,
-                        content: Text(
-                          '✉️ Reset instructions dispatched to ${resetEmailCtrl.text}',
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Send Reset Link',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
