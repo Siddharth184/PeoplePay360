@@ -158,7 +158,10 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ContractsScreen(onNavigateTab: widget.onNavigateTab),
+            builder: (context) => ContractsScreen(
+              onNavigateTab: widget.onNavigateTab,
+              initialEmployee: emp,
+            ),
           ),
         );
         break;

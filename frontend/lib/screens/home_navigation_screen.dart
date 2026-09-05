@@ -213,40 +213,34 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
       isAdmin ? UserManagementScreen(onNavigateTab: _onTabSelected) : accessDeniedScreen('User Management & RBAC', 'System Administrator'), // 11: User Management
     ];
 
-    // Build bottom navigation bar items based on role
-    List<BottomNavigationBarItem> bottomNavItems;
-    List<int> bottomNavIndices;
-
+    // Build enriched navigation bar items based on role
+    List<_NavItem> enrichedNavItems;
     if (isEmployee) {
-      bottomNavItems = const [
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'My Profile'),
-        BottomNavigationBarItem(icon: Icon(Icons.fingerprint), label: 'Attendance'),
-        BottomNavigationBarItem(icon: Icon(Icons.flight_takeoff), label: 'Time Off'),
-        BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Copilot'),
+      enrichedNavItems = const [
+        _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'My Profile', targetIndex: 0),
+        _NavItem(icon: Icons.fingerprint, activeIcon: Icons.fingerprint, label: 'Attendance', targetIndex: 1),
+        _NavItem(icon: Icons.flight_takeoff, activeIcon: Icons.flight_takeoff, label: 'Time Off', targetIndex: 2),
+        _NavItem(icon: Icons.smart_toy_outlined, activeIcon: Icons.smart_toy, label: 'Copilot', targetIndex: 6),
       ];
-      bottomNavIndices = [0, 1, 2, 6];
     } else if (isHrManager) {
-      bottomNavItems = const [
-        BottomNavigationBarItem(icon: Icon(Icons.people_outline), label: 'Employees'),
-        BottomNavigationBarItem(icon: Icon(Icons.fingerprint), label: 'Attendance'),
-        BottomNavigationBarItem(icon: Icon(Icons.flight_takeoff), label: 'Time Off'),
-        BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Copilot'),
+      enrichedNavItems = const [
+        _NavItem(icon: Icons.people_outline, activeIcon: Icons.people, label: 'Employees', targetIndex: 7),
+        _NavItem(icon: Icons.fingerprint, activeIcon: Icons.fingerprint, label: 'Attendance', targetIndex: 1),
+        _NavItem(icon: Icons.flight_takeoff, activeIcon: Icons.flight_takeoff, label: 'Time Off', targetIndex: 2),
+        _NavItem(icon: Icons.smart_toy_outlined, activeIcon: Icons.smart_toy, label: 'Copilot', targetIndex: 6),
       ];
-      bottomNavIndices = [7, 1, 2, 6];
     } else {
-      bottomNavItems = const [
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-        BottomNavigationBarItem(icon: Icon(Icons.fingerprint), label: 'Attendance'),
-        BottomNavigationBarItem(icon: Icon(Icons.flight_takeoff), label: 'Time Off'),
-        BottomNavigationBarItem(icon: Icon(Icons.description_outlined), label: 'Contracts'),
-        BottomNavigationBarItem(icon: Icon(Icons.payments_outlined), label: 'Payrun'),
-        BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Copilot'),
+      enrichedNavItems = const [
+        _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile', targetIndex: 0),
+        _NavItem(icon: Icons.fingerprint, activeIcon: Icons.fingerprint, label: 'Attendance', targetIndex: 1),
+        _NavItem(icon: Icons.flight_takeoff, activeIcon: Icons.flight_takeoff, label: 'Time Off', targetIndex: 2),
+        _NavItem(icon: Icons.description_outlined, activeIcon: Icons.description, label: 'Contracts', targetIndex: 3),
+        _NavItem(icon: Icons.payments_outlined, activeIcon: Icons.payments, label: 'Payrun', targetIndex: 4),
+        _NavItem(icon: Icons.smart_toy_outlined, activeIcon: Icons.smart_toy, label: 'Copilot', targetIndex: 6),
       ];
-      bottomNavIndices = [0, 1, 2, 3, 4, 6];
     }
 
-    int currentBottomNavIndex = bottomNavIndices.indexOf(_currentIndex);
-    if (currentBottomNavIndex == -1) currentBottomNavIndex = 0;
+    final bottomNavIndices = enrichedNavItems.map((e) => e.targetIndex).toList();
 
     return PopScope(
       canPop: false,
@@ -574,18 +568,111 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
           index: _currentIndex,
           children: screens,
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: currentBottomNavIndex,
-          onTap: (navIndex) {
-            final targetTab = bottomNavIndices[navIndex];
-            _onTabSelected(targetTab);
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppTheme.odooAubergine,
-          unselectedItemColor: Colors.grey.shade600,
-          items: bottomNavItems,
+        bottomNavigationBar: _buildEnrichedNavBar(
+          items: enrichedNavItems,
+          currentIndex: _currentIndex,
+          onSelect: _onTabSelected,
         ),
       ),
     );
   }
+
+  Widget _buildEnrichedNavBar({
+    required List<_NavItem> items,
+    required int currentIndex,
+    required Function(int) onSelect,
+  }) {
+    // Determine active index in items list. If currentIndex is not in items, activeIdx is -1 (no item highlighted!)
+    final activeIdx = items.indexWhere((item) => item.targetIndex == currentIndex);
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF131722),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 12,
+            offset: Offset(0, -3),
+          ),
+        ],
+        border: Border(
+          top: BorderSide(color: Color(0xFF252C3D), width: 1),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (i) {
+              final item = items[i];
+              final isSelected = (i == activeIdx);
+
+              return Expanded(
+                child: InkWell(
+                  onTap: () => onSelect(item.targetIndex),
+                  borderRadius: BorderRadius.circular(16),
+                  splashColor: const Color(0xFF714B67).withValues(alpha: 0.2),
+                  highlightColor: Colors.transparent,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: isSelected
+                        ? BoxDecoration(
+                            color: const Color(0xFF714B67).withValues(alpha: 0.28),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFF714B67).withValues(alpha: 0.5),
+                              width: 1,
+                            ),
+                          )
+                        : null,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected ? item.activeIcon : item.icon,
+                          color: isSelected ? const Color(0xFF4EDEA3) : const Color(0xFF94A3B8),
+                          size: isSelected ? 22 : 20,
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: isSelected ? 11 : 10.5,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final int targetIndex;
+
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.targetIndex,
+  });
 }

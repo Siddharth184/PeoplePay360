@@ -8,7 +8,15 @@ import '../models/models.dart';
 
 class ContractsScreen extends StatefulWidget {
   final void Function(int index)? onNavigateTab;
-  const ContractsScreen({super.key, this.onNavigateTab});
+  final EmployeeModel? initialEmployee;
+  final String? employeeId;
+
+  const ContractsScreen({
+    super.key,
+    this.onNavigateTab,
+    this.initialEmployee,
+    this.employeeId,
+  });
 
   @override
   State<ContractsScreen> createState() => _ContractsScreenState();
@@ -36,13 +44,22 @@ class _ContractsScreenState extends State<ContractsScreen> {
   @override
   void initState() {
     super.initState();
-    _emp = MockDataService.currentEmployee;
+    if (widget.initialEmployee != null) {
+      _emp = widget.initialEmployee!;
+    } else if (widget.employeeId != null && widget.employeeId!.isNotEmpty) {
+      _emp = MockDataService.allEmployees.firstWhere(
+        (e) => e.id == widget.employeeId,
+        orElse: () => MockDataService.currentEmployee,
+      );
+    } else {
+      _emp = MockDataService.currentEmployee;
+    }
     EmployeeService.currentEmployeeNotifier.addListener(_onEmployeeChanged);
     _fetchContracts();
   }
 
   void _onEmployeeChanged() {
-    if (mounted) {
+    if (mounted && widget.initialEmployee == null && widget.employeeId == null) {
       setState(() {
         _emp = EmployeeService.currentEmployeeNotifier.value;
       });
@@ -61,19 +78,51 @@ class _ContractsScreenState extends State<ContractsScreen> {
     if (mounted && res.isSuccess && res.data != null && res.data!.isNotEmpty) {
       _allContracts = res.data!;
       final matching = _allContracts.firstWhere(
-        (c) => c.employeeName.toLowerCase().contains(_emp.name.toLowerCase().split(' ').first),
-        orElse: () => _allContracts.first,
+        (c) => _matchesEmployeeName(c.employeeName, _emp.name),
+        orElse: () => _buildFallbackContract(_emp),
       );
       _applyContractData(matching);
     } else {
       // Fallback from MockDataService
       _allContracts = MockDataService.contracts;
       final matching = _allContracts.firstWhere(
-        (c) => c.employeeName.toLowerCase().contains(_emp.name.toLowerCase().split(' ').first),
-        orElse: () => _allContracts.first,
+        (c) => _matchesEmployeeName(c.employeeName, _emp.name),
+        orElse: () => _buildFallbackContract(_emp),
       );
       _applyContractData(matching);
     }
+  }
+
+  bool _matchesEmployeeName(String contractEmpName, String targetEmpName) {
+    final c = contractEmpName.toLowerCase().trim();
+    final t = targetEmpName.toLowerCase().trim();
+    if (c == t) return true;
+    final cParts = c.split(' ');
+    final tParts = t.split(' ');
+    if (cParts.first.length >= 3 && tParts.first.length >= 3 && cParts.first == tParts.first) {
+      return true;
+    }
+    return false;
+  }
+
+  ContractModel _buildFallbackContract(EmployeeModel emp) {
+    final ref = 'CON/2026/${(emp.name.hashCode.abs() % 8999 + 1000)}';
+    final joiningDt = DateTime.tryParse(emp.dateOfJoining ?? '') ?? DateTime(2024, 1, 1);
+    final isExecutive = emp.jobTitle.toLowerCase().contains('director') ||
+        emp.jobTitle.toLowerCase().contains('manager') ||
+        emp.jobTitle.toLowerCase().contains('lead');
+    final structure = isExecutive ? 'Executive Salary Structure' : 'Regular Employee Base';
+
+    return ContractModel(
+      id: 'con-${emp.id}',
+      refCode: ref,
+      employeeName: emp.name,
+      department: emp.department.isNotEmpty ? emp.department : 'Human Resources',
+      startDate: "${joiningDt.year}-${joiningDt.month.toString().padLeft(2, '0')}-${joiningDt.day.toString().padLeft(2, '0')}",
+      wageMonthly: isExecutive ? 115000.0 : 85000.0,
+      status: 'RUNNING',
+      structureName: structure,
+    );
   }
 
   void _applyContractData(ContractModel c) {

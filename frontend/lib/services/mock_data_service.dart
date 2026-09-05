@@ -350,13 +350,19 @@ class MockDataService {
   ];
 
   static List<ContractModel> contracts = [
-    ContractModel(id: 'con-01', refCode: 'CON/2026/0042', employeeName: 'Aarav Sharma', department: 'Finance & Tech Ops', startDate: '2026-01-01', wageMonthly: 100000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
-    ContractModel(id: 'con-02', refCode: 'CON/2025/0011', employeeName: 'Aarav Sharma', department: 'Software Dev', startDate: '2025-01-01', endDate: '2025-12-31', wageMonthly: 85000.0, status: 'EXPIRED', structureName: 'Regular Employee Base'),
-    ContractModel(id: 'con-03', refCode: 'CON/2026/0043', employeeName: 'Priya Patel', department: 'Finance & Tech Ops', startDate: '2026-01-01', wageMonthly: 92000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
-    ContractModel(id: 'con-04', refCode: 'CON/2026/0044', employeeName: 'Vikram Singh', department: 'Engineering', startDate: '2026-02-01', wageMonthly: 78000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
-    ContractModel(id: 'con-05', refCode: 'CON/2026/0045', employeeName: 'Mohammed Ali', department: 'Sales', startDate: '2026-03-01', endDate: '2026-08-31', wageMonthly: 55000.0, status: 'EXPIRED', structureName: 'Contractor Base'),
-    ContractModel(id: 'con-06', refCode: 'CON/2026/0051', employeeName: 'Neha Verma', department: 'Design', startDate: '2026-01-15', wageMonthly: 70000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
-    ContractModel(id: 'con-07', refCode: 'CON/2026/0052', employeeName: 'Karan Mehta', department: 'Customer Support', startDate: '2026-06-01', wageMonthly: 48000.0, status: 'DRAFT', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-01', refCode: 'CON/2026/0010', employeeName: 'Sara Khan', department: 'Human Resources', startDate: '2021-01-04', wageMonthly: 125000.0, status: 'RUNNING', structureName: 'Executive Salary Structure'),
+    ContractModel(id: 'con-02', refCode: 'CON/2026/0042', employeeName: 'Aarav Mehta', department: 'Finance & Tech Ops', startDate: '2024-04-01', wageMonthly: 100000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-02b', refCode: 'CON/2023/0018', employeeName: 'Aarav Mehta', department: 'Finance & Tech Ops', startDate: '2023-04-01', endDate: '2024-03-31', wageMonthly: 85000.0, status: 'EXPIRED', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-03', refCode: 'CON/2026/0015', employeeName: 'Vikram Nair', department: 'Finance & Operations', startDate: '2022-03-15', wageMonthly: 115000.0, status: 'RUNNING', structureName: 'Executive Salary Structure'),
+    ContractModel(id: 'con-04', refCode: 'CON/2026/0022', employeeName: 'Priya Sharma', department: 'Engineering', startDate: '2023-01-15', wageMonthly: 95000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-05', refCode: 'CON/2026/0031', employeeName: 'Rohan Desai', department: 'Engineering', startDate: '2023-08-01', wageMonthly: 110000.0, status: 'RUNNING', structureName: 'Executive Salary Structure'),
+    ContractModel(id: 'con-06', refCode: 'CON/2026/0043', employeeName: 'Priya Patel', department: 'Finance & Tech Ops', startDate: '2023-06-12', wageMonthly: 92000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-07', refCode: 'CON/2026/0028', employeeName: 'Rajesh Kumar', department: 'Human Resources', startDate: '2022-02-01', wageMonthly: 88000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-08', refCode: 'CON/2026/0051', employeeName: 'Neha Verma', department: 'Design', startDate: '2024-01-22', wageMonthly: 70000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-09', refCode: 'CON/2026/0045', employeeName: 'Mohammed Ali', department: 'Sales', startDate: '2025-03-03', endDate: '2026-08-31', wageMonthly: 55000.0, status: 'EXPIRED', structureName: 'Contractor Base'),
+    ContractModel(id: 'con-10', refCode: 'CON/2026/0054', employeeName: 'Ananya Reddy', department: 'Engineering', startDate: '2024-07-08', wageMonthly: 72000.0, status: 'RUNNING', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-11', refCode: 'CON/2026/0052', employeeName: 'Karan Mehta', department: 'Customer Support', startDate: '2025-05-19', wageMonthly: 48000.0, status: 'DRAFT', structureName: 'Regular Employee Base'),
+    ContractModel(id: 'con-12', refCode: 'CON/2026/0001', employeeName: 'Admin User', department: 'Executive Management', startDate: '2020-01-01', wageMonthly: 150000.0, status: 'RUNNING', structureName: 'Executive Salary Structure'),
   ];
 
   static List<SalaryRuleModel> salaryRules = [
