@@ -19,11 +19,18 @@ class AppTheme {
   static const Color amberWarning = Color(0xFFF59E0B);
   static const Color crimsonDanger = Color(0xFFEF4444);
 
+  static const Color odooRed = Color(0xFFEF4444);
+  static const Color odooGreen = Color(0xFF10B981);
+  static const Color surfaceContainerLow = Color(0xFFF1F5F9);
+
   static const Color textPrimaryLight = Color(0xFF0F172A);
   static const Color textPrimaryDark = Color(0xFFF8FAFC);
 
   static const Color textSecondaryLight = Color(0xFF64748B);
   static const Color textSecondaryDark = Color(0xFF94A3B8);
+
+  static const Color onSurface = Color(0xFF0F172A);
+  static const Color onSurfaceVariant = Color(0xFF64748B);
 
   static const Color borderLight = Color(0xFFE2E8F0);
   static const Color borderDark = Color(0xFF334155);
