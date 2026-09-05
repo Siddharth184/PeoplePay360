@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PeoplePay360 — Enterprise ER Schema Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0B0F17;color:#F8FAFC;font-family:'Plus Jakarta Sans',sans-serif;overflow:auto;min-height:100vh}
+.title-bar{text-align:center;padding:32px 16px 8px;position:relative;z-index:10}
+.title-bar h1{font-size:28px;font-weight:700;background:linear-gradient(135deg,#A27B99,#00A09D);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
+.title-bar p{font-size:13px;color:#94A3B8;margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:12px 24px 20px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#94A3B8}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+svg.lines{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.canvas-wrapper{position:relative;width:4600px;min-height:2600px;margin:0 auto;padding:20px}
+.scroll-container{overflow:auto;width:100%;height:calc(100vh - 120px);border:1px solid #1E293B;border-radius:12px;margin:0 16px 16px}
+
+/* Entity Table Styles */
+.entity{position:absolute;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.4);border:1px solid #334155;min-width:260px;z-index:5;transition:box-shadow .2s}
+.entity:hover{box-shadow:0 8px 32px rgba(0,0,0,0.6);z-index:10}
+.entity-header{padding:10px 14px;font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.entity-header .icon{font-size:15px}
+.entity-body{background:#161F30;padding:6px 0}
+.entity-row{display:flex;align-items:center;padding:4px 14px;font-size:11.5px;gap:6px;border-bottom:1px solid #1E293B}
+.entity-row:last-child{border-bottom:none}
+.entity-row .col-name{font-family:'JetBrains Mono',monospace;font-weight:500;color:#E2E8F0;flex:1}
+.entity-row .col-type{font-family:'JetBrains Mono',monospace;font-size:10px;color:#64748B;min-width:80px;text-align:right}
+.badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;letter-spacing:.3px}
+.badge-pk{background:#714B67;color:#fff}
+.badge-fk{background:#334155;color:#94A3B8}
+.badge-uk{background:#1E3A5F;color:#60A5FA}
+.badge-gen{background:#064E3B;color:#6EE7B7}
+.badge-enum{background:#4C1D95;color:#C4B5FD}
+
+/* Domain Colors */
+.hdr-auth{background:linear-gradient(135deg,#714B67,#5A3A52)}
+.hdr-org{background:linear-gradient(135deg,#017E84,#016066)}
+.hdr-emp{background:linear-gradient(135deg,#059669,#047857)}
+.hdr-contract{background:linear-gradient(135deg,#2563EB,#1D4ED8)}
+.hdr-attend{background:linear-gradient(135deg,#0EA5E9,#0284C7)}
+.hdr-timeoff{background:linear-gradient(135deg,#D97706,#B45309)}
+.hdr-payroll{background:linear-gradient(135deg,#DC2626,#B91C1C)}
+.hdr-ai{background:linear-gradient(135deg,#7C3AED,#6D28D9)}
+.hdr-notif{background:linear-gradient(135deg,#EC4899,#DB2777)}
+
+/* Relationship Lines */
+.rel-line{stroke:#334155;stroke-width:1.5;fill:none}
+.rel-line-highlight{stroke:#94A3B8;stroke-width:2}
+.rel-label{font-size:9px;fill:#64748B;font-family:'Plus Jakarta Sans',sans-serif}
+.rel-dot{r:4;fill:#64748B}
+.rel-crow circle{r:3;fill:none;stroke:#64748B;stroke-width:1.5}
+
+/* Annotation badges */
+.constraint-badge{position:absolute;background:#1E293B;border:1px solid #475569;border-radius:8px;padding:6px 10px;font-size:10px;color:#F59E0B;z-index:6;max-width:220px;line-height:1.4}
+.constraint-badge .icon{margin-right:4px}
+</style>
+</head>
+<body>
+
+<div class="title-bar">
+  <h1>🗄️ PeoplePay360 — Enterprise ER Schema</h1>
+  <p>PostgreSQL 18 + pgvector 0.8 &nbsp;•&nbsp; 18 Tables &nbsp;•&nbsp; Odoo 18-Grade Integrity &nbsp;•&nbsp; Hackathon 2026</p>
+</div>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#714B67"></div> Authentication</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#017E84"></div> Organization</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#059669"></div> Employee Hub</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#2563EB"></div> Contracts</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0EA5E9"></div> Attendance</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#D97706"></div> Time Off</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#DC2626"></div> Payroll Engine</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7C3AED"></div> AI / RAG Knowledge</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#EC4899"></div> Notifications</div>
+  <div class="legend-item"><span style="font-size:10px">🔑 PK</span></div>
+  <div class="legend-item"><span style="font-size:10px">🔗 FK</span></div>
+  <div class="legend-item"><span style="font-size:10px">⚡ GENERATED</span></div>
+</div>
+
+<div class="scroll-container">
+<div class="canvas-wrapper" id="canvas">
+
+<!-- ==================== SVG RELATIONSHIP LINES ==================== -->
+<svg class="lines" id="svg-lines" xmlns="http://www.w3.org/2000/svg"></svg>
+
+<!-- ==================== AUTH_USERS ==================== -->
+<div class="entity" id="e-auth-users" style="left:60px;top:40px;width:280px">
+  <div class="entity-header hdr-auth"><span class="icon">🔐</span> auth_users</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">email</span><span class="col-type">VARCHAR(255)</span></div>
+    <div class="entity-row"><span class="col-name">hashed_password</span><span class="col-type">VARCHAR(255)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">role</span><span class="col-type">user_role_enum</span></div>
+    <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span></div>
+    <div class="entity-row"><span class="col-name">created_at</span><span class="col-type">TIMESTAMPTZ</span></div>
+    <div class="entity-row"><span class="col-name">updated_at</span><span class="col-type">TIMESTAMPTZ</span></div>
+  </div>
+</div>
+
+<!-- ==================== DEPARTMENTS ==================== -->
+<div class="entity" id="e-departments" style="left:500px;top:40px;width:280px">
+  <div class="entity-header hdr-org"><span class="icon">🏢</span> departments</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">manager_employee_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span></div>
+    <div class="entity-row"><span class="col-name">created_at</span><span class="col-type">TIMESTAMPTZ</span></div>
+  </div>
+</div>
+
+<!-- ==================== JOB_POSITIONS ==================== -->
+<div class="entity" id="e-job-positions" style="left:860px;top:40px;width:260px">
+  <div class="entity-header hdr-org"><span class="icon">💼</span> job_positions</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">department_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">created_at</span><span class="col-type">TIMESTAMPTZ</span></div>
+  </div>
+</div>
+
+<!-- ==================== WORKING_SCHEDULES ==================== -->
+<div class="entity" id="e-schedules" style="left:1200px;top:40px;width:280px">
+  <div class="entity-header hdr-org"><span class="icon">🕐</span> working_schedules</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="col-name">company_name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="col-name">days_per_week</span><span class="col-type">INT</span></div>
+    <div class="entity-row"><span class="col-name">hours_per_week</span><span class="col-type">NUMERIC(5,2)</span></div>
+    <div class="entity-row"><span class="col-name">timezone</span><span class="col-type">VARCHAR(50)</span></div>
+    <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span></div>
+  </div>
+</div>
+
+<!-- ==================== WORKING_SCHEDULE_LINES ==================== -->
+<div class="entity" id="e-sched-lines" style="left:1560px;top:40px;width:290px">
+  <div class="entity-header hdr-org"><span class="icon">📅</span> working_schedule_lines</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">schedule_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">day_of_week</span><span class="col-type">INT (0-6)</span></div>
+    <div class="entity-row"><span class="col-name">day_name</span><span class="col-type">VARCHAR(15)</span></div>
+    <div class="entity-row"><span class="col-name">start_time</span><span class="col-type">TIME</span></div>
+    <div class="entity-row"><span class="col-name">end_time</span><span class="col-type">TIME</span></div>
+    <div class="entity-row"><span class="col-name">break_hours</span><span class="col-type">NUMERIC(4,2)</span></div>
+    <div class="entity-row"><span class="badge badge-gen">GEN</span><span class="col-name">work_hours</span><span class="col-type">NUMERIC(4,2)</span></div>
+  </div>
+</div>
+
+<!-- ==================== EMPLOYEES (Central Hub) ==================== -->
+<div class="entity" id="e-employees" style="left:500px;top:320px;width:340px">
+  <div class="entity-header hdr-emp"><span class="icon">👤</span> employees &nbsp;<span style="font-size:10px;opacity:.7">CENTRAL HUB</span></div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="badge badge-uk">UK</span><span class="col-name">user_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">badge_id</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">name</span><span class="col-type">VARCHAR(150)</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">work_email</span><span class="col-type">VARCHAR(255)</span></div>
+    <div class="entity-row"><span class="col-name">phone</span><span class="col-type">VARCHAR(25)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">department_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">job_position_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">manager_id</span><span class="col-type">UUID (self)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">working_schedule_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">work_location</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">status</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">bank_account_number</span><span class="col-type">VARCHAR(50)</span></div>
+    <div class="entity-row"><span class="col-name">bank_name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="col-name">bank_ifsc_or_routing</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="col-name">pan_or_ssn</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="col-name">date_of_joining</span><span class="col-type">DATE</span></div>
+  </div>
+</div>
+
+<!-- ==================== HR_CONTRACTS ==================== -->
+<div class="entity" id="e-contracts" style="left:60px;top:380px;width:310px">
+  <div class="entity-header hdr-contract"><span class="icon">📜</span> hr_contracts</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">reference_code</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">employee_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">department_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">job_position_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">working_schedule_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">start_date</span><span class="col-type">DATE</span></div>
+    <div class="entity-row"><span class="col-name">end_date</span><span class="col-type">DATE (nullable)</span></div>
+    <div class="entity-row"><span class="col-name">wage_monthly</span><span class="col-type">NUMERIC(12,2)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">status</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">notes</span><span class="col-type">TEXT</span></div>
+  </div>
+</div>
+
+<!-- ==================== ATTENDANCES ==================== -->
+<div class="entity" id="e-attendances" style="left:950px;top:320px;width:290px">
+  <div class="entity-header hdr-attend"><span class="icon">⏱️</span> attendances</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">employee_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">check_in</span><span class="col-type">TIMESTAMPTZ</span></div>
+    <div class="entity-row"><span class="col-name">check_out</span><span class="col-type">TIMESTAMPTZ</span></div>
+    <div class="entity-row"><span class="col-name">worked_hours</span><span class="col-type">NUMERIC(5,2)</span></div>
+    <div class="entity-row"><span class="col-name">overtime_hours</span><span class="col-type">NUMERIC(5,2)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">status</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">is_manual_edit</span><span class="col-type">BOOLEAN</span></div>
+    <div class="entity-row"><span class="col-name">audit_notes</span><span class="col-type">TEXT</span></div>
+  </div>
+</div>
+
+<!-- ==================== TIMEOFF_TYPES ==================== -->
+<div class="entity" id="e-timeoff-types" style="left:1320px;top:320px;width:270px">
+  <div class="entity-header hdr-timeoff"><span class="icon">🏖️</span> timeoff_types</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">name</span><span class="col-type">VARCHAR(50)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">unit</span><span class="col-type">DAYS / HOURS</span></div>
+    <div class="entity-row"><span class="col-name">requires_allocation</span><span class="col-type">BOOLEAN</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">approval_level</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">display_color</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span></div>
+  </div>
+</div>
+
+<!-- ==================== LEAVE_ALLOCATIONS ==================== -->
+<div class="entity" id="e-allocations" style="left:1320px;top:620px;width:300px">
+  <div class="entity-header hdr-timeoff"><span class="icon">📊</span> leave_allocations</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">employee_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">timeoff_type_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">allocated_days</span><span class="col-type">NUMERIC(5,2)</span></div>
+    <div class="entity-row"><span class="col-name">taken_days</span><span class="col-type">NUMERIC(5,2)</span></div>
+    <div class="entity-row"><span class="badge badge-gen">GEN</span><span class="col-name">remaining_days</span><span class="col-type">NUMERIC(5,2)</span></div>
+    <div class="entity-row"><span class="col-name">validity_year</span><span class="col-type">INT</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">status</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">approver_employee_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">description</span><span class="col-type">TEXT</span></div>
+  </div>
+</div>
+
+<!-- ==================== LEAVE_REQUESTS ==================== -->
+<div class="entity" id="e-leave-requests" style="left:1700px;top:620px;width:290px">
+  <div class="entity-header hdr-timeoff"><span class="icon">✉️</span> leave_requests</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">employee_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">timeoff_type_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">allocation_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">start_date</span><span class="col-type">DATE</span></div>
+    <div class="entity-row"><span class="col-name">end_date</span><span class="col-type">DATE</span></div>
+    <div class="entity-row"><span class="col-name">duration_days</span><span class="col-type">NUMERIC(4,2)</span></div>
+    <div class="entity-row"><span class="col-name">reason</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">status</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">approver_employee_id</span><span class="col-type">UUID</span></div>
+  </div>
+</div>
+
+<!-- ==================== SALARY_STRUCTURES ==================== -->
+<div class="entity" id="e-structures" style="left:60px;top:800px;width:280px">
+  <div class="entity-header hdr-payroll"><span class="icon">🏗️</span> salary_structures</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">code</span><span class="col-type">VARCHAR(50)</span></div>
+    <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span></div>
+    <div class="entity-row"><span class="col-name">notes</span><span class="col-type">TEXT</span></div>
+  </div>
+</div>
+
+<!-- ==================== SALARY_RULES ==================== -->
+<div class="entity" id="e-rules" style="left:60px;top:1040px;width:310px">
+  <div class="entity-header hdr-payroll"><span class="icon">⚙️</span> salary_rules</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">salary_structure_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="col-name">code</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="col-name">sequence</span><span class="col-type">INT</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">category</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">computation_type</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">fixed_amount</span><span class="col-type">NUMERIC(12,2)</span></div>
+    <div class="entity-row"><span class="col-name">percentage_base</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="col-name">percentage_rate</span><span class="col-type">NUMERIC(5,2)</span></div>
+    <div class="entity-row"><span class="col-name">python_code</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span></div>
+  </div>
+</div>
+
+<!-- ==================== PAYRUNS ==================== -->
+<div class="entity" id="e-payruns" style="left:480px;top:820px;width:310px">
+  <div class="entity-header hdr-payroll"><span class="icon">💰</span> payruns</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">reference_code</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="col-name">name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">salary_structure_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">date_start</span><span class="col-type">DATE</span></div>
+    <div class="entity-row"><span class="col-name">date_end</span><span class="col-type">DATE</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">status</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">total_basic</span><span class="col-type">NUMERIC(14,2)</span></div>
+    <div class="entity-row"><span class="col-name">total_gross</span><span class="col-type">NUMERIC(14,2)</span></div>
+    <div class="entity-row"><span class="col-name">total_net</span><span class="col-type">NUMERIC(14,2)</span></div>
+    <div class="entity-row"><span class="col-name">employee_count</span><span class="col-type">INT</span></div>
+    <div class="entity-row"><span class="col-name">warnings_count</span><span class="col-type">INT</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">created_by_user_id</span><span class="col-type">UUID</span></div>
+  </div>
+</div>
+
+<!-- ==================== PAYSLIPS ==================== -->
+<div class="entity" id="e-payslips" style="left:480px;top:1200px;width:320px">
+  <div class="entity-header hdr-payroll"><span class="icon">📄</span> payslips &nbsp;<span style="font-size:9px;opacity:.7">UNIQUE(payrun, employee)</span></div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">reference_code</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">payrun_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">employee_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">contract_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">salary_structure_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">date_start / date_end</span><span class="col-type">DATE</span></div>
+    <div class="entity-row"><span class="col-name">worked_days</span><span class="col-type">NUMERIC(4,2)</span></div>
+    <div class="entity-row"><span class="col-name">basic_amount</span><span class="col-type">NUMERIC(12,2)</span></div>
+    <div class="entity-row"><span class="col-name">gross_amount</span><span class="col-type">NUMERIC(12,2)</span></div>
+    <div class="entity-row"><span class="col-name">net_amount</span><span class="col-type">NUMERIC(12,2)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">status</span><span class="col-type">VARCHAR(20)</span></div>
+    <div class="entity-row"><span class="col-name">warning_notes</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="col-name">pdf_url</span><span class="col-type">VARCHAR(500)</span></div>
+  </div>
+</div>
+
+<!-- ==================== PAYSLIP_LINES ==================== -->
+<div class="entity" id="e-payslip-lines" style="left:880px;top:1200px;width:280px">
+  <div class="entity-header hdr-payroll"><span class="icon">📝</span> payslip_lines</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">payslip_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">salary_rule_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">rule_name</span><span class="col-type">VARCHAR(100)</span></div>
+    <div class="entity-row"><span class="col-name">rule_code</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">category</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="col-name">sequence</span><span class="col-type">INT</span></div>
+    <div class="entity-row"><span class="col-name">amount</span><span class="col-type">NUMERIC(12,2)</span></div>
+  </div>
+</div>
+
+<!-- ==================== DOCUMENT_CHUNKS (RAG) ==================== -->
+<div class="entity" id="e-doc-chunks" style="left:1320px;top:1020px;width:300px">
+  <div class="entity-header hdr-ai"><span class="icon">🧠</span> document_chunks &nbsp;<span style="font-size:9px;opacity:.7">pgvector</span></div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">collection_name</span><span class="col-type">VARCHAR(50)</span></div>
+    <div class="entity-row"><span class="col-name">title</span><span class="col-type">VARCHAR(255)</span></div>
+    <div class="entity-row"><span class="col-name">content</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="col-name">metadata</span><span class="col-type">JSONB</span></div>
+    <div class="entity-row"><span class="col-name">embedding</span><span class="col-type">vector(384)</span></div>
+  </div>
+</div>
+
+<!-- ==================== RAG_ESCALATIONS ==================== -->
+<div class="entity" id="e-escalations" style="left:1700px;top:980px;width:320px">
+  <div class="entity-header hdr-ai"><span class="icon">🎫</span> rag_escalations &nbsp;<span style="font-size:9px;opacity:.7">Human-in-Loop</span></div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-uk">UK</span><span class="col-name">ticket_no</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">employee_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">asked_by_user_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">question_text</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="col-name">question_embedding</span><span class="col-type">vector(384)</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">category</span><span class="col-type">esc_cat_enum</span></div>
+    <div class="entity-row"><span class="col-name">escalation_reason</span><span class="col-type">VARCHAR(40)</span></div>
+    <div class="entity-row"><span class="col-name">retrieval_confidence</span><span class="col-type">NUMERIC(4,3)</span></div>
+    <div class="entity-row"><span class="col-name">ai_draft_answer</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">status</span><span class="col-type">esc_status_enum</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">priority</span><span class="col-type">esc_prio_enum</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">assigned_to_user_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">answer_text</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">answered_by_user_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">sla_due_at</span><span class="col-type">TIMESTAMPTZ</span></div>
+    <div class="entity-row"><span class="col-name">publish_to_kb</span><span class="col-type">BOOLEAN</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">kb_chunk_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">duplicate_of_id</span><span class="col-type">UUID (self)</span></div>
+  </div>
+</div>
+
+<!-- ==================== RAG_ESCALATION_EVENTS ==================== -->
+<div class="entity" id="e-esc-events" style="left:2100px;top:980px;width:280px">
+  <div class="entity-header hdr-ai"><span class="icon">📋</span> rag_escalation_events</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">escalation_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">actor_user_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">event_type</span><span class="col-type">VARCHAR(30)</span></div>
+    <div class="entity-row"><span class="col-name">body</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">visibility</span><span class="col-type">VARCHAR(10)</span></div>
+  </div>
+</div>
+
+<!-- ==================== ESCALATION_ROUTING_RULES ==================== -->
+<div class="entity" id="e-routing" style="left:2100px;top:1280px;width:280px">
+  <div class="entity-header hdr-ai"><span class="icon">🔀</span> escalation_routing_rules</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">category</span><span class="col-type">esc_cat_enum</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">target_role</span><span class="col-type">user_role_enum</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">department_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">sla_hours</span><span class="col-type">INT</span></div>
+    <div class="entity-row"><span class="badge badge-enum">ENUM</span><span class="col-name">priority</span><span class="col-type">esc_prio_enum</span></div>
+    <div class="entity-row"><span class="col-name">sequence</span><span class="col-type">INT</span></div>
+    <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span></div>
+  </div>
+</div>
+
+<!-- ==================== NOTIFICATIONS ==================== -->
+<div class="entity" id="e-notifications" style="left:1700px;top:1480px;width:290px">
+  <div class="entity-header hdr-notif"><span class="icon">🔔</span> notifications</div>
+  <div class="entity-body">
+    <div class="entity-row"><span class="badge badge-pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">recipient_user_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">kind</span><span class="col-type">VARCHAR(40)</span></div>
+    <div class="entity-row"><span class="col-name">title</span><span class="col-type">VARCHAR(200)</span></div>
+    <div class="entity-row"><span class="col-name">body</span><span class="col-type">TEXT</span></div>
+    <div class="entity-row"><span class="col-name">deep_link</span><span class="col-type">VARCHAR(200)</span></div>
+    <div class="entity-row"><span class="badge badge-fk">FK</span><span class="col-name">escalation_id</span><span class="col-type">UUID</span></div>
+    <div class="entity-row"><span class="col-name">is_read</span><span class="col-type">BOOLEAN</span></div>
+  </div>
+</div>
+
+<!-- ==================== CONSTRAINT ANNOTATIONS ==================== -->
+<div class="constraint-badge" style="left:60px;top:720px">
+  <span class="icon">🛡️</span> <b>OVERLAP GUARD</b>: Trigger prevents multiple RUNNING contracts for same employee in overlapping date ranges.
+</div>
+<div class="constraint-badge" style="left:480px;top:1560px">
+  <span class="icon">🔒</span> <b>DUPLICATE GUARD</b>: UNIQUE(payrun_id, employee_id) prevents duplicate payslips per employee in a payrun.
+</div>
+<div class="constraint-badge" style="left:1320px;top:920px">
+  <span class="icon">⚡</span> <b>HNSW INDEX</b>: vector_cosine_ops on embedding column for &lt;2ms semantic similarity search.
+</div>
+
+</div><!-- /canvas-wrapper -->
+</div><!-- /scroll-container -->
+
+<script>
+// Draw SVG relationship lines between entities
+const svg = document.getElementById('svg-lines');
+const canvas = document.getElementById('canvas');
+
+function getCenter(el, side) {
+  const r = el.getBoundingClientRect();
+  const cr = canvas.getBoundingClientRect();
+  const x = r.left - cr.left, y = r.top - cr.top, w = r.width, h = r.height;
+  switch(side) {
+    case 'top': return {x: x + w/2, y: y};
+    case 'bottom': return {x: x + w/2, y: y + h};
+    case 'left': return {x: x, y: y + h/2};
+    case 'right': return {x: x + w, y: y + h/2};
+  }
+}
+
+function drawLine(fromId, fromSide, toId, toSide, label, color, dashed) {
+  const from = getCenter(document.getElementById(fromId), fromSide);
+  const to = getCenter(document.getElementById(toId), toSide);
+  
+  const midX = (from.x + to.x) / 2;
+  const midY = (from.y + to.y) / 2;
+  
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  
+  let d;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    d = `M ${from.x} ${from.y} C ${from.x + dx*0.4} ${from.y}, ${to.x - dx*0.4} ${to.y}, ${to.x} ${to.y}`;
+  } else {
+    d = `M ${from.x} ${from.y} C ${from.x} ${from.y + dy*0.4}, ${to.x} ${to.y - dy*0.4}, ${to.x} ${to.y}`;
+  }
+  
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  path.setAttribute('stroke', color || '#475569');
+  path.setAttribute('stroke-width', '1.5');
+  path.setAttribute('fill', 'none');
+  if (dashed) path.setAttribute('stroke-dasharray', '6,4');
+  svg.appendChild(path);
+
+  // Dots at endpoints
+  [from, to].forEach(p => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+    c.setAttribute('r', '3'); c.setAttribute('fill', color || '#475569');
+    svg.appendChild(c);
+  });
+
+  // Label
+  if (label) {
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    const textW = label.length * 5.5 + 10;
+    bg.setAttribute('x', midX - textW/2); bg.setAttribute('y', midY - 8);
+    bg.setAttribute('width', textW); bg.setAttribute('height', 16);
+    bg.setAttribute('rx', 4); bg.setAttribute('fill', '#0B0F17'); bg.setAttribute('stroke', '#334155');
+    svg.appendChild(bg);
+
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', midX); t.setAttribute('y', midY + 4);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('font-size', '9'); t.setAttribute('fill', '#94A3B8');
+    t.setAttribute('font-family', 'Plus Jakarta Sans, sans-serif');
+    t.textContent = label;
+    svg.appendChild(t);
+  }
+}
+
+// === DRAW ALL RELATIONSHIPS ===
+// Auth -> Employees
+drawLine('e-auth-users', 'bottom', 'e-employees', 'top', '1:1 user_id', '#A27B99');
+// Auth -> Payruns
+drawLine('e-auth-users', 'bottom', 'e-payruns', 'top', '1:N created_by', '#A27B99', true);
+
+// Departments -> Employees
+drawLine('e-departments', 'bottom', 'e-employees', 'top', '1:N dept_id', '#00A09D');
+// Departments -> Job Positions
+drawLine('e-departments', 'right', 'e-job-positions', 'left', '1:N', '#00A09D');
+// Departments -> Contracts
+drawLine('e-departments', 'bottom', 'e-contracts', 'top', '1:N', '#00A09D', true);
+
+// Job Positions -> Employees
+drawLine('e-job-positions', 'bottom', 'e-employees', 'top', '1:N job_pos', '#00A09D');
+
+// Working Schedules -> Lines
+drawLine('e-schedules', 'right', 'e-sched-lines', 'left', '1:N CASCADE', '#00A09D');
+// Working Schedules -> Employees
+drawLine('e-schedules', 'bottom', 'e-employees', 'top', '1:N sched', '#00A09D', true);
+// Working Schedules -> Contracts
+drawLine('e-schedules', 'bottom', 'e-contracts', 'top', '1:N', '#00A09D', true);
+
+// Employees -> Contracts
+drawLine('e-employees', 'left', 'e-contracts', 'right', '1:N contracts', '#10B981');
+// Employees -> Attendances
+drawLine('e-employees', 'right', 'e-attendances', 'left', '1:N logs', '#0EA5E9');
+// Employees -> Allocations
+drawLine('e-employees', 'bottom', 'e-allocations', 'top', '1:N balance', '#D97706');
+// Employees -> Leave Requests
+drawLine('e-employees', 'right', 'e-leave-requests', 'top', '1:N requests', '#D97706', true);
+// Employees -> Payslips
+drawLine('e-employees', 'bottom', 'e-payslips', 'top', '1:N payslips', '#10B981');
+// Employees -> Escalations
+drawLine('e-employees', 'bottom', 'e-escalations', 'left', '1:N raises Q', '#7C3AED', true);
+
+// TimeOff Types -> Allocations
+drawLine('e-timeoff-types', 'bottom', 'e-allocations', 'top', '1:N type', '#D97706');
+// TimeOff Types -> Requests
+drawLine('e-timeoff-types', 'bottom', 'e-leave-requests', 'top', '1:N type', '#D97706', true);
+
+// Allocations -> Leave Requests
+drawLine('e-allocations', 'right', 'e-leave-requests', 'left', '1:N deducts', '#D97706');
+
+// Structures -> Rules
+drawLine('e-structures', 'bottom', 'e-rules', 'top', '1:N CASCADE', '#DC2626');
+// Structures -> Payruns
+drawLine('e-structures', 'right', 'e-payruns', 'left', '1:N selected', '#DC2626');
+// Structures -> Payslips
+drawLine('e-structures', 'bottom', 'e-payslips', 'left', '1:N applied', '#DC2626', true);
+
+// Payruns -> Payslips
+drawLine('e-payruns', 'bottom', 'e-payslips', 'top', '1:N CASCADE', '#DC2626');
+
+// Payslips -> Lines
+drawLine('e-payslips', 'right', 'e-payslip-lines', 'left', '1:N CASCADE', '#DC2626');
+
+// Rules -> Payslip Lines
+drawLine('e-rules', 'right', 'e-payslip-lines', 'bottom', '1:N rule_ref', '#DC2626', true);
+
+// Contracts -> Payslips
+drawLine('e-contracts', 'bottom', 'e-payslips', 'left', '1:N wage src', '#2563EB');
+
+// Document Chunks -> Escalations (KB publish)
+drawLine('e-doc-chunks', 'right', 'e-escalations', 'left', 'kb_chunk', '#7C3AED', true);
+
+// Escalations -> Events
+drawLine('e-escalations', 'right', 'e-esc-events', 'left', '1:N audit trail', '#7C3AED');
+
+// Escalations -> Notifications
+drawLine('e-escalations', 'bottom', 'e-notifications', 'top', '1:N triggers', '#EC4899');
+
+// Routing -> Departments
+drawLine('e-routing', 'left', 'e-escalations', 'bottom', 'routes to', '#7C3AED', true);
+</script>
+
+</body>
+</html>
