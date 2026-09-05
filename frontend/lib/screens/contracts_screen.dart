@@ -16,12 +16,22 @@ class ContractsScreen extends StatefulWidget {
 
 class _ContractsScreenState extends State<ContractsScreen> {
   bool _rulesExpanded = true;
-  String _selectedStage = 'Running';
+  late EmployeeModel _emp;
+
+  // Contract View / Edit State
+  String? _contractId = 'con-01';
+  String _contractRef = 'CON/2026/0042';
+  DateTime _startDate = DateTime(2026, 1, 1);
+  DateTime? _endDate;
+  String _department = 'Finance & Tech Ops';
+  String _jobPosition = 'HR Manager & People Director';
   double _monthlyWage = 100000.0;
+  String _salaryStructure = 'Regular Employee Base';
+  String _selectedStage = 'Running';
   String _schedule = '40 Hours / Week (Standard)';
   String _contractType = 'Permanent / Full-Time';
-  String _contractRef = 'CON/2026/0042';
-  late EmployeeModel _emp;
+
+  List<ContractModel> _allContracts = [];
 
   @override
   void initState() {
@@ -36,6 +46,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
       setState(() {
         _emp = EmployeeService.currentEmployeeNotifier.value;
       });
+      _fetchContracts();
     }
   }
 
@@ -46,22 +57,129 @@ class _ContractsScreenState extends State<ContractsScreen> {
   }
 
   Future<void> _fetchContracts() async {
-    final res = await ContractService.getContracts();
+    final res = await ContractService.getContracts(employeeId: _emp.id);
     if (mounted && res.isSuccess && res.data != null && res.data!.isNotEmpty) {
-      final first = res.data!.first;
-      setState(() {
-        _monthlyWage = first.wageMonthly;
-        _selectedStage = first.status == 'RUNNING' ? 'Running' : (first.status == 'EXPIRED' ? 'Expired' : 'Draft');
-        _contractRef = first.refCode;
-      });
+      _allContracts = res.data!;
+      final matching = _allContracts.firstWhere(
+        (c) => c.employeeName.toLowerCase().contains(_emp.name.toLowerCase().split(' ').first),
+        orElse: () => _allContracts.first,
+      );
+      _applyContractData(matching);
+    } else {
+      // Fallback from MockDataService
+      _allContracts = MockDataService.contracts;
+      final matching = _allContracts.firstWhere(
+        (c) => c.employeeName.toLowerCase().contains(_emp.name.toLowerCase().split(' ').first),
+        orElse: () => _allContracts.first,
+      );
+      _applyContractData(matching);
     }
+  }
+
+  void _applyContractData(ContractModel c) {
+    if (!mounted) return;
+    setState(() {
+      _contractId = c.id;
+      _contractRef = c.refCode.isNotEmpty ? c.refCode : 'CON/2026/0042';
+      _monthlyWage = c.wageMonthly > 0 ? c.wageMonthly : 100000.0;
+      _selectedStage = c.status == 'RUNNING'
+          ? 'Running'
+          : (c.status == 'EXPIRED'
+              ? 'Expired'
+              : (c.status == 'CANCELLED' ? 'Cancelled' : 'Draft'));
+      _department = c.department.isNotEmpty ? c.department : _emp.department;
+      _jobPosition = _emp.jobTitle.isNotEmpty ? _emp.jobTitle : 'Senior Analyst';
+      _startDate = DateTime.tryParse(c.startDate) ?? DateTime(2026, 1, 1);
+      _endDate = c.endDate != null && c.endDate!.isNotEmpty ? DateTime.tryParse(c.endDate!) : null;
+      _salaryStructure = c.structureName ?? 'Regular Employee Base';
+    });
+  }
+
+  String _formatDateStr(DateTime? dt) {
+    if (dt == null) return 'Ongoing (—)';
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final dayStr = dt.day.toString().padLeft(2, '0');
+    final monStr = months[dt.month - 1];
+    return '$dayStr-$monStr-${dt.year}';
+  }
+
+  String _formatYMD(DateTime dt) {
+    return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+  }
+
+  /// Validation logic against overlapping active contracts
+  String? _checkOverlap({
+    required String? currentContractId,
+    required DateTime startDate,
+    required DateTime? endDate,
+    required String stage,
+    required String employeeName,
+  }) {
+    if (stage != 'Running') return null;
+
+    final targetNameLower = employeeName.toLowerCase().trim();
+
+    for (final c in _allContracts) {
+      if (currentContractId != null && c.id == currentContractId) {
+        continue;
+      }
+
+      final isSameEmployee = c.employeeName.toLowerCase().trim() == targetNameLower ||
+          c.employeeName.toLowerCase().contains(targetNameLower.split(' ').first);
+
+      if (!isSameEmployee) continue;
+
+      final isRunning = c.status == 'RUNNING' || c.status == 'Running';
+      if (!isRunning) continue;
+
+      final otherStart = DateTime.tryParse(c.startDate) ?? DateTime(2026, 1, 1);
+      final otherEnd = c.endDate != null && c.endDate!.isNotEmpty ? DateTime.tryParse(c.endDate!) : null;
+
+      final bool overlaps = (otherEnd == null || !startDate.isAfter(otherEnd)) &&
+          (endDate == null || !endDate.isBefore(otherStart));
+
+      if (overlaps) {
+        final endLabel = otherEnd != null ? _formatDateStr(otherEnd) : 'Ongoing';
+        return 'Overlapping active contract detected! Employee ($employeeName) already has an active Running contract (${c.refCode}) for period ${_formatDateStr(otherStart)} to $endLabel.';
+      }
+    }
+
+    return null;
   }
 
   void _openEditContractSheet() {
     final wageCtrl = TextEditingController(text: _monthlyWage.toStringAsFixed(2));
+    final positionCtrl = TextEditingController(text: _jobPosition);
+
+    DateTime editStartDate = _startDate;
+    DateTime? editEndDate = _endDate;
+    String editDept = _department;
+    String editStruct = _salaryStructure;
+    String editStage = _selectedStage;
     String editSchedule = _schedule;
     String editType = _contractType;
-    String editStage = _selectedStage;
+
+    String? sheetError;
+
+    final departmentsList = [
+      'Finance & Tech Ops',
+      'Human Resources',
+      'Engineering',
+      'Design',
+      'Sales',
+      'Executive Management',
+      'Customer Support',
+    ];
+
+    final structuresList = [
+      'Regular Employee Base',
+      'Contractor Base',
+      'Executive Salary Structure',
+      'Intern Stipend',
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -125,7 +243,42 @@ class _ContractsScreenState extends State<ContractsScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Edit employee dates, department, position, wage, structure & status.',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Validation Error Banner inside sheet if present
+                    if (sheetError != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFEBEE),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFEF5350)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.error_outline, color: Color(0xFFC62828), size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                sheetError!,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFB71C1C),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
 
                     // Stage Selector
                     Text(
@@ -149,10 +302,187 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           backgroundColor: const Color(0xFFF2F3FF),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           onSelected: (val) {
-                            if (val) setSheetState(() => editStage = st);
+                            if (val) {
+                              setSheetState(() {
+                                editStage = st;
+                                sheetError = null;
+                              });
+                            }
                           },
                         );
                       }).toList(),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Contract Dates Row (Start & End Date Pickers)
+                    Row(
+                      children: [
+                        // Start Date
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Start Date *',
+                                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: editStartDate,
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime(2030),
+                                  );
+                                  if (picked != null) {
+                                    setSheetState(() {
+                                      editStartDate = picked;
+                                      sheetError = null;
+                                    });
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF2F3FF),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today, size: 16, color: Color(0xFF714B67)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _formatYMD(editStartDate),
+                                          style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        // End Date
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'End Date',
+                                    style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
+                                  ),
+                                  if (editEndDate != null)
+                                    GestureDetector(
+                                      onTap: () {
+                                        setSheetState(() {
+                                          editEndDate = null;
+                                          sheetError = null;
+                                        });
+                                      },
+                                      child: Text(
+                                        'Set Ongoing',
+                                        style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF00696E)),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: editEndDate ?? editStartDate.add(const Duration(days: 365)),
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime(2030),
+                                  );
+                                  if (picked != null) {
+                                    setSheetState(() {
+                                      editEndDate = picked;
+                                      sheetError = null;
+                                    });
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF2F3FF),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.event_busy, size: 16, color: Color(0xFF714B67)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          editEndDate != null ? _formatYMD(editEndDate!) : 'Ongoing',
+                                          style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.bold, color: editEndDate != null ? const Color(0xFF131B2E) : const Color(0xFF00696E)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Department Dropdown
+                    Text(
+                      'Department *',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(12)),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: departmentsList.contains(editDept) ? editDept : departmentsList.first,
+                          isExpanded: true,
+                          items: departmentsList.map((d) {
+                            return DropdownMenuItem(value: d, child: Text(d));
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) setSheetState(() => editDept = val);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Job Position TextField
+                    Text(
+                      'Job Position / Title *',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 46,
+                      decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(12)),
+                      child: TextField(
+                        controller: positionCtrl,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.work_outline, color: Color(0xFF714B67), size: 18),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 14),
 
@@ -178,7 +508,31 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Working Schedule
+                    // Salary Structure Dropdown
+                    Text(
+                      'Salary Structure *',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(12)),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: structuresList.contains(editStruct) ? editStruct : structuresList.first,
+                          isExpanded: true,
+                          items: structuresList.map((s) {
+                            return DropdownMenuItem(value: s, child: Text(s));
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) setSheetState(() => editStruct = val);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Working Schedule Dropdown
                     Text(
                       'Working Schedule *',
                       style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
@@ -204,7 +558,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Contract Type
+                    // Contract Type Dropdown
                     Text(
                       'Contract Type *',
                       style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
@@ -230,7 +584,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Buttons
+                    // Save / Cancel Action Buttons
                     Row(
                       children: [
                         Expanded(
@@ -253,15 +607,73 @@ class _ContractsScreenState extends State<ContractsScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               elevation: 0,
                             ),
-                            onPressed: () {
+                            onPressed: () async {
+                              // 1. Date range validation
+                              if (editEndDate != null && editStartDate.isAfter(editEndDate!)) {
+                                setSheetState(() {
+                                  sheetError = 'Contract End Date cannot precede Start Date.';
+                                });
+                                return;
+                              }
+
                               final newWage = double.tryParse(wageCtrl.text.trim()) ?? _monthlyWage;
+                              if (newWage <= 0) {
+                                setSheetState(() {
+                                  sheetError = 'Monthly Gross Wage must be greater than 0.';
+                                });
+                                return;
+                              }
+
+                              // 2. Active Overlap Validation
+                              final overlapErr = _checkOverlap(
+                                currentContractId: _contractId,
+                                startDate: editStartDate,
+                                endDate: editEndDate,
+                                stage: editStage,
+                                employeeName: _emp.name,
+                              );
+
+                              if (overlapErr != null) {
+                                setSheetState(() {
+                                  sheetError = overlapErr;
+                                });
+                                return;
+                              }
+
+                              // 3. Perform update via API if possible
+                              if (_contractId != null) {
+                                final apiStatus = editStage == 'Running'
+                                    ? 'RUNNING'
+                                    : (editStage == 'Expired'
+                                        ? 'EXPIRED'
+                                        : (editStage == 'Cancelled' ? 'CANCELLED' : 'DRAFT'));
+                                final payload = {
+                                  'start_date': _formatYMD(editStartDate),
+                                  'end_date': editEndDate != null ? _formatYMD(editEndDate!) : null,
+                                  'wage_monthly': newWage,
+                                  'department': editDept,
+                                  'job_position': positionCtrl.text.trim(),
+                                  'structure_name': editStruct,
+                                  'status': apiStatus,
+                                };
+                                ContractService.updateContract(_contractId!, payload);
+                              }
+
+                              // Update parent screen state
                               setState(() {
+                                _startDate = editStartDate;
+                                _endDate = editEndDate;
+                                _department = editDept;
+                                _jobPosition = positionCtrl.text.trim().isNotEmpty ? positionCtrl.text.trim() : _jobPosition;
                                 _monthlyWage = newWage;
+                                _salaryStructure = editStruct;
+                                _selectedStage = editStage;
                                 _schedule = editSchedule;
                                 _contractType = editType;
-                                _selectedStage = editStage;
                               });
+
                               Navigator.pop(context);
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   backgroundColor: Color(0xFF004A31),
@@ -332,12 +744,12 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Section 1: Employment Terms Card
+                  // Section 1: Employment Terms Card (Employee + Dates + Department + Position)
                   _buildEmploymentTermsCard(),
 
                   const SizedBox(height: 14),
 
-                  // Section 2: Compensation & Wage Card
+                  // Section 2: Compensation & Wage Card (Wage + Salary Structure)
                   _buildCompensationCard(),
 
                   const SizedBox(height: 12),
@@ -418,7 +830,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                       Row(
                         children: [
                           Text(
-                            'CON/2026/0042',
+                            _contractRef,
                             style: GoogleFonts.jetBrainsMono(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -461,7 +873,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
               InkWell(
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('📜 Audit: Contract created 01-Jan-2026 by SysAdmin')),
+                    SnackBar(content: Text('📜 Audit: Contract created 01-Jan-2026 for ${_emp.name}')),
                   );
                 },
                 borderRadius: BorderRadius.circular(20),
@@ -505,12 +917,8 @@ class _ContractsScreenState extends State<ContractsScreen> {
   }
 
   Widget _buildLifecycleStepper() {
-    final steps = [
-      {'name': 'Draft', 'isDone': true, 'isActive': false},
-      {'name': 'Running', 'isDone': false, 'isActive': true},
-      {'name': 'Expired', 'isDone': false, 'isActive': false},
-      {'name': 'Cancelled', 'isDone': false, 'isActive': false},
-    ];
+    final stages = ['Draft', 'Running', 'Expired', 'Cancelled'];
+    final currentIdx = stages.indexOf(_selectedStage);
 
     return Container(
       decoration: BoxDecoration(
@@ -538,10 +946,11 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: steps.map((step) {
-              final isDone = step['isDone'] as bool;
-              final isActive = step['isActive'] as bool;
-              final name = step['name'] as String;
+            children: stages.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final name = entry.value;
+              final isActive = idx == currentIdx;
+              final isDone = idx < currentIdx && _selectedStage != 'Cancelled';
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -554,19 +963,23 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           width: 34,
                           height: 34,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF4EDEA3).withValues(alpha: 0.35),
+                            color: (name == 'Cancelled' ? Colors.red : const Color(0xFF4EDEA3)).withValues(alpha: 0.35),
                             shape: BoxShape.circle,
                           ),
                         ),
                         Container(
                           width: 28,
                           height: 28,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF006443),
+                          decoration: BoxDecoration(
+                            color: name == 'Cancelled' ? Colors.red[700] : const Color(0xFF006443),
                             shape: BoxShape.circle,
                           ),
-                          child: const Center(
-                            child: Icon(Icons.verified, color: Colors.white, size: 16),
+                          child: Center(
+                            child: Icon(
+                              name == 'Cancelled' ? Icons.cancel : Icons.verified,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ],
@@ -610,7 +1023,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                       fontSize: 11.5,
                       fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                       color: isActive
-                          ? const Color(0xFF006443)
+                          ? (name == 'Cancelled' ? Colors.red[800]! : const Color(0xFF006443))
                           : (isDone ? const Color(0xFF4E444A) : const Color(0xFF80747A)),
                     ),
                   ),
@@ -663,9 +1076,9 @@ class _ContractsScreenState extends State<ContractsScreen> {
                       height: 1.4,
                     ),
                     children: [
-                      const TextSpan(text: 'This is the single active running contract for '),
+                      const TextSpan(text: 'Contract parameters for '),
                       TextSpan(text: _emp.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF131B2E))),
-                      const TextSpan(text: ' for the current payroll cycle. Superseded or historical contracts are archived automatically.'),
+                      const TextSpan(text: ' are validated against overlapping active periods to prevent double payruns.'),
                     ],
                   ),
                 ),
@@ -691,7 +1104,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Subheading
+          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -729,7 +1142,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
           const SizedBox(height: 14),
 
-          // Employee Identification Snippet
+          // 1. Employee Info Snippet
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -775,13 +1188,13 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: const Color(0xFF57344F),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              _emp.department.toUpperCase(),
+                              _department.toUpperCase(),
                               style: GoogleFonts.jetBrainsMono(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
@@ -792,29 +1205,27 @@ class _ContractsScreenState extends State<ContractsScreen> {
                         ],
                       ),
                       Text(
-                        '${_emp.jobTitle} · ${_emp.department}',
+                        '$_jobPosition · $_department',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
+                          fontSize: 11.5,
                           color: const Color(0xFF4E444A),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, size: 20, color: Color(0xFF80747A)),
               ],
             ),
           ),
 
           const SizedBox(height: 12),
 
-          // Detail Grid
-          // Contract Period Row
+          // 2. Contract Dates Row
           _buildDetailRow(
             icon: Icons.calendar_month,
-            label: 'Contract Period',
+            label: 'Contract Dates',
             valueWidget: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
@@ -822,7 +1233,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '01-Jan-2026',
+                    _formatDateStr(_startDate),
                     style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
                   ),
                   const Padding(
@@ -830,7 +1241,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     child: Text('→', style: TextStyle(color: Color(0xFF80747A))),
                   ),
                   Text(
-                    'Ongoing (—)',
+                    _formatDateStr(_endDate),
                     style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF00696E)),
                   ),
                 ],
@@ -843,7 +1254,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Indefinite',
+                _endDate == null ? 'Indefinite' : 'Fixed-Term',
                 style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006E73)),
               ),
             ),
@@ -851,7 +1262,37 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
           const SizedBox(height: 8),
 
-          // Working Schedule
+          // 3. Department Row
+          _buildDetailRow(
+            icon: Icons.business,
+            label: 'Department',
+            valueWidget: Text(
+              _department,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+            ),
+            trailing: const Icon(Icons.check_circle_outline, size: 17, color: Color(0xFF006443)),
+          ),
+
+          const SizedBox(height: 8),
+
+          // 4. Job Position Row
+          _buildDetailRow(
+            icon: Icons.work_outline,
+            label: 'Job Position',
+            valueWidget: Text(
+              _jobPosition,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+            ),
+            trailing: const Icon(Icons.verified, size: 17, color: Color(0xFF714B67)),
+          ),
+
+          const SizedBox(height: 8),
+
+          // 5. Working Schedule Row
           _buildDetailRow(
             icon: Icons.schedule,
             label: 'Working Schedule',
@@ -861,39 +1302,6 @@ class _ContractsScreenState extends State<ContractsScreen> {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
             ),
-            trailing: InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Opening Working Schedule Builder...')),
-                );
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(Icons.open_in_new, size: 16, color: Color(0xFF00696E)),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Contract Type
-          _buildDetailRow(
-            icon: Icons.description_outlined,
-            label: 'Contract Type',
-            valueWidget: Text(
-              _contractType,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-            ),
             trailing: const Icon(Icons.lock_outline, size: 17, color: Color(0xFF80747A)),
           ),
         ],
@@ -902,6 +1310,8 @@ class _ContractsScreenState extends State<ContractsScreen> {
   }
 
   Widget _buildCompensationCard() {
+    final annualCtc = _monthlyWage * 12;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1026,7 +1436,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '₹ 11,20,000.00 / yr',
+                        '₹ ${annualCtc.toStringAsFixed(2)} / yr',
                         style: GoogleFonts.jetBrainsMono(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
                       ),
                     ],
@@ -1038,7 +1448,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
           const SizedBox(height: 12),
 
-          // Salary Structure Breakdown Snippet
+          // Salary Structure Breakdown
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1061,13 +1471,13 @@ class _ContractsScreenState extends State<ContractsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Regular Salary Structure',
+                                  _salaryStructure,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
                                 ),
                                 Text(
-                                  '12 Active Rules Configured',
+                                  'Salary Structure Configured',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF4E444A)),
@@ -1114,10 +1524,10 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     runSpacing: 6,
                     children: const [
                       _RulePill('Basic (50%)'),
-                      _RulePill('HRA (20%)'),
-                      _RulePill('Std Deduction'),
-                      _RulePill('Provident Fund (12%)'),
-                      _RulePill('ESI Guard'),
+                      _RulePill('HRA (40%)'),
+                      _RulePill('Std Allowance'),
+                      _RulePill('Provident Fund'),
+                      _RulePill('Professional Tax'),
                       _RulePill('Special Allowance'),
                     ],
                   ),
@@ -1169,7 +1579,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                         ),
                       ),
                       Text(
-                        'Hash: 8f9b...a12c · 02-Jan-2026',
+                        'Hash: 8f9b...a12c · Validated',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.jetBrainsMono(
