@@ -61,7 +61,6 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
   bool _keepMeSignedIn = true;
   bool _isAuthenticating = false;
   bool _isAuthenticated = false;
-  bool _isScanningFaceId = false;
 
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
@@ -149,44 +148,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
     }
   }
 
-  Future<void> _handleFaceId() async {
-    if (_isScanningFaceId) return;
 
-    setState(() {
-      _isScanningFaceId = true;
-    });
-
-    await Future.delayed(const Duration(milliseconds: 1200));
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF004A31),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Color(0xFF6FFBBE)),
-            const SizedBox(width: 8),
-            Text(
-              'Face ID Confirmed • Logging in...',
-              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (!mounted) return;
-
-    final targetRole = _demoRoles[_selectedRoleIndex]['systemRole'] ?? 'ADMIN';
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => HomeNavigationScreen(userRole: targetRole),
-      ),
-    );
-  }
 
   void _openForgotPasswordDialog() {
     final resetEmailCtrl = TextEditingController(text: _emailController.text);
@@ -778,36 +740,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
             ),
           ),
 
-          const SizedBox(height: 12),
 
-          // Face ID Secondary Button
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFEAEDFF),
-                foregroundColor: const Color(0xFF00696E),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              onPressed: _handleFaceId,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.face, size: 20, color: Color(0xFF00696E)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Or sign in with Face ID',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF00696E),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
