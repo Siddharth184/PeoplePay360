@@ -46,7 +46,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   void _onEmployeeNotifierChanged() {
     if (mounted) {
       final updated = EmployeeService.currentEmployeeNotifier.value;
-      if (updated.id == emp.id || widget.initialEmployee == null) {
+      if (updated.id == emp.id) {
         setState(() {
           emp = updated;
         });
@@ -136,6 +136,10 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   void _openEditEmployeeSheet() {
+    if (!ApiClient.hasHrAccess) {
+      _toast('Only HR personnel can edit employee profiles');
+      return;
+    }
     final nameCtrl = TextEditingController(text: emp.name);
     final titleCtrl = TextEditingController(text: emp.jobTitle);
     final deptCtrl = TextEditingController(text: emp.department);
@@ -649,7 +653,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               ),
               onSelected: _onProfileAction,
               itemBuilder: (context) {
-                final bool canEdit = ApiClient.hasHrAccess || ApiClient.isOwnProfile(emp.id);
+                final bool canEdit = ApiClient.hasHrAccess;
                 return [
                   if (canEdit) _menuItem('edit', Icons.edit_outlined, 'Edit Profile', iconColor: const Color(0xFF714B67)),
                   _menuItem('copy_email', Icons.alternate_email_rounded, 'Copy Work Email', iconColor: const Color(0xFF00696E)),
@@ -1642,6 +1646,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildBottomActionBar() {
+    final bool canEdit = ApiClient.hasHrAccess;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
@@ -1696,29 +1701,31 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          if (canEdit) ...[
+            const SizedBox(width: 10),
 
-          // Edit Employee Primary Button
-          Expanded(
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF714B67),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                elevation: 2,
-              ),
-              onPressed: _openEditEmployeeSheet,
-              icon: const Icon(Icons.edit_note, size: 18),
-              label: Text(
-                'Edit Employee',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+            // Edit Employee Primary Button (HR Only)
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF714B67),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 2,
+                ),
+                onPressed: _openEditEmployeeSheet,
+                icon: const Icon(Icons.edit_note, size: 18),
+                label: Text(
+                  'Edit Employee',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
