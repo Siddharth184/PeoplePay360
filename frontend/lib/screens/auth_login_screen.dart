@@ -373,76 +373,85 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      // App Icon with Cyan badge
-                      Stack(
-                        children: [
-                          Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.badge_outlined,
-                                color: Colors.white,
-                                size: 26,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            right: -1,
-                            bottom: -1,
-                            child: Container(
-                              width: 13,
-                              height: 13,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        // App Icon with Cyan badge
+                        Stack(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF92EFF5),
-                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFF714B67),
-                                  width: 2,
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.badge_outlined,
+                                  color: Colors.white,
+                                  size: 24,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PeoplePay360',
-                            style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.2,
+                            Positioned(
+                              right: -1,
+                              bottom: -1,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF92EFF5),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF714B67),
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'PeoplePay360',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              Text(
+                                'ENTERPRISE HR & PAYROLL • ODOO 18',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.jetBrainsMono(
+                                  color: const Color(0xFFF0BFE0),
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            'ENTERPRISE HR & PAYROLL • ODOO 18',
-                            style: GoogleFonts.jetBrainsMono(
-                              color: const Color(0xFFF0BFE0),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   // PROD-US1 Pill
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
@@ -451,19 +460,19 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 7,
-                          height: 7,
+                          width: 6,
+                          height: 6,
                           decoration: const BoxDecoration(
                             color: Color(0xFF4EDEA3),
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 4),
                         Text(
-                          'PROD-US1',
+                          'PROD',
                           style: GoogleFonts.jetBrainsMono(
                             color: Colors.white,
-                            fontSize: 11,
+                            fontSize: 10.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -589,12 +598,16 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                   color: const Color(0xFF0F172A),
                 ),
               ),
-              Text(
-                _currentRoleBadge,
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF00696E),
+              Flexible(
+                child: Text(
+                  _currentRoleBadge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF00696E),
+                  ),
                 ),
               ),
             ],
@@ -649,6 +662,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                   });
                 },
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
                       width: 20,
@@ -665,11 +679,15 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Keep me signed in',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: const Color(0xFF4E444A),
+                    Flexible(
+                      child: Text(
+                        'Keep me signed in',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: const Color(0xFF4E444A),
+                        ),
                       ),
                     ),
                   ],
@@ -819,12 +837,16 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                '⚡ Quick Demo Roles (1-Tap Fast Evaluation)',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  '⚡ Quick Demo Roles (1-Tap Fast Eval)',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
                 ),
               ),
             ],
