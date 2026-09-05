@@ -642,94 +642,103 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  // Back Button
-                  InkWell(
-                    onTap: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      } else if (widget.onNavigateTab != null) {
-                        widget.onNavigateTab!(0);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF2F3FF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF131B2E)),
+              Expanded(
+                child: Row(
+                  children: [
+                    // Back Button
+                    InkWell(
+                      onTap: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else if (widget.onNavigateTab != null) {
+                          widget.onNavigateTab!(0);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF2F3FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF131B2E)),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Logo + Title Column
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    const SizedBox(width: 10),
+                    // Logo + Title Column
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF714B67),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.badge_outlined, color: Colors.white, size: 13),
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF714B67),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Center(
+                                  child: Icon(Icons.badge_outlined, color: Colors.white, size: 13),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'User Management',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF131B2E),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'User Management',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF131B2E),
+                          const SizedBox(height: 2),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF92EFF5),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'ADMIN • RBAC v2026.1',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF006E73),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF92EFF5),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'ADMIN • RBAC v2026.1',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF006E73),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               // + New User Button
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF714B67),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   elevation: 2,
                   shadowColor: const Color(0x33714B67),
                 ),
                 onPressed: _openNewUserSheet,
-                icon: const Icon(Icons.person_add, size: 16),
+                icon: const Icon(Icons.person_add, size: 15),
                 label: Text(
                   '+ New User',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -938,20 +947,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.touch_app, size: 15, color: Color(0xFF006E73)),
-              const SizedBox(width: 6),
-              Text(
-                'Tap card for RBAC permissions • Swipe left for quick actions',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF006E73),
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(Icons.touch_app, size: 15, color: Color(0xFF006E73)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Tap card for RBAC permissions • Swipe left for quick actions',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF006E73),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(width: 6),
           const Icon(Icons.swipe_left, size: 15, color: Color(0xFF006E73)),
         ],
       ),
@@ -1267,25 +1283,32 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    item.isYou ? Icons.verified_user : Icons.link,
-                    size: 14,
-                    color: const Color(0xFF00696E),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    item.isYou
-                        ? 'Full System & Audit Logs Access'
-                        : 'Linked: ${item.linkedEmployee} (${item.department})',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      color: const Color(0xFF4E444A),
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      item.isYou ? Icons.verified_user : Icons.link,
+                      size: 14,
+                      color: const Color(0xFF00696E),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        item.isYou
+                            ? 'Full System & Audit Logs Access'
+                            : 'Linked: ${item.linkedEmployee} (${item.department})',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: const Color(0xFF4E444A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: item.extraBadge == '2FA Enforced'
                     ? const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5)
@@ -1380,41 +1403,49 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Left: Directory Synced
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF006443),
-                  shape: BoxShape.circle,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF006443),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Directory Synced',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF131B2E),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    'Synced',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF131B2E),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           // Right: Quick Invite + RBAC Matrix
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF714B67),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   elevation: 2,
                 ),
                 onPressed: _openQuickInviteSheet,
-                icon: const Icon(Icons.forward_to_inbox, size: 15),
+                icon: const Icon(Icons.forward_to_inbox, size: 14),
                 label: Text(
                   'Quick Invite',
                   style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold),

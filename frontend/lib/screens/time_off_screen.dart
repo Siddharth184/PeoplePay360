@@ -470,43 +470,52 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF006443),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(Icons.check_circle, color: Colors.white, size: 20),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _toastTitle,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF131B2E),
-                    ),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF006443),
+                    shape: BoxShape.circle,
                   ),
-                  Text(
-                    _toastDesc,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      color: const Color(0xFF4E444A),
-                    ),
+                  child: const Center(
+                    child: Icon(Icons.check_circle, color: Colors.white, size: 20),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _toastTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF131B2E),
+                        ),
+                      ),
+                      Text(
+                        _toastDesc,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: const Color(0xFF4E444A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Text(
             'Just now',
             style: GoogleFonts.jetBrainsMono(
@@ -528,42 +537,51 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E7FF),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.event_available, color: Color(0xFF714B67), size: 22),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Time Off Requests',
-                        style: GoogleFonts.outfit(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF131B2E),
-                        ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2E7FF),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      Text(
-                        'PeoplePay360 • Q3 Cycle',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          color: const Color(0xFF4E444A),
-                        ),
+                      child: const Center(
+                        child: Icon(Icons.event_available, color: Color(0xFF714B67), size: 22),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Time Off Requests',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF131B2E),
+                            ),
+                          ),
+                          Text(
+                            'PeoplePay360 • Q3 Cycle',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: const Color(0xFF4E444A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Row(
                 children: [
                   InkWell(
@@ -827,20 +845,27 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.schedule, size: 18, color: Color(0xFF00696E)),
-              const SizedBox(width: 8),
-              Text(
-                '$count pending requests before cutoff (Sep 25).',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF131B2E),
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(Icons.schedule, size: 18, color: Color(0xFF00696E)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '$count pending requests before cutoff (Sep 25).',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF131B2E),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           InkWell(
             onTap: _approveAllPending,
             child: Text(
@@ -881,46 +906,54 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFFF2F3FF),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.network(
-                      r['avatar'] as String,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Center(
-                        child: Text(name.substring(0, 2).toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFF2F3FF),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF131B2E),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.network(
+                        r['avatar'] as String,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Text(name.substring(0, 2).toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
-                      Text(
-                        r['role'] as String,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.5,
-                          color: const Color(0xFF4E444A),
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF131B2E),
+                            ),
+                          ),
+                          Text(
+                            r['role'] as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              color: const Color(0xFF4E444A),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
               if (isApproved)
                 Container(

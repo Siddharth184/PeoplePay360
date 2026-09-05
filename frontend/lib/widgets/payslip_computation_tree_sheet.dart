@@ -60,46 +60,53 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Navigator.pop(context),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF2F3FF),
-                          shape: BoxShape.circle,
+                Expanded(
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF2F3FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
                         ),
-                        child: const Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PAYSLIP REFERENCE',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF4E444A),
-                            letterSpacing: 0.5,
-                          ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PAYSLIP REFERENCE',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF4E444A),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Text(
+                              refNo,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF131B2E),
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          refNo,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF131B2E),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Row(
                   children: [
                     Container(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/mock_data_service.dart';
 import '../theme/app_theme.dart';
 import 'salary_rule_editor_screen.dart';
@@ -290,44 +291,60 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> with SingleTi
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('AST Syntax Status: VALID', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.emeraldSuccess)),
                       Row(
                         children: [
-                          OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.odooAubergine,
-                              side: const BorderSide(color: AppTheme.odooAubergine),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SalaryRuleEditorScreen(
-                                    ruleName: activeRule.name,
-                                    ruleCode: activeRule.code,
-                                    category: activeRule.category,
-                                    sequence: activeRule.sequence,
-                                    initialPythonCode: activeRule.pythonCode,
+                          const Icon(Icons.check_circle, size: 15, color: AppTheme.emeraldSuccess),
+                          const SizedBox(width: 5),
+                          Text('AST Syntax Status: VALID', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.emeraldSuccess)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppTheme.odooAubergine,
+                                side: const BorderSide(color: AppTheme.odooAubergine),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SalaryRuleEditorScreen(
+                                      ruleName: activeRule.name,
+                                      ruleCode: activeRule.code,
+                                      category: activeRule.category,
+                                      sequence: activeRule.sequence,
+                                      initialPythonCode: activeRule.pythonCode,
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                            label: const Text('Full Rule Builder'),
+                                );
+                              },
+                              icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                              label: const Text('Rule Builder', style: TextStyle(fontSize: 12)),
+                            ),
                           ),
                           const SizedBox(width: 8),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.odooTeal, foregroundColor: Colors.white),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('⚡ Rule AST Verified & Saved to Database')),
-                              );
-                            },
-                            icon: const Icon(Icons.play_arrow, size: 18),
-                            label: const Text('Test Rule'),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.odooTeal,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                              ),
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('⚡ Rule AST Verified & Saved to Database')),
+                                );
+                              },
+                              icon: const Icon(Icons.play_arrow, size: 16),
+                              label: const Text('Test Rule', style: TextStyle(fontSize: 12)),
+                            ),
                           ),
                         ],
                       ),

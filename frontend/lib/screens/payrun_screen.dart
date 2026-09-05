@@ -4,7 +4,8 @@ import '../widgets/payslip_computation_tree_sheet.dart';
 import '../widgets/payrun_wizard_sheet.dart';
 
 class PayrunScreen extends StatefulWidget {
-  const PayrunScreen({super.key});
+  final void Function(int index)? onNavigateTab;
+  const PayrunScreen({super.key, this.onNavigateTab});
 
   @override
   State<PayrunScreen> createState() => _PayrunScreenState();
@@ -234,69 +235,87 @@ class _PayrunScreenState extends State<PayrunScreen> with SingleTickerProviderSt
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Returning to Workspace Dashboard')),
-                  );
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF2F3FF),
-                    shape: BoxShape.circle,
+          Expanded(
+            child: Row(
+              children: [
+                InkWell(
+                  onTap: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else if (widget.onNavigateTab != null) {
+                      widget.onNavigateTab!(0);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF2F3FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF131B2E)),
                   ),
-                  child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF131B2E)),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Payrun / Feb 2026',
-                        style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF006443).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF006443), shape: BoxShape.circle)),
-                            const SizedBox(width: 4),
-                            Text(
-                              _pipelineStatus,
-                              style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006443)),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Payrun / Feb 2026',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF006443).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF006443), shape: BoxShape.circle)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _pipelineStatus,
+                                  style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF006443)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Text('BATCH #PR-2026-02', style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF4E444A))),
+                          const SizedBox(width: 4),
+                          Text('•', style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF4E444A))),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'Odoo 18 Engine',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF00696E)),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Text('BATCH #PR-2026-02', style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF4E444A))),
-                      const SizedBox(width: 4),
-                      Text('•', style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF4E444A))),
-                      const SizedBox(width: 4),
-                      Text('Odoo 18 Engine', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF00696E))),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           PopupMenuButton<String>(
             icon: Container(
               width: 38,

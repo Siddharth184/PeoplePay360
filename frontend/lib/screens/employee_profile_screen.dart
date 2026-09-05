@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/mock_data_service.dart';
 import '../widgets/payslip_pdf_dialog.dart';
@@ -14,6 +15,63 @@ class EmployeeProfileScreen extends StatefulWidget {
 class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   int _selectedTabIndex = 0;
   final emp = MockDataService.currentEmployee;
+
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF57344F)),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF131B2E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onProfileAction(String action) {
+    switch (action) {
+      case 'edit':
+        _openEditEmployeeSheet();
+        break;
+      case 'copy_email':
+        Clipboard.setData(ClipboardData(text: emp.email));
+        _toast('Work email copied to clipboard');
+        break;
+      case 'copy_id':
+        Clipboard.setData(ClipboardData(text: emp.badgeId ?? emp.id));
+        _toast('Employee ID copied to clipboard');
+        break;
+      case 'print_payslip':
+        if (MockDataService.payslips.isNotEmpty) {
+          showDialog(
+            context: context,
+            builder: (context) => PayslipPdfDialog(payslip: MockDataService.payslips.first),
+          );
+        } else {
+          _toast('No payslip available to print yet');
+        }
+        break;
+    }
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(milliseconds: 1600),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
 
   void _openEditEmployeeSheet() {
     final nameCtrl = TextEditingController(text: emp.name);
@@ -57,27 +115,33 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFD7F1),
-                            borderRadius: BorderRadius.circular(10),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFD7F1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.edit_note, color: Color(0xFF714B67), size: 22),
                           ),
-                          child: const Icon(Icons.edit_note, color: Color(0xFF714B67), size: 22),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Edit Employee Profile',
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF131B2E),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Edit Employee Profile',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.outfit(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF131B2E),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
@@ -377,48 +441,61 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              InkWell(
-                onTap: () => Navigator.maybePop(context),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF2F3FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+          Expanded(
+            child: Row(
+              children: [
+                InkWell(
+                  onTap: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else if (widget.onNavigateTab != null) {
+                      widget.onNavigateTab!(0);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF2F3FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'EMPLOYEE MASTER 360',
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF00696E),
-                    ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'EMPLOYEE MASTER 360',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                          color: const Color(0xFF00696E),
+                        ),
+                      ),
+                      Text(
+                        emp.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF131B2E),
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    emp.name,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF131B2E),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Container(
             width: 38,
             height: 38,
@@ -426,14 +503,18 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               color: Color(0xFFF2F3FF),
               shape: BoxShape.circle,
             ),
-            child: IconButton(
+            child: PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF4E444A)),
               padding: EdgeInsets.zero,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('⚡ Odoo Actions: Duplicate • Archive • Print Badge')),
-                );
-              },
+              tooltip: 'Employee actions',
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              onSelected: _onProfileAction,
+              itemBuilder: (context) => [
+                _menuItem('edit', Icons.edit_outlined, 'Edit Profile'),
+                _menuItem('copy_email', Icons.alternate_email_rounded, 'Copy Work Email'),
+                _menuItem('copy_id', Icons.badge_outlined, 'Copy Employee ID'),
+                _menuItem('print_payslip', Icons.receipt_long_rounded, 'Print Latest Payslip'),
+              ],
             ),
           ),
         ],

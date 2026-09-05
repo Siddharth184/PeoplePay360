@@ -181,23 +181,29 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFD7F1),
-                        borderRadius: BorderRadius.circular(10),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFD7F1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.add_task, color: Color(0xFF714B67), size: 22),
                       ),
-                      child: const Icon(Icons.add_task, color: Color(0xFF714B67), size: 22),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Manual Attendance Punch',
-                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          'Manual Attendance Punch',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
@@ -611,78 +617,89 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                if (Navigator.canPop(context)) {
-                                  Navigator.pop(context);
-                                } else if (widget.onNavigateTab != null) {
-                                  widget.onNavigateTab!(0);
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFF2F3FF),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Center(
-                                  child: Icon(Icons.arrow_back, size: 20, color: Color(0xFF131B2E)),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Attendance Records',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: -0.3,
-                                    color: const Color(0xFF131B2E),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
+                                  } else if (widget.onNavigateTab != null) {
+                                    widget.onNavigateTab!(0);
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF2F3FF),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
                                   ),
                                 ),
-                                Row(
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Pay Cycle: Sept 2026',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 11.5,
-                                        color: const Color(0xFF4E444A),
+                                      'Attendance Records',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: -0.3,
+                                        color: const Color(0xFF131B2E),
                                       ),
                                     ),
-                                    const SizedBox(width: 5),
-                                    Container(
-                                      width: 4,
-                                      height: 4,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF80747A),
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      'STITCH_ATT_2.3',
-                                      style: GoogleFonts.jetBrainsMono(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF00696E),
-                                      ),
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            'Pay Cycle: Sept 2026',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 11,
+                                              color: const Color(0xFF4E444A),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Container(
+                                          width: 4,
+                                          height: 4,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF80747A),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'STITCH_ATT',
+                                          style: GoogleFonts.jetBrainsMono(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF00696E),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
-
+                        const SizedBox(width: 8),
                         // Actions
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             InkWell(
                               onTap: () {
@@ -695,24 +712,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                               },
                               borderRadius: BorderRadius.circular(20),
                               child: Container(
-                                width: 40,
-                                height: 40,
+                                width: 38,
+                                height: 38,
                                 decoration: const BoxDecoration(
                                   color: Color(0xFFF2F3FF),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Center(
-                                  child: Icon(Icons.calendar_today, size: 19, color: Color(0xFF131B2E)),
+                                  child: Icon(Icons.calendar_today, size: 18, color: Color(0xFF131B2E)),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             InkWell(
                               onTap: _openManualPunchModal,
                               borderRadius: BorderRadius.circular(24),
                               child: Container(
-                                height: 40,
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                height: 38,
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF714B67),
                                   borderRadius: BorderRadius.circular(24),
@@ -725,13 +742,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                                   ],
                                 ),
                                 child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.add, size: 18, color: Colors.white),
+                                    const Icon(Icons.add, size: 16, color: Colors.white),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Manual Punch',
+                                      'Punch',
                                       style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12.5,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),

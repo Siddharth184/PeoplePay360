@@ -57,12 +57,14 @@ class _DynamicIslandPillState extends State<DynamicIslandPill> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: _togglePunch,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: GestureDetector(
+        onTap: _togglePunch,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
           borderRadius: BorderRadius.circular(30),
@@ -143,6 +145,7 @@ class _DynamicIslandPillState extends State<DynamicIslandPill> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

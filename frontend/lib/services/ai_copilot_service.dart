@@ -20,7 +20,8 @@ class AiCopilotService {
     }
 
     final response = await ApiClient.post<Map<String, dynamic>>(
-      '/ai/copilot/ask',
+      // Backend route is /ai/assistant (see app/api/v1/ai.py). Must match exactly.
+      '/ai/assistant',
       body: body,
       parser: (json) => json as Map<String, dynamic>,
       timeout: const Duration(seconds: 30),
@@ -49,7 +50,7 @@ class AiCopilotService {
 
   static Future<ApiResponse<List<Map<String, dynamic>>>> getConversations() async {
     return await ApiClient.get<List<Map<String, dynamic>>>(
-      '/ai/copilot/conversations',
+      '/ai/conversations',
       parser: (json) {
         if (json is List) {
           return json.map((e) => e as Map<String, dynamic>).toList();
@@ -61,7 +62,7 @@ class AiCopilotService {
 
   static Future<ApiResponse<Map<String, dynamic>>> getConversation(String id) async {
     return await ApiClient.get<Map<String, dynamic>>(
-      '/ai/copilot/conversations/$id',
+      '/ai/conversations/$id',
       parser: (json) => json as Map<String, dynamic>,
     );
   }
@@ -83,10 +84,14 @@ class AiCopilotService {
       '/ai/escalations',
       queryParams: query,
       parser: (json) {
-        if (json is List) {
-          return json.map((e) => EscalationTicketModel.fromJson(e as Map<String, dynamic>)).toList();
-        }
-        return [];
+        // Backend returns a paginated EscalationPage: { total, limit, offset, items }.
+        // Tolerate a bare list too, in case the endpoint shape changes.
+        final List rawList = json is Map && json['items'] is List
+            ? json['items'] as List
+            : (json is List ? json : const []);
+        return rawList
+            .map((e) => EscalationTicketModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       },
     );
 
@@ -112,10 +117,15 @@ class AiCopilotService {
     return response;
   }
 
-  static Future<ApiResponse<Map<String, dynamic>>> resolveEscalation(String escalationId, String answer) async {
+  static Future<ApiResponse<Map<String, dynamic>>> resolveEscalation(
+    String escalationId,
+    String answer, {
+    bool publishToKb = false,
+  }) async {
+    // Backend route is /ai/escalations/{id}/answer and expects answer_text.
     return await ApiClient.post<Map<String, dynamic>>(
-      '/ai/escalations/$escalationId/resolve',
-      body: {'answer': answer},
+      '/ai/escalations/$escalationId/answer',
+      body: {'answer_text': answer, 'publish_to_kb': publishToKb},
       parser: (json) => json as Map<String, dynamic>,
     );
   }

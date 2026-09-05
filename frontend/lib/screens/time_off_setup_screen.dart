@@ -327,50 +327,58 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        InkWell(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('📅 Selected: Annual Fiscal Cycle (Jan 1 – Dec 31, 2026)')),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                              boxShadow: const [
-                                BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1)),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.event_repeat, size: 17, color: Color(0xFF714B67)),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Cycle: Jan 1 – Dec 31, 2026',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF131B2E),
+                        Flexible(
+                          child: InkWell(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('📅 Selected: Annual Fiscal Cycle (Jan 1 – Dec 31, 2026)')),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                boxShadow: const [
+                                  BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1)),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.event_repeat, size: 16, color: Color(0xFF714B67)),
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'Cycle: FY 2026',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF131B2E),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.expand_more, size: 16, color: Color(0xFF4E444A)),
-                              ],
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.expand_more, size: 16, color: Color(0xFF4E444A)),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-
+                        const SizedBox(width: 6),
                         // Accrual Active Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
                           decoration: BoxDecoration(
                             color: const Color(0xFF92EFF5).withValues(alpha: 0.45),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               AnimatedBuilder(
                                 animation: _pulseController,
@@ -405,26 +413,33 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Leave Allocations & Balances',
-                              style: GoogleFonts.outfit(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF131B2E),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Leave Allocations',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF131B2E),
+                                ),
                               ),
-                            ),
-                            Text(
-                              'Year 2026 • Policy Balances & Accrual Engine',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11.5,
-                                color: const Color(0xFF4E444A),
+                              Text(
+                                'Year 2026 • Policy Balances & Accrual Engine',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5,
+                                  color: const Color(0xFF4E444A),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         InkWell(
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -725,12 +740,16 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
                                 const SizedBox(width: 4),
                                 Text('•', style: TextStyle(color: Colors.grey[400])),
                                 const SizedBox(width: 4),
-                                Text(
-                                  alloc['policy'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF57344F),
+                                Flexible(
+                                  child: Text(
+                                    alloc['policy'] as String,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF57344F),
+                                    ),
                                   ),
                                 ),
                               ],

@@ -537,27 +537,34 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF006443),
-                        shape: BoxShape.circle,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF006443),
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${_shifts.length} Days / Week • ${_totalWeeklyHours.toStringAsFixed(1)} Total Working Hours',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF131B2E),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${_shifts.length} Days/Wk • ${_totalWeeklyHours.toStringAsFixed(1)}h Total Working Hours',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF131B2E),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 6),
                 const Icon(Icons.check_circle, color: Color(0xFF006443), size: 17),
               ],
             ),
@@ -903,43 +910,48 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total Weekly Working Time',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5,
-                      color: const Color(0xFF4E444A),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total Weekly Working Time',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: const Color(0xFF4E444A),
+                      ),
                     ),
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        totalHours.toStringAsFixed(1),
-                        style: GoogleFonts.outfit(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF131B2E),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          totalHours.toStringAsFixed(1),
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF131B2E),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Hours',
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF4E444A),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Hours',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF4E444A),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
                   color: isCompliant
                       ? const Color(0xFF006443).withValues(alpha: 0.12)
@@ -947,15 +959,16 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       isCompliant ? Icons.task_alt : Icons.warning_amber_rounded,
-                      size: 15,
+                      size: 14,
                       color: isCompliant ? const Color(0xFF006443) : const Color(0xFFBA1A1A),
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isCompliant ? 'Compliant (40h Max)' : 'Overtime Alert',
+                      isCompliant ? 'Compliant' : 'Overtime',
                       style: GoogleFonts.jetBrainsMono(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
