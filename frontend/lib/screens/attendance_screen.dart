@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/attendance_punch_sheet.dart';
+import '../services/attendance_service.dart';
 
 class AttendanceScreen extends StatefulWidget {
   final void Function(int index)? onNavigateTab;
@@ -739,7 +740,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                             ),
                             const SizedBox(width: 6),
                             InkWell(
-                              onTap: _openManualPunchModal,
+                              onTap: () => AttendancePunchSheet.show(context),
                               borderRadius: BorderRadius.circular(24),
                               child: Container(
                                 height: 38,
@@ -758,7 +759,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.add, size: 16, color: Colors.white),
+                                    const Icon(Icons.add_task, size: 16, color: Colors.white),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Punch',
@@ -955,6 +956,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
                   ],
                 ),
               ),
+
+              // HR Punch Approval Desk (Real-Time Reactive)
+              _buildHrPunchApprovalDesk(),
+
+              const SizedBox(height: 8),
 
               // Horizontal Scroll Filter Chips
               SingleChildScrollView(
@@ -1547,4 +1553,402 @@ class _AttendanceScreenState extends State<AttendanceScreen> with SingleTickerPr
       ),
     );
   }
+
+  Widget _buildHrPunchApprovalDesk() {
+    return ValueListenableBuilder<PunchState>(
+      valueListenable: AttendanceService.stateNotifier,
+      builder: (context, punchState, _) {
+        final pendingRequests = punchState.allRequests.where((r) => r.status == 'PENDING').toList();
+        final hasPending = pendingRequests.isNotEmpty;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: hasPending
+                    ? [const Color(0xFF283044), const Color(0xFF1E1A34)]
+                    : [const Color(0xFFF2F3FF), const Color(0xFFE8EBFC)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: hasPending ? const Color(0xFF714B67).withValues(alpha: 0.6) : const Color(0xFFDAE2FD),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: hasPending ? const Color(0xFF714B67).withValues(alpha: 0.25) : const Color(0x08000000),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Bar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: hasPending ? const Color(0xFFFFD7F1).withValues(alpha: 0.2) : const Color(0xFFFFD7F1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.admin_panel_settings_outlined,
+                            size: 18,
+                            color: hasPending ? const Color(0xFFFFD7F1) : const Color(0xFF714B67),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'HR Punch Approval Desk',
+                              style: GoogleFonts.outfit(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: hasPending ? Colors.white : const Color(0xFF131B2E),
+                              ),
+                            ),
+                            Text(
+                              hasPending
+                                  ? '${pendingRequests.length} pending punch request(s) need review'
+                                  : 'All employee punches approved & up to date',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10.5,
+                                color: hasPending ? const Color(0xFF95F1F8) : const Color(0xFF4E444A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: hasPending
+                            ? const Color(0xFFBA1A1A).withValues(alpha: 0.25)
+                            : const Color(0xFF00696E).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: hasPending ? const Color(0xFFFFDAD6) : const Color(0xFF00696E),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        hasPending ? '⚡ ${pendingRequests.length} PENDING' : '✓ 0 QUEUED',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: hasPending ? const Color(0xFFFFDAD6) : const Color(0xFF00696E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                if (hasPending) ...[
+                  const SizedBox(height: 12),
+                  ...pendingRequests.map((req) => _buildHrPendingRequestCard(context, req)),
+                ] else ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF00696E)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Active: ${punchState.activeApprovedRequest?.employeeName ?? 'Aarav Mehta'} (${punchState.status == PunchStatus.punchedIn ? 'Punched In' : punchState.status == PunchStatus.onBreak ? 'On Break' : 'Checked Out'})',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF131B2E),
+                            ),
+                          ),
+                        ],
+                      ),
+                      InkWell(
+                        onTap: () => AttendancePunchSheet.show(context),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF714B67),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.add, size: 14, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                'New Request',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHrPendingRequestCard(BuildContext context, PunchRequestRecord req) {
+    Color badgeBg;
+    Color badgeFg;
+    IconData badgeIcon;
+
+    switch (req.type) {
+      case PunchRequestType.punchIn:
+        badgeBg = const Color(0xFF6FFBBE).withValues(alpha: 0.2);
+        badgeFg = const Color(0xFF6FFBBE);
+        badgeIcon = Icons.login_rounded;
+        break;
+      case PunchRequestType.punchOut:
+        badgeBg = const Color(0xFFFFDAD6).withValues(alpha: 0.2);
+        badgeFg = const Color(0xFFFFDAD6);
+        badgeIcon = Icons.logout_rounded;
+        break;
+      case PunchRequestType.breakStart:
+      case PunchRequestType.breakEnd:
+        badgeBg = const Color(0xFFFFD7F1).withValues(alpha: 0.2);
+        badgeFg = const Color(0xFFFFD7F1);
+        badgeIcon = Icons.coffee_rounded;
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131B2E).withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Row 1: Employee info + Type badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundImage: NetworkImage(req.employeeAvatar),
+                      backgroundColor: const Color(0xFF714B67),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            req.employeeName,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${req.employeeId} • ${req.employeeDept}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              color: const Color(0xFF95F1F8),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(badgeIcon, size: 12, color: badgeFg),
+                    const SizedBox(width: 4),
+                    Text(
+                      req.typeLabel.toUpperCase(),
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: badgeFg,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // Row 2: Requested Time & Location
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.access_time_rounded, size: 12, color: Color(0xFF95F1F8)),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Requested: ${req.requestedTimeString} • ${req.requestedDateString}',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.place_outlined, size: 12, color: Color(0xFFFFD7F1)),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        '${req.location} (${req.workMode})',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.5,
+                          color: const Color(0xFFE2E8F0),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                if (req.reason.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.notes_rounded, size: 12, color: Color(0xFF6FFBBE)),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Note: "${req.reason}"',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10.5,
+                            fontStyle: FontStyle.italic,
+                            color: const Color(0xFF6FFBBE),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Row 3: Action Buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFFFDAD6),
+                    side: const BorderSide(color: Color(0xFFBA1A1A)),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () async {
+                    await AttendanceService.rejectPunchRequest(req.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFFBA1A1A),
+                          behavior: SnackBarBehavior.floating,
+                          content: Text('✕ Rejected ${req.typeLabel} request for ${req.employeeName}'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.close, size: 14),
+                  label: Text('Reject', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00696E),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    await AttendanceService.approvePunchRequest(req.id, approverName: 'Sara Khan (HR Lead)');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFF004A31),
+                          behavior: SnackBarBehavior.floating,
+                          content: Text('✓ Approved ${req.typeLabel} for ${req.employeeName} • Time: ${req.requestedTimeString}'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.check_circle_outline, size: 14, color: Color(0xFF6FFBBE)),
+                  label: Text(
+                    '✓ Approve Punch',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
+

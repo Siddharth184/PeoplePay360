@@ -13,11 +13,13 @@ class AuthLoginScreen extends StatefulWidget {
 
 class _AuthLoginScreenState extends State<AuthLoginScreen> {
   // Backend Seeded Role Models
-  final List<Map<String, String>> _demoRoles = [
+  final List<Map<String, dynamic>> _demoRoles = [
     {
       'role': 'Admin',
-      'label': '★ Admin',
+      'label': 'Admin',
+      'icon': Icons.admin_panel_settings_outlined,
       'badge': 'admin@oxp.com • Full Access',
+      'desc': 'Full System Access',
       'email': 'admin@oxp.com',
       'pass': 'PeoplePay@360',
       'systemRole': 'ADMIN',
@@ -25,15 +27,19 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
     {
       'role': 'HR Manager',
       'label': 'HR Manager',
+      'icon': Icons.groups_outlined,
       'badge': 'Sara Khan • HR Lead',
+      'desc': 'Sara Khan • HR Lead',
       'email': 'sara.khan@oxp.com',
       'pass': 'PeoplePay@360',
       'systemRole': 'HR_MANAGER',
     },
     {
-      'role': 'Payroll Mgr',
-      'label': 'Payroll Mgr',
+      'role': 'HR Payroll Mgr',
+      'label': 'HR Payroll Mgr',
+      'icon': Icons.account_balance_wallet_outlined,
       'badge': 'Vikram Nair • Finance Lead',
+      'desc': 'Vikram Nair • Finance Lead',
       'email': 'vikram.nair@oxp.com',
       'pass': 'PeoplePay@360',
       'systemRole': 'HR_PAYROLL_MANAGER',
@@ -41,7 +47,9 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
     {
       'role': 'Payroll User',
       'label': 'Payroll User',
-      'badge': 'Aarav Mehta • Comp & Payroll',
+      'icon': Icons.receipt_long_outlined,
+      'badge': 'Aarav Mehta • Payroll',
+      'desc': 'Aarav Mehta • Payroll',
       'email': 'aarav.mehta@oxp.com',
       'pass': 'PeoplePay@360',
       'systemRole': 'HR_PAYROLL_USER',
@@ -49,7 +57,9 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
     {
       'role': 'Employee',
       'label': 'Employee',
+      'icon': Icons.badge_outlined,
       'badge': 'Rohan Desai • Engineering',
+      'desc': 'Rohan Desai • Eng',
       'email': 'rohan.desai@oxp.com',
       'pass': 'PeoplePay@360',
       'systemRole': 'EMPLOYEE',
@@ -151,9 +161,40 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
 
 
   void _openForgotPasswordDialog() {
-    final resetEmailCtrl = TextEditingController(text: _emailController.text);
-    bool isSending = false;
+    final emailCtrl = TextEditingController(text: _emailController.text);
+    final currentPassCtrl = TextEditingController();
+    final newPassCtrl = TextEditingController();
+    final confirmPassCtrl = TextEditingController();
+
+    int step = 1; // 1 = verify current password, 2 = set new password
+    bool isBusy = false;
     String? localError;
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+
+    void showResultSnack(BuildContext c, String message, {required bool ok}) {
+      ScaffoldMessenger.of(c).showSnackBar(
+        SnackBar(
+          backgroundColor: ok ? const Color(0xFF004A31) : const Color(0xFFBA1A1A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Row(
+            children: [
+              Icon(ok ? Icons.check_circle : Icons.error_outline,
+                  color: ok ? const Color(0xFF6FFBBE) : Colors.white),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w600, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     showModalBottomSheet(
       context: context,
@@ -162,6 +203,121 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            InputDecoration fieldDecoration(IconData icon, String hint,
+                {Widget? suffix}) {
+              return InputDecoration(
+                prefixIcon: Icon(icon, color: const Color(0xFF00696E), size: 20),
+                suffixIcon: suffix,
+                border: InputBorder.none,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                hintText: hint,
+                hintStyle:
+                    GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
+              );
+            }
+
+            Widget fieldBox(Widget child) {
+              return Container(
+                margin: const EdgeInsets.only(top: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F3FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: localError != null
+                      ? Border.all(color: const Color(0xFFBA1A1A))
+                      : null,
+                ),
+                child: child,
+              );
+            }
+
+            final textStyle = GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: const Color(0xFF131B2E),
+              fontWeight: FontWeight.w500,
+            );
+
+            Future<void> onVerify() async {
+              final email = emailCtrl.text.trim();
+              if (email.isEmpty || !email.contains('@')) {
+                setSheetState(() => localError = 'Enter a valid work email address.');
+                return;
+              }
+              if (currentPassCtrl.text.isEmpty) {
+                setSheetState(() => localError = 'Enter your current password.');
+                return;
+              }
+              setSheetState(() {
+                isBusy = true;
+                localError = null;
+              });
+              final res = await AuthService.verifyCurrentPassword(
+                email: email,
+                password: currentPassCtrl.text,
+              );
+              if (!ctx.mounted) return;
+              setSheetState(() {
+                isBusy = false;
+                if (res.isSuccess) {
+                  step = 2;
+                  localError = null;
+                } else {
+                  localError = res.errorMessage ?? 'Current password is incorrect.';
+                }
+              });
+            }
+
+            Future<void> onSave() async {
+              final newPass = newPassCtrl.text;
+              if (newPass.length < 8) {
+                setSheetState(() =>
+                    localError = 'New password must be at least 8 characters.');
+                return;
+              }
+              if (newPass != confirmPassCtrl.text) {
+                setSheetState(() => localError = 'The two passwords do not match.');
+                return;
+              }
+              if (newPass == currentPassCtrl.text) {
+                setSheetState(() =>
+                    localError = 'New password must differ from the current one.');
+                return;
+              }
+              setSheetState(() {
+                isBusy = true;
+                localError = null;
+              });
+              final res = await AuthService.resetPassword(
+                email: emailCtrl.text.trim(),
+                currentPassword: currentPassCtrl.text,
+                newPassword: newPass,
+              );
+              if (!ctx.mounted) return;
+              if (res.isSuccess) {
+                Navigator.pop(ctx);
+                // Prefill the login form for an immediate sign-in with the new password.
+                if (mounted) {
+                  setState(() {
+                    _emailController.text = emailCtrl.text.trim();
+                    _passwordController.clear();
+                  });
+                }
+                showResultSnack(
+                  context,
+                  res.data?['detail']?.toString() ??
+                      'Password updated. Sign in with your new password.',
+                  ok: true,
+                );
+              } else {
+                setSheetState(() {
+                  isBusy = false;
+                  localError = res.errorMessage ?? 'Unable to update password.';
+                  // A rejected current password sends the user back to step 1.
+                  if (res.statusCode == 400 || res.statusCode == 401) step = 1;
+                });
+              }
+            }
+
             return Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
@@ -192,7 +348,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Reset Password',
+                        step == 1 ? 'Reset Password' : 'Set New Password',
                         style: GoogleFonts.outfit(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -205,45 +361,85 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
-                    'Enter your verified company work email. We will dispatch an encrypted Odoo password reset link to your inbox.',
+                    step == 1
+                        ? 'Step 1 of 2 — confirm your identity by entering your current password.'
+                        : 'Step 2 of 2 — choose a new password. It will be required the next time you sign in.',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: const Color(0xFF4E444A),
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F3FF),
-                      borderRadius: BorderRadius.circular(12),
-                      border: localError != null ? Border.all(color: const Color(0xFFBA1A1A)) : null,
-                    ),
-                    child: TextField(
-                      controller: resetEmailCtrl,
+                  const SizedBox(height: 6),
+
+                  if (step == 1) ...[
+                    fieldBox(TextField(
+                      controller: emailCtrl,
                       keyboardType: TextInputType.emailAddress,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: const Color(0xFF131B2E),
-                        fontWeight: FontWeight.w500,
+                      style: textStyle,
+                      decoration: fieldDecoration(
+                          Icons.mail_outline, 'name@enterprise.odoo.com'),
+                    )),
+                    fieldBox(TextField(
+                      controller: currentPassCtrl,
+                      obscureText: obscureCurrent,
+                      style: textStyle,
+                      onSubmitted: (_) => onVerify(),
+                      decoration: fieldDecoration(
+                        Icons.lock_outline,
+                        'Current password',
+                        suffix: IconButton(
+                          icon: Icon(
+                            obscureCurrent
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: const Color(0xFF80747A),
+                            size: 19,
+                          ),
+                          onPressed: () => setSheetState(
+                              () => obscureCurrent = !obscureCurrent),
+                        ),
                       ),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF00696E), size: 20),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        hintText: 'name@enterprise.odoo.com',
-                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
+                    )),
+                  ] else ...[
+                    fieldBox(TextField(
+                      controller: newPassCtrl,
+                      obscureText: obscureNew,
+                      style: textStyle,
+                      decoration: fieldDecoration(
+                        Icons.lock_reset_outlined,
+                        'New password (min 8 characters)',
+                        suffix: IconButton(
+                          icon: Icon(
+                            obscureNew
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: const Color(0xFF80747A),
+                            size: 19,
+                          ),
+                          onPressed: () =>
+                              setSheetState(() => obscureNew = !obscureNew),
+                        ),
                       ),
-                    ),
-                  ),
+                    )),
+                    fieldBox(TextField(
+                      controller: confirmPassCtrl,
+                      obscureText: obscureNew,
+                      style: textStyle,
+                      onSubmitted: (_) => onSave(),
+                      decoration: fieldDecoration(
+                          Icons.lock_outline, 'Confirm new password'),
+                    )),
+                  ],
+
                   if (localError != null) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       localError!,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFFBA1A1A)),
+                      style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12, color: const Color(0xFFBA1A1A)),
                     ),
                   ],
                   const SizedBox(height: 20),
@@ -254,81 +450,47 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF714B67),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
                         elevation: 0,
                       ),
-                      onPressed: isSending
+                      onPressed: isBusy
                           ? null
-                          : () async {
-                              final email = resetEmailCtrl.text.trim();
-                              if (email.isEmpty || !email.contains('@')) {
-                                setSheetState(() {
-                                  localError = 'Please enter a valid work email address.';
-                                });
-                                return;
-                              }
-
-                              setSheetState(() {
-                                isSending = true;
-                                localError = null;
-                              });
-
-                              final response = await AuthService.forgotPassword(email: email);
-
-                              if (!ctx.mounted) return;
-                              Navigator.pop(ctx);
-
-                              if (response.isSuccess) {
-                                final msg = response.data?['detail'] ??
-                                    '✉️ Reset instructions dispatched to $email';
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: const Color(0xFF004A31),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    content: Row(
-                                      children: [
-                                        const Icon(Icons.check_circle, color: Color(0xFF6FFBBE)),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            msg.toString(),
-                                            style: GoogleFonts.plusJakartaSans(
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: const Color(0xFFBA1A1A),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    content: Text(
-                                      response.errorMessage ?? 'Unable to process reset request.',
-                                      style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                      child: isSending
+                          : (step == 1 ? onVerify : onSave),
+                      child: isBusy
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
                             )
                           : Text(
-                              'Send Reset Link',
-                              style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.bold),
+                              step == 1 ? 'Verify & Continue' : 'Save New Password',
+                              style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 15, fontWeight: FontWeight.bold),
                             ),
                     ),
                   ),
+                  if (step == 2)
+                    Align(
+                      alignment: Alignment.center,
+                      child: TextButton(
+                        onPressed: isBusy
+                            ? null
+                            : () => setSheetState(() {
+                                  step = 1;
+                                  localError = null;
+                                }),
+                        child: Text(
+                          '← Back',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF714B67),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             );
@@ -359,13 +521,9 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
 
             // QUICK ROLE DEMO SWITCHER
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               child: _buildQuickDemoRolesSection(),
             ),
-
-            // LEGAL FOOTER
-            _buildFooter(),
-            const SizedBox(height: 28),
           ],
         ),
       ),
@@ -818,61 +976,75 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
   Widget _buildQuickDemoRolesSection() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F3FF),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A714B67),
+            blurRadius: 24,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 22,
-                height: 22,
+                width: 28,
+                height: 28,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF92EFF5),
+                  color: Color(0xFFFFD7F1),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Icon(Icons.bolt, color: Color(0xFF006E73), size: 15),
+                  child: Icon(Icons.bolt, color: Color(0xFF714B67), size: 18),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  '⚡ Quick Demo Roles (1-Tap Fast Eval)',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0F172A),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Quick Demo Roles',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
+                    Text(
+                      'Tap a role card to pre-fill credentials',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Instantly populate credentials for judging & sandbox access.',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              color: const Color(0xFF4E444A),
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // 2x2 Grid of Roles
+          // 2x2 Grid of 4 Roles (Admin, HR Manager, Payroll User, Employee)
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _demoRoles.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 2.2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.85,
             ),
             itemBuilder: (context, index) {
               final item = _demoRoles[index];
@@ -880,22 +1052,25 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
 
               return InkWell(
                 onTap: () => _selectRole(index),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
+                borderRadius: BorderRadius.circular(14),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFFFD7F1) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    color: isSelected ? const Color(0xFFFFD7F1) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFF714B67).withValues(alpha: 0.3)
+                          ? const Color(0xFF714B67)
                           : const Color(0xFFE2E8F0),
+                      width: isSelected ? 1.5 : 1,
                     ),
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
+                      if (isSelected)
+                        BoxShadow(
+                          color: const Color(0xFF714B67).withValues(alpha: 0.12),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
                     ],
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -906,37 +1081,59 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            item['label']!,
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? const Color(0xFF2F1029)
-                                  : (item['role'] == 'Admin'
-                                      ? const Color(0xFF714B67)
-                                      : const Color(0xFF00696E)),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  item['icon'] as IconData,
+                                  size: 16,
+                                  color: isSelected ? const Color(0xFF714B67) : const Color(0xFF00696E),
+                                ),
+                                const SizedBox(width: 5),
+                                Expanded(
+                                  child: Text(
+                                    item['label'] as String,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? const Color(0xFF2F1029)
+                                          : const Color(0xFF131B2E),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           if (isSelected)
-                            const Icon(
-                              Icons.done,
-                              size: 14,
-                              color: Color(0xFF2F1029),
+                            Container(
+                              width: 16,
+                              height: 16,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF714B67),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                size: 11,
+                                color: Colors.white,
+                              ),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        item['badge']!,
+                        item['desc'] as String,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w500,
                           color: isSelected
-                              ? const Color(0xFF2F1029)
-                              : const Color(0xFF4E444A),
+                              ? const Color(0xFF57344F)
+                              : const Color(0xFF64748B),
                         ),
                       ),
                     ],
@@ -948,12 +1145,12 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
 
           // Notification Banner
           if (_notificationText != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: const Color(0xFF92EFF5),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -992,56 +1189,6 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
           ],
         ],
       ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEAEDFF),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.lock_outline, size: 12, color: Color(0xFF4E444A)),
-              const SizedBox(width: 5),
-              Text(
-                'Secured by Odoo Enterprise RBAC • Version 2026.1',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 10,
-                  color: const Color(0xFF4E444A),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 5,
-              height: 5,
-              decoration: const BoxDecoration(
-                color: Color(0xFF00696E),
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Acme Global Industries (US-East Cluster)',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                color: const Color(0xFF64748B),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
