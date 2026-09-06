@@ -743,7 +743,19 @@ class PayslipModel {
     return parsed ?? defaultVal;
   }
 
-  double get hourlyRate => _hourlyRate ?? ((contractMonthlyWage > 0 ? contractMonthlyWage : 85000.0) / (scheduledHours > 0 ? scheduledHours : 176.0));
+  double get safeContractMonthlyWage => safeDouble(contractMonthlyWage, 85000.0);
+  double get safeScheduledHours => safeDouble(scheduledHours, 176.0);
+  double get safeOvertimeHours => safeDouble(overtimeHours, 0.0);
+  double get safeOvertimePay => safeDouble(overtimePay, 0.0);
+  double get safeExtraDays => safeDouble(extraDays, 0.0);
+  double get safeExtraDaysPay => safeDouble(extraDaysPay, 0.0);
+  double get safeWorkedDays => safeDouble(workedDays, 22.0);
+  double get safeWorkedHours => safeDouble(workedHours, 176.0);
+  double get safeBasicAmount => safeDouble(basicAmount, 50000.0);
+  double get safeGrossAmount => safeDouble(grossAmount, 80000.0);
+  double get safeNetAmount => safeDouble(netAmount, 75000.0);
+
+  double get hourlyRate => _hourlyRate ?? (safeContractMonthlyWage / (safeScheduledHours > 0 ? safeScheduledHours : 176.0));
   double get overtimeRate => _overtimeRate ?? (hourlyRate * 1.5);
 
   PayslipModel({

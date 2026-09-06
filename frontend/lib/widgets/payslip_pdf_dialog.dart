@@ -11,12 +11,12 @@ class PayslipPdfDialog extends StatelessWidget {
   const PayslipPdfDialog({super.key, required this.payslip});
 
   List<PayslipLineModel> get _effectiveLines {
-    final otPay = payslip.overtimePay > 0
-        ? payslip.overtimePay
-        : (payslip.overtimeHours > 0 ? double.parse((payslip.overtimeHours * payslip.overtimeRate).toStringAsFixed(2)) : 7244.30);
-    final extPay = payslip.extraDaysPay > 0
-        ? payslip.extraDaysPay
-        : (payslip.extraDays > 0 ? double.parse((payslip.extraDays * (payslip.contractMonthlyWage / 22.0)).toStringAsFixed(2)) : 7727.30);
+    final otPay = payslip.safeOvertimePay > 0
+        ? payslip.safeOvertimePay
+        : (payslip.safeOvertimeHours > 0 ? double.parse((payslip.safeOvertimeHours * payslip.overtimeRate).toStringAsFixed(2)) : 7244.30);
+    final extPay = payslip.safeExtraDaysPay > 0
+        ? payslip.safeExtraDaysPay
+        : (payslip.safeExtraDays > 0 ? double.parse((payslip.safeExtraDays * (payslip.safeContractMonthlyWage / 22.0)).toStringAsFixed(2)) : 7727.30);
 
     if (payslip.lines.isNotEmpty) {
       final list = List<PayslipLineModel>.from(payslip.lines);
@@ -41,7 +41,7 @@ class PayslipPdfDialog extends StatelessWidget {
       return list;
     }
 
-    final basic = payslip.basicAmount > 0 ? payslip.basicAmount : 50000.0;
+    final basic = payslip.safeBasicAmount > 0 ? payslip.safeBasicAmount : 50000.0;
     final hra = 20000.0;
     final sa = 10000.0;
 
@@ -66,15 +66,15 @@ class PayslipPdfDialog extends StatelessWidget {
     final pStart = payslip.periodStart.isNotEmpty ? payslip.periodStart : '01-Feb-2026';
     final pEnd = payslip.periodEnd.isNotEmpty ? payslip.periodEnd : '28-Feb-2026';
 
-    final contractWage = payslip.contractMonthlyWage > 0 ? payslip.contractMonthlyWage : 85000.0;
+    final contractWage = payslip.safeContractMonthlyWage > 0 ? payslip.safeContractMonthlyWage : 85000.0;
     final hourlyRate = payslip.hourlyRate > 0 ? payslip.hourlyRate : (contractWage / 176.0);
     final otRate = payslip.overtimeRate > 0 ? payslip.overtimeRate : (hourlyRate * 1.5);
-    final otHours = payslip.overtimeHours > 0 ? payslip.overtimeHours : 10.0;
-    final otEarning = payslip.overtimePay > 0 ? payslip.overtimePay : double.parse((otHours * otRate).toStringAsFixed(2));
+    final otHours = payslip.safeOvertimeHours > 0 ? payslip.safeOvertimeHours : 10.0;
+    final otEarning = payslip.safeOvertimePay > 0 ? payslip.safeOvertimePay : double.parse((otHours * otRate).toStringAsFixed(2));
 
-    final extraDays = payslip.extraDays > 0 ? payslip.extraDays : 2.0;
-    final extraDaysPayout = payslip.extraDaysPay > 0 ? payslip.extraDaysPay : double.parse((extraDays * (contractWage / 22.0)).toStringAsFixed(2));
-    final workedDays = payslip.workedDays > 0 ? payslip.workedDays : 22.0;
+    final extraDays = payslip.safeExtraDays > 0 ? payslip.safeExtraDays : 2.0;
+    final extraDaysPayout = payslip.safeExtraDaysPay > 0 ? payslip.safeExtraDaysPay : double.parse((extraDays * (contractWage / 22.0)).toStringAsFixed(2));
+    final workedDays = payslip.safeWorkedDays > 0 ? payslip.safeWorkedDays : 22.0;
 
     // Compute exact totals from lines
     double earningsSum = 0.0;

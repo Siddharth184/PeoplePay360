@@ -76,5 +76,27 @@ void main() {
       expect(dialog.payslip.grossAmount, equals(94971.59));
       expect(dialog.payslip.lines, isEmpty);
     });
+
+    test('PayslipModel safe getters return default numbers even when json contains null or empty fields', () {
+      final mockMapWithNulls = <String, dynamic>{
+        'id': 'pay-null-test',
+        'refCode': null,
+        'extra_days_pay': null,
+        'overtime_pay': null,
+        'worked_days': null,
+        'basic': null,
+        'gross': null,
+        'net': null,
+      };
+
+      final payslip = PayslipModel.fromJson(mockMapWithNulls);
+
+      expect(payslip.safeExtraDaysPay, equals(0.0));
+      expect(payslip.safeOvertimePay, equals(0.0));
+      expect(payslip.safeWorkedDays, equals(22.0));
+      expect(payslip.safeBasicAmount, equals(50000.0));
+      expect(payslip.safeGrossAmount, equals(80000.0));
+      expect(payslip.safeNetAmount, equals(75000.0));
+    });
   });
 }
