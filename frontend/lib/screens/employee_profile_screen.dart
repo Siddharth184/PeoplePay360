@@ -102,17 +102,20 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     if (_selectedPayMonth.contains('February')) monthPrefix = '2026-02';
 
     if (_employeePayslips.isNotEmpty) {
-      return _employeePayslips.firstWhere(
+      final slip = _employeePayslips.firstWhere(
         (p) => p.periodStart.startsWith(monthPrefix),
         orElse: () => _employeePayslips.first,
       );
+      return slip.employeeName.isNotEmpty ? slip : slip.copyWith(employeeName: _employee.name);
     }
 
     final mockList = MockDataService.payslips;
-    return mockList.firstWhere(
+    final baseSlip = mockList.firstWhere(
       (p) => p.periodStart.startsWith(monthPrefix),
       orElse: () => mockList.first,
     );
+
+    return baseSlip.copyWith(employeeName: _employee.name);
   }
 
   PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color iconColor = const Color(0xFF714B67)}) {

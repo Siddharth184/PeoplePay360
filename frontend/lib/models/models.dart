@@ -819,10 +819,20 @@ class PayslipModel {
       extDaysPay = safeDouble(json['extra_days_pay'] ?? json['extraDaysPay'], extraD > 0 ? double.parse((extraD * dailyRate).toStringAsFixed(2)) : 0.0);
     }
 
+    final parsedEmpName = json['employee_name']?.toString() ??
+        json['employeeName']?.toString() ??
+        json['name']?.toString() ??
+        json['empName']?.toString() ??
+        json['emp_name']?.toString() ??
+        (json['employee'] is String ? json['employee'].toString() : null) ??
+        (json['employee'] is Map ? json['employee']['name']?.toString() : null) ??
+        (json['employee_id'] is List && (json['employee_id'] as List).length > 1 ? (json['employee_id'] as List)[1].toString() : null) ??
+        '';
+
     return PayslipModel(
       id: json['id']?.toString() ?? '',
       refCode: json['reference_code']?.toString() ?? json['number']?.toString() ?? json['refCode']?.toString() ?? json['refNo']?.toString() ?? '',
-      employeeName: json['employee_name']?.toString() ?? json['employeeName']?.toString() ?? json['name']?.toString() ?? '',
+      employeeName: parsedEmpName,
       periodStart: json['date_start']?.toString() ?? json['date_from']?.toString() ?? json['periodStart']?.toString() ?? '',
       periodEnd: json['date_end']?.toString() ?? json['date_to']?.toString() ?? json['periodEnd']?.toString() ?? '',
       workedDays: safeDouble(json['worked_days'] ?? json['workedDays'], 22.0),
@@ -840,6 +850,52 @@ class PayslipModel {
       netAmount: safeDouble(json['net_amount'] ?? json['net_wage'] ?? json['netAmount'] ?? json['netPayout'] ?? json['net'], 75000.0),
       status: json['status']?.toString() ?? 'DONE',
       lines: parsedLines,
+    );
+  }
+
+  PayslipModel copyWith({
+    String? id,
+    String? refCode,
+    String? employeeName,
+    String? periodStart,
+    String? periodEnd,
+    double? workedDays,
+    double? workedHours,
+    double? overtimeHours,
+    double? scheduledHours,
+    double? overtimePay,
+    double? extraDays,
+    double? extraDaysPay,
+    double? contractMonthlyWage,
+    double? hourlyRate,
+    double? overtimeRate,
+    double? basicAmount,
+    double? grossAmount,
+    double? netAmount,
+    String? status,
+    List<PayslipLineModel>? lines,
+  }) {
+    return PayslipModel(
+      id: id ?? this.id,
+      refCode: refCode ?? this.refCode,
+      employeeName: employeeName ?? this.employeeName,
+      periodStart: periodStart ?? this.periodStart,
+      periodEnd: periodEnd ?? this.periodEnd,
+      workedDays: workedDays ?? this.workedDays,
+      workedHours: workedHours ?? this.workedHours,
+      overtimeHours: overtimeHours ?? this.overtimeHours,
+      scheduledHours: scheduledHours ?? this.scheduledHours,
+      overtimePay: overtimePay ?? this.overtimePay,
+      extraDays: extraDays ?? this.extraDays,
+      extraDaysPay: extraDaysPay ?? this.extraDaysPay,
+      contractMonthlyWage: contractMonthlyWage ?? this.contractMonthlyWage,
+      hourlyRate: hourlyRate ?? this.hourlyRate,
+      overtimeRate: overtimeRate ?? this.overtimeRate,
+      basicAmount: basicAmount ?? this.basicAmount,
+      grossAmount: grossAmount ?? this.grossAmount,
+      netAmount: netAmount ?? this.netAmount,
+      status: status ?? this.status,
+      lines: lines ?? this.lines,
     );
   }
 }

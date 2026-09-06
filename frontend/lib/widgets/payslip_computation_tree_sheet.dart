@@ -434,7 +434,11 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
                     onPressed: () {
                       try {
                         final raw = widget.payslip['rawPayslip'];
-                        final model = (raw is PayslipModel) ? raw : PayslipModel.fromJson(widget.payslip);
+                        final nameFromSheet = widget.payslip['name'] ?? widget.payslip['employeeName'] ?? widget.payslip['employee_name'];
+                        PayslipModel model = (raw is PayslipModel) ? raw : PayslipModel.fromJson(widget.payslip);
+                        if (nameFromSheet != null && nameFromSheet.toString().isNotEmpty) {
+                          model = model.copyWith(employeeName: nameFromSheet.toString());
+                        }
                         showDialog(
                           context: context,
                           builder: (context) => PayslipPdfDialog(payslip: model),

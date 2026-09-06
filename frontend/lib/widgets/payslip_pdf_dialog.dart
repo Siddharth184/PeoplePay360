@@ -62,7 +62,7 @@ class PayslipPdfDialog extends StatelessWidget {
 
     final lines = _effectiveLines;
     final refCode = payslip.refCode.isNotEmpty ? payslip.refCode : 'PS-2026-02-0042';
-    final empName = payslip.employeeName.isNotEmpty ? payslip.employeeName : 'Aarav Mehta';
+    final empName = payslip.employeeName.isNotEmpty ? payslip.employeeName : 'Employee';
     final pStart = payslip.periodStart.isNotEmpty ? payslip.periodStart : '01-Feb-2026';
     final pEnd = payslip.periodEnd.isNotEmpty ? payslip.periodEnd : '28-Feb-2026';
 
