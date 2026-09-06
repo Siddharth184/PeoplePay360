@@ -84,9 +84,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
       setState(() {
         _isLoadingPayslips = false;
         if (res.isSuccess && res.data != null) {
-          _employeePayslips = res.data!;
+          _employeePayslips = res.data!.map((p) => p.copyWith(employeeName: emp.name)).toList();
         } else if (!ApiClient.isBackendOnline || res.statusCode == 0) {
-          _employeePayslips = MockDataService.payslips;
+          _employeePayslips = MockDataService.payslips.map((p) => p.copyWith(employeeName: emp.name)).toList();
         } else {
           _employeePayslips = [];
         }
@@ -102,21 +102,21 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     if (_selectedPayMonth.contains('May')) monthPrefix = '2026-05';
     if (_selectedPayMonth.contains('February')) monthPrefix = '2026-02';
 
+    PayslipModel base;
     if (_employeePayslips.isNotEmpty) {
-      final slip = _employeePayslips.firstWhere(
+      base = _employeePayslips.firstWhere(
         (p) => p.periodStart.startsWith(monthPrefix),
         orElse: () => _employeePayslips.first,
       );
-      return slip.employeeName.isNotEmpty ? slip : slip.copyWith(employeeName: emp.name);
+    } else {
+      final mockList = MockDataService.payslips;
+      base = mockList.firstWhere(
+        (p) => p.periodStart.startsWith(monthPrefix),
+        orElse: () => mockList.first,
+      );
     }
 
-    final mockList = MockDataService.payslips;
-    final baseSlip = mockList.firstWhere(
-      (p) => p.periodStart.startsWith(monthPrefix),
-      orElse: () => mockList.first,
-    );
-
-    return baseSlip.copyWith(employeeName: emp.name);
+    return base.copyWith(employeeName: emp.name);
   }
 
   PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color iconColor = const Color(0xFF714B67)}) {

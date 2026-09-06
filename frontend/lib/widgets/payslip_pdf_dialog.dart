@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/models.dart';
+import '../services/mock_data_service.dart';
 
 class PayslipPdfDialog extends StatelessWidget {
   final PayslipModel payslip;
@@ -73,15 +74,32 @@ class PayslipPdfDialog extends StatelessWidget {
     final pStart = payslip.periodStart.isNotEmpty ? payslip.periodStart : '01-Feb-2026';
     final pEnd = payslip.periodEnd.isNotEmpty ? payslip.periodEnd : '28-Feb-2026';
 
-    final empId = 'EMP-${(empName.hashCode.abs() % 8000 + 1000)}';
-    final roleName = empName.contains('Sara')
-        ? 'Finance Lead'
-        : (empName.contains('Aarav')
-            ? 'Tech Ops Lead'
-            : (empName.contains('Priya')
-                ? 'HR Specialist'
-                : (empName.contains('Rahul') ? 'Senior Engineer' : 'Operations Specialist')));
-    final bankAc = 'HDFC Bank ending ••••${(empName.hashCode.abs() % 8999 + 1000)}';
+    final matchedEmp = MockDataService.allEmployees.firstWhere(
+      (e) => (e.name.toLowerCase() == empName.toLowerCase()) ||
+             (empName.isNotEmpty && e.name.toLowerCase().contains(empName.toLowerCase().split(' ').first)),
+      orElse: () => EmployeeModel(
+        id: 'EMP-${(empName.hashCode.abs() % 8000 + 1000)}',
+        name: empName,
+        email: '',
+        jobTitle: 'Staff Specialist',
+        department: 'Operations',
+        workPhone: '',
+        managerName: 'Sara Khan',
+        avatarUrl: '',
+        timeOffBalance: 0,
+        activeContractsCount: 1,
+        attendancesCount: 0,
+        payslipsCount: 0,
+      ),
+    );
+
+    final empId = matchedEmp.id.toUpperCase().startsWith('EMP-')
+        ? matchedEmp.id.toUpperCase()
+        : 'EMP-${(empName.hashCode.abs() % 8000 + 1000)}';
+    final roleName = matchedEmp.jobTitle.isNotEmpty ? matchedEmp.jobTitle : 'Staff Specialist';
+    final bankAc = (matchedEmp.bankName != null && matchedEmp.bankName!.isNotEmpty && matchedEmp.bankAccountNumber != null && matchedEmp.bankAccountNumber!.isNotEmpty)
+        ? '${matchedEmp.bankName} ending ••••${matchedEmp.bankAccountNumber!.length > 4 ? matchedEmp.bankAccountNumber!.substring(matchedEmp.bankAccountNumber!.length - 4) : matchedEmp.bankAccountNumber}'
+        : 'HDFC Bank ending ••••${(empName.hashCode.abs() % 8999 + 1000)}';
 
     final contractWage = payslip.safeContractMonthlyWage > 0 ? payslip.safeContractMonthlyWage : 85000.0;
     final hourlyRate = payslip.hourlyRate > 0 ? payslip.hourlyRate : (contractWage / 176.0);

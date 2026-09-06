@@ -165,7 +165,17 @@ class PayrunService {
     }
 
     if (!ApiClient.isBackendOnline || response.statusCode == 0) {
-      return ApiResponse.success(MockDataService.payslips);
+      var list = List<PayslipModel>.from(MockDataService.payslips);
+      if (employeeId != null && employeeId.isNotEmpty) {
+        final matches = list.where((p) => p.employeeName.toLowerCase().contains(employeeId.toLowerCase())).toList();
+        if (matches.isNotEmpty) {
+          list = matches;
+        } else {
+          final activeName = ApiClient.currentEmployeeName ?? 'Employee';
+          list = list.map((p) => p.copyWith(employeeName: activeName)).toList();
+        }
+      }
+      return ApiResponse.success(list);
     }
 
     return response;
