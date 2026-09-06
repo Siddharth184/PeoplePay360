@@ -32,3 +32,5 @@ api_router.include_router(salary_structures.router)
 api_router.include_router(payruns.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(ai.router)
+api_router.add_api_route("/payroll/assignments", contracts.list_assignments, methods=["GET"], tags=["Payroll Assignments"])
+

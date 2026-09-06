@@ -22,7 +22,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   int _selectedTabIndex = 0;
   late EmployeeModel emp;
 
-  String _selectedPayMonth = 'September 2026';
+  String _selectedPayMonth = '2026-09-01 → 2026-09-30';
   String _selectedAttendanceMonth = '2026-09-01 → 2026-09-30';
   List<PayslipModel> _employeePayslips = [];
   bool _isLoadingPayslips = false;
@@ -195,6 +195,9 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
           builder: (context) => PayslipPdfDialog(payslip: activeSlip),
         );
         break;
+      case 'send_message':
+        _openMessageSheet();
+        break;
     }
   }
 
@@ -233,6 +236,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return StatefulBuilder(
@@ -444,6 +448,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: const BoxDecoration(
@@ -744,6 +749,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 return [
                   _menuItem('contracts', Icons.description_outlined, 'Contracts', iconColor: const Color(0xFF714B67)),
                   _menuItem('print_payslip', Icons.receipt_long_rounded, 'Print Latest Payslip', iconColor: const Color(0xFF00696E)),
+                  _menuItem('send_message', Icons.chat_outlined, 'Send Internal Message', iconColor: const Color(0xFF714B67)),
                 ];
               },
             ),
@@ -940,16 +946,23 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.mail_outline, color: Color(0xFF00696E), size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      emp.email,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF131B2E)),
-                    ),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.mail_outline, color: Color(0xFF00696E), size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          emp.email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF131B2E)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 InkWell(
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -973,16 +986,23 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.phone_outlined, color: Color(0xFF00696E), size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      emp.workPhone,
-                      style: GoogleFonts.jetBrainsMono(fontSize: 12.5, color: const Color(0xFF131B2E)),
-                    ),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.phone_outlined, color: Color(0xFF00696E), size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          emp.workPhone,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.jetBrainsMono(fontSize: 12.5, color: const Color(0xFF131B2E)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00696E),
@@ -1578,8 +1598,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
       if (a.checkIn != null) {
         return DateFormat('yyyy-MM').format(a.checkIn!) == yearMonthStr;
       }
-      if (a.dateStr != null && a.dateStr!.length >= 7) {
-        return a.dateStr!.startsWith(yearMonthStr);
+      if (a.dateStr.length >= 7) {
+        return a.dateStr.startsWith(yearMonthStr);
       }
       return false;
     }).toList();
@@ -1593,7 +1613,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
 
     for (final att in monthAttendances) {
       final st = att.status.toUpperCase();
-      totalWorkedHours += (att.workedHours ?? 0.0);
+      totalWorkedHours += att.workedHours;
       if (st == 'PRESENT') {
         presentCount++;
       } else if (st == 'LATE' || st == 'HALF_DAY') {
@@ -1695,6 +1715,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                       if (val != null) {
                         setState(() {
                           _selectedAttendanceMonth = val;
+                          _selectedPayMonth = val;
                         });
                       }
                     },
@@ -1942,7 +1963,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     final checkOutStr = item.checkOut != null ? DateFormat('hh:mm a').format(item.checkOut!) : '--:--';
     final dateDisplay = item.checkIn != null
         ? DateFormat('EEE, MMM dd').format(item.checkIn!)
-        : (item.dateStr ?? 'Date Log');
+        : (item.dateStr.isNotEmpty ? item.dateStr : 'Date Log');
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2005,7 +2026,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${(item.workedHours ?? 0.0).toStringAsFixed(1)} Hrs${(item.overtimeHours ?? 0.0) > 0 ? ' (+${item.overtimeHours!.toStringAsFixed(1)}h OT)' : ''}',
+              '${item.workedHours.toStringAsFixed(1)} Hrs${item.overtimeHours > 0 ? ' (+${item.overtimeHours.toStringAsFixed(1)}h OT)' : ''}',
               style: GoogleFonts.jetBrainsMono(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
             ),
           ],
@@ -2153,6 +2174,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                       if (val != null) {
                         setState(() {
                           _selectedPayMonth = val;
+                          _selectedAttendanceMonth = val;
                         });
                       }
                     },
@@ -2332,19 +2354,40 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildWeeklyActivityMiniPanel() {
-    final activeSlip = _getActivePayslip();
-    final periodDate = DateTime.tryParse(activeSlip.periodStart);
-    final monthStr = periodDate != null ? DateFormat('MMM').format(periodDate) : DateFormat('MMM').format(DateTime.now());
-    final yearMonthStr = periodDate != null ? DateFormat('yyyy-MM').format(periodDate) : DateFormat('yyyy-MM').format(DateTime.now());
+    final String activeMonthStr = (_selectedTabIndex == 2) ? _selectedAttendanceMonth : _selectedPayMonth;
+    final String selStart = activeMonthStr.contains('→') ? activeMonthStr.split('→').first.trim() : activeMonthStr;
 
-    final userAttendances = MockDataService.attendances.where(
-      (a) => (a.employeeId == emp.id || (a.employeeName != null && a.employeeName!.isNotEmpty && emp.name.toLowerCase().contains(a.employeeName!.toLowerCase().split(' ').first)))
-          && (a.checkIn != null && DateFormat('yyyy-MM').format(a.checkIn!) == yearMonthStr),
-    ).toList();
+    DateTime? periodDate = DateTime.tryParse(selStart);
+    if (periodDate == null && selStart.length >= 7) {
+      periodDate = DateTime.tryParse('${selStart.substring(0, 7)}-01');
+    }
+    periodDate ??= DateTime.now();
+
+    final monthStr = DateFormat('MMM').format(periodDate);
+    final yearMonthStr = DateFormat('yyyy-MM').format(periodDate);
+
+    final activeSlip = _getActivePayslip();
+
+    final userAttendances = MockDataService.attendances.where((a) {
+      final isEmp = a.employeeId == emp.id ||
+          (a.employeeName != null &&
+              a.employeeName!.isNotEmpty &&
+              emp.name.toLowerCase().contains(a.employeeName!.toLowerCase().split(' ').first));
+      if (!isEmp) return false;
+      if (a.checkIn != null) {
+        return DateFormat('yyyy-MM').format(a.checkIn!) == yearMonthStr;
+      }
+      if (a.dateStr.length >= 7) {
+        return a.dateStr.startsWith(yearMonthStr);
+      }
+      return false;
+    }).toList();
 
     final double totalWorked = userAttendances.isNotEmpty
-        ? userAttendances.fold(0.0, (sum, a) => sum + (a.workedHours ?? 0.0))
-        : (activeSlip.workedHours > 0 ? activeSlip.workedHours : (emp.attendancesCount > 0 ? (emp.attendancesCount * 7.55).clamp(0.0, 168.0) : 0.0));
+        ? userAttendances.fold(0.0, (sum, a) => sum + a.workedHours)
+        : (activeSlip.periodStart.startsWith(yearMonthStr) && activeSlip.workedHours > 0
+            ? activeSlip.workedHours
+            : 0.0);
 
     final double targetHours = activeSlip.scheduledHours > 0 ? activeSlip.scheduledHours : 168.0;
     final double progress = (targetHours > 0) ? (totalWorked / targetHours).clamp(0.0, 1.0) : 0.0;
@@ -2427,6 +2470,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildBottomActionBar() {
+    if (!_canEdit) return const SizedBox.shrink();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
@@ -2442,72 +2487,26 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
-          // PDF Export Button
-          InkWell(
-            onTap: () {
-              final activeSlip = _getActivePayslip();
-              showDialog(
-                context: context,
-                builder: (context) => PayslipPdfDialog(payslip: activeSlip),
-              );
-            },
-            borderRadius: BorderRadius.circular(24),
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF2F3FF),
-                shape: BoxShape.circle,
+          Expanded(
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF714B67),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                elevation: 2,
               ),
-              child: const Center(
-                child: Icon(Icons.picture_as_pdf, color: Color(0xFF131B2E), size: 19),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Message Button
-          InkWell(
-            onTap: _openMessageSheet,
-            borderRadius: BorderRadius.circular(24),
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF2F3FF),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(Icons.chat_outlined, color: Color(0xFF131B2E), size: 19),
-              ),
-            ),
-          ),
-
-          if (_canEdit) ...[
-            const SizedBox(width: 10),
-
-            // Edit Employee Primary Button (HR+ only)
-            Expanded(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF714B67),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  elevation: 2,
-                ),
-                onPressed: _openEditEmployeeSheet,
-                icon: const Icon(Icons.edit_note, size: 18),
-                label: Text(
-                  'Edit Employee',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+              onPressed: _openEditEmployeeSheet,
+              icon: const Icon(Icons.edit_note, size: 18),
+              label: Text(
+                'Edit Employee',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          ],
+          ),
         ],
       ),
     );

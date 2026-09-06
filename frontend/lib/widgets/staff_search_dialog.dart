@@ -12,6 +12,7 @@ class StaffSearchDialog extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StaffSearchDialog(onSelectEmployee: onSelectEmployee),
     );
@@ -59,7 +60,8 @@ class _StaffSearchDialogState extends State<StaffSearchDialog> {
     }).toList();
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+      margin: const EdgeInsets.only(top: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),

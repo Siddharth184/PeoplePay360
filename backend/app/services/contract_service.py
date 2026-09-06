@@ -371,6 +371,124 @@ def revise_wage(
     }
 
 
+def revise_compensation(
+    db: Session,
+    contract_id: uuid.UUID | str,
+    *,
+    new_wage=None,
+    new_salary_structure_id: uuid.UUID | str | None = None,
+    effective_from: date,
+    reason: str | None = None,
+) -> dict:
+    """The correct way to change salary or structure: supersede, never overwrite.
+
+    Closes current contract at effective_from - 1 day and opens a new RUNNING
+    contract at the new wage and/or salary structure.
+    """
+    stmt = select(HrContract).where(HrContract.id == contract_id).with_for_update()
+    old = db.execute(stmt).scalars().first()
+    if not old:
+        raise NotFoundError(f"Contract {contract_id} not found.")
+
+    if old.status != "RUNNING":
+        raise ConflictError(
+            f"Only a RUNNING contract can be revised; {old.reference_code} is {old.status}."
+        )
+    if effective_from <= old.start_date:
+        raise ValidationError(
+            f"effective_from must be after current contract's start date ({old.start_date})."
+        )
+    if old.end_date and effective_from > old.end_date:
+        raise ValidationError(
+            f"effective_from must fall within current contract, which ends {old.end_date}."
+        )
+
+    target_wage = old.wage_monthly if new_wage is None else new_wage
+    if to_decimal(target_wage) <= 0:
+        raise ValidationError("Wage must be greater than 0.")
+
+    target_structure_id = old.salary_structure_id if new_salary_structure_id is None else new_salary_structure_id
+    if target_structure_id:
+        from app.models.salary import SalaryStructure
+        struct = db.get(SalaryStructure, target_structure_id)
+        if not struct:
+            raise NotFoundError(f"Salary structure {target_structure_id} not found.")
+        if not struct.is_active:
+            raise ConflictError(f"Selected salary structure is inactive.")
+
+    from app.models.payrun import Payrun, Payslip
+
+    paid_after = db.execute(
+        select(Payslip.reference_code)
+        .join(Payrun, Payrun.id == Payslip.payrun_id)
+        .where(
+            Payslip.contract_id == old.id,
+            Payslip.date_end >= effective_from,
+            Payrun.status.in_(["VALIDATED", "PAID"]),
+        )
+    ).scalars().all()
+    if paid_after:
+        raise ConflictError(
+            f"Payroll has already been finalised for a period on or after {effective_from} using this contract, so it cannot be split there.",
+            details={"payslips": list(paid_after)},
+        )
+
+    open_runs = db.execute(
+        select(Payrun.reference_code)
+        .join(Payslip, Payslip.payrun_id == Payrun.id)
+        .where(
+            Payslip.contract_id == old.id,
+            Payrun.status.in_(["DRAFT", "COMPUTED"]),
+            Payrun.date_start <= effective_from,
+            Payrun.date_end >= effective_from,
+        )
+    ).scalars().all()
+    if open_runs:
+        raise ConflictError(
+            f"This employee is included in an open payrun ({', '.join(open_runs)}) for this period. Finalise or recompute the payrun before changing compensation."
+        )
+
+    old_end = effective_from - timedelta(days=1)
+    old.end_date = old_end
+    old.status = "EXPIRED"
+    old.notes = (
+        f"{old.notes}\n" if old.notes else ""
+    ) + f"Superseded by compensation revision effective {effective_from}."
+    db.flush()
+
+    new_contract = HrContract(
+        reference_code=next_contract_reference(db, effective_from),
+        employee_id=old.employee_id,
+        department_id=old.department_id,
+        job_position_id=old.job_position_id,
+        working_schedule_id=old.working_schedule_id,
+        salary_structure_id=target_structure_id,
+        start_date=effective_from,
+        end_date=None,
+        wage_monthly=target_wage,
+        status="RUNNING",
+        notes=(reason or f"Compensation revision effective {effective_from}.")
+        + f" Supersedes {old.reference_code}.",
+    )
+    db.add(new_contract)
+    db.commit()
+    db.refresh(old)
+    db.refresh(new_contract)
+
+    return {
+        "previous_contract": old,
+        "new_contract": new_contract,
+        "previous_wage": to_decimal(old.wage_monthly),
+        "new_wage": to_decimal(new_contract.wage_monthly),
+        "effective_from": effective_from,
+        "note": (
+            f"{old.reference_code} now ends {old_end} and is EXPIRED. "
+            f"{new_contract.reference_code} runs from {effective_from} at new compensation."
+        ),
+    }
+
+
+
 def set_contract_status(
     db: Session, contract_id: uuid.UUID | str, new_status: str
 ) -> HrContract:

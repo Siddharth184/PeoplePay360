@@ -68,6 +68,7 @@ class _TimeOffSetupScreenState extends State<TimeOffSetupScreen> with SingleTick
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setSheetState) => Container(

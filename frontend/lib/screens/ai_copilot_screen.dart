@@ -1108,13 +1108,6 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                     onSubmitted: (val) => _sendQuery(val),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.mic_rounded, color: Color(0xFF4E444A), size: 20),
-                  tooltip: 'Voice dictation',
-                  onPressed: () {
-                    _insertQuickPrompt('Explain my payslip statutory deductions');
-                  },
-                ),
                 Material(
                   color: const Color(0xFF57344F),
                   shape: const CircleBorder(),

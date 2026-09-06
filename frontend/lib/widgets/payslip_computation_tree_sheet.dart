@@ -12,6 +12,7 @@ class PayslipComputationTreeSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => PayslipComputationTreeSheet(payslip: payslip),
     );
@@ -36,7 +37,8 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
     final refNo = slip['refNo'] ?? 'PS-2026-02-0042';
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.92,
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+      margin: const EdgeInsets.only(top: 16),
       decoration: const BoxDecoration(
         color: Color(0xFFFAF8FF),
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),

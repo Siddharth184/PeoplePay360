@@ -319,20 +319,58 @@ class MockDataService {
       final d = now.subtract(Duration(days: daysAgo));
       return DateTime(d.year, d.month, d.day, hour, minute);
     }
+    DateTime exactDate(int y, int m, int d, int h, int min) {
+      return DateTime(y, m, d, h, min);
+    }
 
     _attendancesList = [
-      AttendanceModel(id: 'att-01', checkIn: dayAt(0, 9, 2), checkOut: null, status: 'PRESENT', workedHours: 5.5, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-      AttendanceModel(id: 'att-02', checkIn: dayAt(1, 9, 15), checkOut: dayAt(1, 18, 10), status: 'LATE', workedHours: 8.5, overtimeHours: 0.5, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-      AttendanceModel(id: 'att-03', checkIn: dayAt(2, 8, 58), checkOut: dayAt(2, 18, 0), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-      AttendanceModel(id: 'att-04', checkIn: dayAt(3, 9, 0), checkOut: dayAt(3, 17, 55), status: 'PRESENT', workedHours: 8.9, overtimeHours: 0.9, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-      AttendanceModel(id: 'att-05', checkIn: dayAt(4, 9, 5), checkOut: dayAt(4, 18, 15), status: 'PRESENT', workedHours: 9.1, overtimeHours: 1.1, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-      AttendanceModel(id: 'att-06', checkIn: dayAt(5, 8, 55), checkOut: dayAt(5, 18, 2), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
-      AttendanceModel(id: 'att-07', checkIn: dayAt(0, 9, 20), checkOut: null, status: 'LATE', workedHours: 5.2, overtimeHours: 0.0, employeeName: 'Priya Patel', employeeId: 'emp-002'),
-      AttendanceModel(id: 'att-08', checkIn: dayAt(0, 8, 45), checkOut: null, status: 'PRESENT', workedHours: 5.8, overtimeHours: 0.0, employeeName: 'Vikram Singh', employeeId: 'emp-005'),
+      // Base dynamic relative records for existing tests
+      AttendanceModel(id: 'att-01', checkIn: dayAt(1, 9, 2), checkOut: dayAt(1, 18, 0), status: 'PRESENT', workedHours: 8.9, overtimeHours: 0.9, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-02', checkIn: dayAt(2, 9, 15), checkOut: dayAt(2, 18, 10), status: 'LATE', workedHours: 8.5, overtimeHours: 0.5, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-03', checkIn: dayAt(3, 8, 58), checkOut: dayAt(3, 18, 0), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-04', checkIn: dayAt(4, 9, 0), checkOut: dayAt(4, 17, 55), status: 'PRESENT', workedHours: 8.9, overtimeHours: 0.9, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-05', checkIn: dayAt(5, 9, 5), checkOut: dayAt(5, 18, 15), status: 'PRESENT', workedHours: 9.1, overtimeHours: 1.1, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-06', checkIn: dayAt(6, 8, 55), checkOut: dayAt(6, 18, 2), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-07', checkIn: dayAt(1, 9, 20), checkOut: dayAt(1, 18, 20), status: 'LATE', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Priya Patel', employeeId: 'emp-002'),
+      AttendanceModel(id: 'att-08', checkIn: dayAt(1, 8, 45), checkOut: dayAt(1, 17, 45), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Vikram Singh', employeeId: 'emp-005'),
       AttendanceModel(id: 'att-11', checkIn: dayAt(1, 9, 1), checkOut: dayAt(1, 18, 5), status: 'PRESENT', workedHours: 9.0, overtimeHours: 1.0, employeeName: 'Neha Verma', employeeId: 'emp-006'),
       AttendanceModel(id: 'att-12', checkIn: dayAt(1, 8, 50), checkOut: dayAt(1, 17, 45), status: 'PRESENT', workedHours: 8.9, overtimeHours: 0.9, employeeName: 'Ananya Reddy', employeeId: 'emp-008'),
       AttendanceModel(id: 'att-13', checkIn: dayAt(1, 9, 32), checkOut: dayAt(1, 18, 40), status: 'LATE', workedHours: 9.1, overtimeHours: 1.1, employeeName: 'Rajesh Kumar', employeeId: 'emp-003'),
       AttendanceModel(id: 'att-14', checkIn: dayAt(2, 8, 40), checkOut: dayAt(2, 17, 50), status: 'PRESENT', workedHours: 9.2, overtimeHours: 1.2, employeeName: 'Sara Khan', employeeId: 'emp-004'),
+
+      // September 2026 Multi-Employee Records
+      AttendanceModel(id: 'att-sep-01', checkIn: exactDate(2026, 9, 1, 9, 0), checkOut: exactDate(2026, 9, 1, 18, 0), status: 'PRESENT', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-sep-02', checkIn: exactDate(2026, 9, 2, 9, 15), checkOut: exactDate(2026, 9, 2, 18, 10), status: 'LATE', workedHours: 7.9, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-sep-03', checkIn: exactDate(2026, 9, 3, 8, 55), checkOut: exactDate(2026, 9, 3, 18, 30), status: 'PRESENT', workedHours: 8.5, overtimeHours: 0.5, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-sep-04', checkIn: exactDate(2026, 9, 4, 9, 0), checkOut: exactDate(2026, 9, 4, 13, 0), status: 'HALF_DAY', workedHours: 4.0, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-sep-05', checkIn: exactDate(2026, 9, 7, 9, 5), checkOut: exactDate(2026, 9, 7, 18, 0), status: 'PRESENT', workedHours: 7.9, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-sep-06', checkIn: null, checkOut: null, status: 'LEAVE', workedHours: 0.0, overtimeHours: 0.0, auditNotes: 'Paid Time Off', employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+
+      // August 2026 Multi-Employee Records
+      AttendanceModel(id: 'att-aug-01', checkIn: exactDate(2026, 8, 3, 9, 0), checkOut: exactDate(2026, 8, 3, 18, 0), status: 'PRESENT', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-aug-02', checkIn: exactDate(2026, 8, 4, 9, 25), checkOut: exactDate(2026, 8, 4, 18, 15), status: 'LATE', workedHours: 7.8, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-aug-03', checkIn: exactDate(2026, 8, 5, 8, 50), checkOut: exactDate(2026, 8, 5, 19, 0), status: 'PRESENT', workedHours: 9.1, overtimeHours: 1.1, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-aug-04', checkIn: null, checkOut: null, status: 'LEAVE', workedHours: 0.0, overtimeHours: 0.0, auditNotes: 'Sick Leave', employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-aug-05', checkIn: exactDate(2026, 8, 11, 9, 0), checkOut: exactDate(2026, 8, 11, 18, 0), status: 'PRESENT', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-aug-06', checkIn: exactDate(2026, 8, 12, 9, 30), checkOut: exactDate(2026, 8, 12, 18, 30), status: 'LATE', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+
+      // July 2026 Multi-Employee Records
+      AttendanceModel(id: 'att-jul-01', checkIn: null, checkOut: null, status: 'LEAVE', workedHours: 0.0, overtimeHours: 0.0, auditNotes: 'Compensatory Off', employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-jul-02', checkIn: exactDate(2026, 7, 2, 8, 55), checkOut: exactDate(2026, 7, 2, 18, 0), status: 'PRESENT', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+      AttendanceModel(id: 'att-jul-03', checkIn: exactDate(2026, 7, 3, 9, 0), checkOut: exactDate(2026, 7, 3, 18, 0), status: 'PRESENT', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Aarav Sharma', employeeId: 'emp-001'),
+
+      // Priya Patel (emp-002) Multi-Month Records
+      AttendanceModel(id: 'att-pri-01', checkIn: exactDate(2026, 9, 1, 9, 10), checkOut: exactDate(2026, 9, 1, 18, 15), status: 'LATE', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Priya Patel', employeeId: 'emp-002'),
+      AttendanceModel(id: 'att-pri-02', checkIn: exactDate(2026, 9, 2, 8, 50), checkOut: exactDate(2026, 9, 2, 18, 0), status: 'PRESENT', workedHours: 8.1, overtimeHours: 0.1, employeeName: 'Priya Patel', employeeId: 'emp-002'),
+      AttendanceModel(id: 'att-pri-03', checkIn: exactDate(2026, 8, 1, 9, 0), checkOut: exactDate(2026, 8, 1, 18, 0), status: 'PRESENT', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Priya Patel', employeeId: 'emp-002'),
+
+      // Rajesh Kumar (emp-003) Multi-Month Records
+      AttendanceModel(id: 'att-raj-01', checkIn: exactDate(2026, 9, 1, 9, 25), checkOut: exactDate(2026, 9, 1, 18, 30), status: 'LATE', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Rajesh Kumar', employeeId: 'emp-003'),
+      AttendanceModel(id: 'att-raj-02', checkIn: exactDate(2026, 9, 2, 8, 55), checkOut: exactDate(2026, 9, 2, 18, 0), status: 'PRESENT', workedHours: 8.0, overtimeHours: 0.0, employeeName: 'Rajesh Kumar', employeeId: 'emp-003'),
+
+      // Sara Khan (emp-004) Multi-Month Records
+      AttendanceModel(id: 'att-sar-01', checkIn: exactDate(2026, 9, 1, 8, 45), checkOut: exactDate(2026, 9, 1, 18, 0), status: 'PRESENT', workedHours: 8.2, overtimeHours: 0.2, employeeName: 'Sara Khan', employeeId: 'emp-004'),
+      AttendanceModel(id: 'att-sar-02', checkIn: exactDate(2026, 8, 1, 8, 40), checkOut: exactDate(2026, 8, 1, 18, 0), status: 'PRESENT', workedHours: 8.3, overtimeHours: 0.3, employeeName: 'Sara Khan', employeeId: 'emp-004'),
     ];
     return _attendancesList!;
   }
@@ -416,10 +454,10 @@ class MockDataService {
         PayslipLineModel(ruleName: 'Net Salary', ruleCode: 'NET', category: 'NET', amount: 126747.73),
       ],
     ),
-    // Aarav Sharma
+    // Aug 2026
     PayslipModel(
-      id: 'pay-01',
-      refCode: 'PAY/2026/08',
+      id: 'pay-08',
+      refCode: 'SLIP/2026/08-001',
       employeeName: 'Aarav Sharma',
       periodStart: '2026-08-01',
       periodEnd: '2026-08-31',
@@ -441,6 +479,84 @@ class MockDataService {
         PayslipLineModel(ruleName: 'Provident Fund', ruleCode: 'PF', category: 'DEDUCTION', amount: -3000.0),
         PayslipLineModel(ruleName: 'Professional Tax', ruleCode: 'PT', category: 'DEDUCTION', amount: -2000.0),
         PayslipLineModel(ruleName: 'Net Salary', ruleCode: 'NET', category: 'NET', amount: 89971.59),
+      ],
+    ),
+    // Jul 2026
+    PayslipModel(
+      id: 'pay-07',
+      refCode: 'SLIP/2026/07-001',
+      employeeName: 'Sara Khan',
+      periodStart: '2026-07-01',
+      periodEnd: '2026-07-31',
+      contractMonthlyWage: 85000.0,
+      overtimeHours: 8.0,
+      overtimePay: 5795.45,
+      extraDays: 1.0,
+      extraDaysPay: 3863.64,
+      grossAmount: 89659.09,
+      netAmount: 84659.09,
+      status: 'PAID',
+      lines: [
+        PayslipLineModel(ruleName: 'Basic Salary', ruleCode: 'BASIC', category: 'BASIC', amount: 50000.0),
+        PayslipLineModel(ruleName: 'House Rent Allowance', ruleCode: 'HRA', category: 'ALLOWANCE', amount: 20000.0),
+        PayslipLineModel(ruleName: 'Special Allowance', ruleCode: 'SA', category: 'ALLOWANCE', amount: 10000.0),
+        PayslipLineModel(ruleName: 'Overtime Earning (1.5x Rate)', ruleCode: 'OT', category: 'ALLOWANCE', amount: 5795.45),
+        PayslipLineModel(ruleName: 'Extra Days Payout', ruleCode: 'EXT_DAYS', category: 'ALLOWANCE', amount: 3863.64),
+        PayslipLineModel(ruleName: 'Gross Salary', ruleCode: 'GROSS', category: 'GROSS', amount: 89659.09),
+        PayslipLineModel(ruleName: 'Provident Fund', ruleCode: 'PF', category: 'DEDUCTION', amount: -3000.0),
+        PayslipLineModel(ruleName: 'Professional Tax', ruleCode: 'PT', category: 'DEDUCTION', amount: -2000.0),
+        PayslipLineModel(ruleName: 'Net Salary', ruleCode: 'NET', category: 'NET', amount: 84659.09),
+      ],
+    ),
+    // Jun 2026
+    PayslipModel(
+      id: 'pay-06',
+      refCode: 'SLIP/2026/06-001',
+      employeeName: 'Sara Khan',
+      periodStart: '2026-06-01',
+      periodEnd: '2026-06-30',
+      contractMonthlyWage: 85000.0,
+      overtimeHours: 5.0,
+      overtimePay: 3622.16,
+      extraDays: 0.0,
+      extraDaysPay: 0.0,
+      grossAmount: 83622.16,
+      netAmount: 78622.16,
+      status: 'PAID',
+      lines: [
+        PayslipLineModel(ruleName: 'Basic Salary', ruleCode: 'BASIC', category: 'BASIC', amount: 50000.0),
+        PayslipLineModel(ruleName: 'House Rent Allowance', ruleCode: 'HRA', category: 'ALLOWANCE', amount: 20000.0),
+        PayslipLineModel(ruleName: 'Special Allowance', ruleCode: 'SA', category: 'ALLOWANCE', amount: 10000.0),
+        PayslipLineModel(ruleName: 'Overtime Earning (1.5x Rate)', ruleCode: 'OT', category: 'ALLOWANCE', amount: 3622.16),
+        PayslipLineModel(ruleName: 'Gross Salary', ruleCode: 'GROSS', category: 'GROSS', amount: 83622.16),
+        PayslipLineModel(ruleName: 'Provident Fund', ruleCode: 'PF', category: 'DEDUCTION', amount: -3000.0),
+        PayslipLineModel(ruleName: 'Professional Tax', ruleCode: 'PT', category: 'DEDUCTION', amount: -2000.0),
+        PayslipLineModel(ruleName: 'Net Salary', ruleCode: 'NET', category: 'NET', amount: 78622.16),
+      ],
+    ),
+    // Feb 2026
+    PayslipModel(
+      id: 'pay-02-sk',
+      refCode: 'SLIP/2026/02-001',
+      employeeName: 'Sara Khan',
+      periodStart: '2026-02-01',
+      periodEnd: '2026-02-28',
+      contractMonthlyWage: 85000.0,
+      overtimeHours: 0.0,
+      overtimePay: 0.0,
+      extraDays: 0.0,
+      extraDaysPay: 0.0,
+      grossAmount: 80000.0,
+      netAmount: 75000.0,
+      status: 'CONFIRMED',
+      lines: [
+        PayslipLineModel(ruleName: 'Basic Salary', ruleCode: 'BASIC', category: 'BASIC', amount: 50000.0),
+        PayslipLineModel(ruleName: 'House Rent Allowance', ruleCode: 'HRA', category: 'ALLOWANCE', amount: 20000.0),
+        PayslipLineModel(ruleName: 'Special Allowance', ruleCode: 'SA', category: 'ALLOWANCE', amount: 10000.0),
+        PayslipLineModel(ruleName: 'Gross Salary', ruleCode: 'GROSS', category: 'GROSS', amount: 80000.0),
+        PayslipLineModel(ruleName: 'Provident Fund', ruleCode: 'PF', category: 'DEDUCTION', amount: -3000.0),
+        PayslipLineModel(ruleName: 'Professional Tax', ruleCode: 'PT', category: 'DEDUCTION', amount: -2000.0),
+        PayslipLineModel(ruleName: 'Net Salary', ruleCode: 'NET', category: 'NET', amount: 75000.0),
       ],
     ),
   ];

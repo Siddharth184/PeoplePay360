@@ -12,6 +12,7 @@ class NotificationsDrawer extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => NotificationsDrawer(onNavigateTab: onNavigateTab),
     );
@@ -68,53 +69,70 @@ class _NotificationsDrawerState extends State<NotificationsDrawer> {
 
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.notifications_active, color: AppTheme.odooAubergine),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Notifications Inbox',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                        ),
-                        if (unreadCount > 0) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.odooTeal,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                    Expanded(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.notifications_active, color: AppTheme.odooAubergine),
+                          const SizedBox(width: 6),
+                          Flexible(
                             child: Text(
-                              '$unreadCount new',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              'Notifications Inbox',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 17,
+                                  ),
                             ),
                           ),
+                          if (unreadCount > 0) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppTheme.odooTeal,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '$unreadCount new',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
+                    const SizedBox(width: 6),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           onPressed: () {
                             NotificationService.markAllRead();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('All notifications marked as read')),
                             );
                           },
-                          child: const Text('Mark Read', style: TextStyle(fontSize: 12)),
+                          child: const Text('Mark Read', style: TextStyle(fontSize: 11.5)),
                         ),
+                        const SizedBox(width: 2),
                         IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           icon: const Icon(Icons.close, size: 20),
                           onPressed: () => Navigator.pop(context),
                         ),

@@ -107,6 +107,7 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
@@ -370,11 +371,93 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                           final wageStr = wageCtrl.text.trim();
                           final bankAcc = bankAccountCtrl.text.trim();
 
-                          if (name.isEmpty || email.isEmpty) {
+                          final nameRegex = RegExp(r"^[a-zA-Z\s.\-']{2,100}$");
+                          final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+                          final phoneRegex = RegExp(r"^\+?[0-9\s\-()]{7,25}$");
+                          final badgeRegex = RegExp(r"^[a-zA-Z0-9\-_]{2,20}$");
+                          final dateRegex = RegExp(r"^\d{4}-\d{2}-\d{2}$");
+                          final bankAccRegex = RegExp(r"^[a-zA-Z0-9\-\s]{6,50}$");
+                          final wageVal = double.tryParse(wageStr);
+
+                          if (name.isEmpty || !nameRegex.hasMatch(name)) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('⚠️ Please enter Full Name and Work Email')),
+                              const SnackBar(
+                                backgroundColor: Color(0xFFBA1A1A),
+                                content: Text('⚠️ Valid Full Name required (letters, spaces, dots or hyphens only).'),
+                              ),
                             );
                             return;
+                          }
+
+                          if (email.isEmpty || !emailRegex.hasMatch(email)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                backgroundColor: Color(0xFFBA1A1A),
+                                content: Text('⚠️ Valid Work Email required (e.g. user@company.com).'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (phone.isNotEmpty && !phoneRegex.hasMatch(phone)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                backgroundColor: Color(0xFFBA1A1A),
+                                content: Text('⚠️ Valid Work Phone required (digits, +, spaces, hyphens).'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (badgeId.isNotEmpty && !badgeRegex.hasMatch(badgeId)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                backgroundColor: Color(0xFFBA1A1A),
+                                content: Text('⚠️ Badge ID must be 2-20 alphanumeric characters (e.g. EMP-4095).'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (joiningDate.isNotEmpty && !dateRegex.hasMatch(joiningDate)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                backgroundColor: Color(0xFFBA1A1A),
+                                content: Text('⚠️ Date of Joining must be YYYY-MM-DD format (e.g. 2026-09-01).'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (wageStr.isNotEmpty && (wageVal == null || wageVal < 0)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                backgroundColor: Color(0xFFBA1A1A),
+                                content: Text('⚠️ Base Salary must be a valid positive number.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (bankAcc.isNotEmpty && !bankAccRegex.hasMatch(bankAcc)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                backgroundColor: Color(0xFFBA1A1A),
+                                content: Text('⚠️ Bank Account No. must be 6-50 alphanumeric characters or hyphens.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          String mappedType = 'PERMANENT';
+                          if (empType == 'Contractor' || empType == 'Part-time') {
+                            mappedType = 'CONTRACT';
+                          } else if (empType == 'Intern') {
+                            mappedType = 'INTERN';
+                          } else if (empType == 'Probation') {
+                            mappedType = 'PROBATION';
+                          } else {
+                            mappedType = 'PERMANENT';
                           }
 
                           setSheetState(() => isSubmitting = true);
@@ -391,9 +474,9 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                             'department_name': dept,
                             'work_location': location,
                             'manager_name': manager,
-                            'employee_type': empType,
+                            'employee_type': mappedType,
                             'date_of_joining': joiningDate,
-                            'wage_monthly': double.tryParse(wageStr) ?? 85000.0,
+                            'wage_monthly': wageVal ?? 85000.0,
                             'bank_name': bankName,
                             'bank_account_number': bankAcc,
                             'company_name': 'OXP Pvt Ltd',
@@ -990,18 +1073,6 @@ class _EmployeeDirectoryScreenState extends State<EmployeeDirectoryScreen> {
                                       child: Icon(Icons.close, size: 18, color: Colors.grey),
                                     ),
                                   ),
-                                GestureDetector(
-                                  onTap: () => _triggerToast('Voice search activated... Speak now'),
-                                  child: Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFEAEDFF),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.mic, size: 18, color: Color(0xFF4E444A)),
-                                  ),
-                                ),
                               ],
                             ),
                           ),

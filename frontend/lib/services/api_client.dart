@@ -199,7 +199,7 @@ class ApiClient {
     T Function(dynamic json)? parser,
     Duration? timeout,
   }) async {
-    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
+    final effectiveTimeout = timeout ?? const Duration(seconds: 4);
     try {
       final uri = _buildUri(path, queryParams);
       developer.log('GET $uri', name: 'ApiClient');
@@ -221,7 +221,7 @@ class ApiClient {
     T Function(dynamic json)? parser,
     Duration? timeout,
   }) async {
-    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
+    final effectiveTimeout = timeout ?? const Duration(seconds: 4);
     try {
       final uri = _buildUri(path, queryParams);
       final encodedBody = body != null ? jsonEncode(body) : null;
@@ -246,7 +246,7 @@ class ApiClient {
     T Function(dynamic json)? parser,
     Duration? timeout,
   }) async {
-    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
+    final effectiveTimeout = timeout ?? const Duration(seconds: 4);
     try {
       final uri = _buildUri(path, queryParams);
       final encodedBody = body != null ? jsonEncode(body) : null;
@@ -271,7 +271,7 @@ class ApiClient {
     T Function(dynamic json)? parser,
     Duration? timeout,
   }) async {
-    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
+    final effectiveTimeout = timeout ?? const Duration(seconds: 4);
     try {
       final uri = _buildUri(path, queryParams);
       final encodedBody = body != null ? jsonEncode(body) : null;
@@ -295,7 +295,7 @@ class ApiClient {
     T Function(dynamic json)? parser,
     Duration? timeout,
   }) async {
-    final effectiveTimeout = timeout ?? (isBackendOnline ? const Duration(seconds: 3) : const Duration(milliseconds: 1000));
+    final effectiveTimeout = timeout ?? const Duration(seconds: 4);
     try {
       final uri = _buildUri(path, queryParams);
       developer.log('DELETE $uri', name: 'ApiClient');

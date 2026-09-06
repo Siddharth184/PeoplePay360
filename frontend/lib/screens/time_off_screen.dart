@@ -212,6 +212,7 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
@@ -322,23 +323,29 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF92EFF5),
-                              borderRadius: BorderRadius.circular(10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF92EFF5),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.beach_access, color: Color(0xFF006E73), size: 22),
                             ),
-                            child: const Icon(Icons.beach_access, color: Color(0xFF006E73), size: 22),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'Request Time Off',
-                            style: GoogleFonts.outfit(fontSize: 19, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                          ),
-                        ],
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                'Request Time Off',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.outfit(fontSize: 19, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close, color: Color(0xFF4E444A)),
@@ -465,18 +472,18 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
                   if (startDate.year == endDate.year && startDate.month == endDate.month && startDate.day == endDate.day) ...[
                     Text('Duration Mode', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         _buildDayPartChoice('Full Day', 'FULL_DAY', dayPart, (val) {
                           setModalState(() => dayPart = val);
                           fetchPreview();
                         }),
-                        const SizedBox(width: 8),
                         _buildDayPartChoice('First Half', 'FIRST_HALF', dayPart, (val) {
                           setModalState(() => dayPart = val);
                           fetchPreview();
                         }),
-                        const SizedBox(width: 8),
                         _buildDayPartChoice('Second Half', 'SECOND_HALF', dayPart, (val) {
                           setModalState(() => dayPart = val);
                           fetchPreview();

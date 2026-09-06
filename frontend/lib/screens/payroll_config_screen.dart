@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../services/contract_service.dart';
 import '../services/salary_structure_service.dart';
+import '../services/mock_data_service.dart';
 import '../theme/app_theme.dart';
 
 class PayrollConfigScreen extends StatefulWidget {
@@ -28,7 +30,10 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
   bool _isSimulating = false;
   String? _simulationError;
 
-  bool get _canEdit => ApiClient.hasPayrollConfigWriteAccess;
+  // Employee Payroll Board Filter State
+  String _empSearchQuery = '';
+  String _selectedDeptFilter = 'All';
+  String _selectedPosFilter = 'All';
 
   @override
   void initState() {
@@ -64,7 +69,8 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
       });
 
       if (list.isNotEmpty) {
-        final targetId = selectId ?? _selectedStructure?.id ?? list.first.id;
+        final targetId = selectId ??
+            (list.any((s) => s.id == _selectedStructure?.id) ? _selectedStructure!.id : list.first.id);
         _selectStructure(targetId);
       } else {
         setState(() => _selectedStructure = null);
@@ -168,6 +174,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (modalContext) {
@@ -336,12 +343,19 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.crimsonDanger, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(dialogContext);
-              final res = await SalaryStructureService.deleteStructure(structure.id);
+              final deletedId = structure.id;
+              final res = await SalaryStructureService.deleteStructure(deletedId);
               if (!mounted) return;
               if (res.isSuccess) {
                 messenger.showSnackBar(
                   SnackBar(content: Text(res.message ?? res.data?['detail'] ?? 'Structure deleted')),
                 );
+                setState(() {
+                  _structures.removeWhere((s) => s.id == deletedId);
+                  if (_selectedStructure?.id == deletedId) {
+                    _selectedStructure = _structures.isNotEmpty ? _structures.first : null;
+                  }
+                });
                 _loadStructures();
               } else {
                 messenger.showSnackBar(
@@ -388,6 +402,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (modalContext) {
@@ -804,11 +819,21 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     }
   }
 
+  bool get _canRead => ApiClient.hasPayrollConfigReadAccess;
+  bool get _canEdit => ApiClient.hasPayrollConfigWriteAccess;
+
   // ===========================================================================
   // BUILD
   // ===========================================================================
   @override
   Widget build(BuildContext context) {
+    if (!_canRead) {
+      return Scaffold(
+        backgroundColor: AppTheme.deepBgLight,
+        body: SafeArea(child: _buildAccessRestrictedState()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.deepBgLight,
       body: SafeArea(
@@ -826,6 +851,40 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                       }
                     },
                   ),
+      ),
+    );
+  }
+
+  Widget _buildAccessRestrictedState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppTheme.crimsonDanger.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.lock_outline, size: 32, color: AppTheme.crimsonDanger),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Access Restricted',
+              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You do not have permission to view payroll structures and rules. '
+              'Please contact your system administrator if you require access.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppTheme.textSecondaryLight),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -905,6 +964,22 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                           onPressed: () => _openStructureModal(),
                           icon: const Icon(Icons.add, size: 18),
                           label: const Text('New Structure', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
+                      ),
+                    if (!_canEdit)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.odooTeal.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.lock_outline, size: 14, color: AppTheme.odooTeal),
+                            const SizedBox(width: 4),
+                            Text('Read-Only', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.odooTeal)),
+                          ],
                         ),
                       ),
                   ],
@@ -1029,6 +1104,10 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
   Widget _buildMobileStructureSelector() {
     if (_structures.isEmpty) return const SizedBox.shrink();
 
+    final validSelectedId = _structures.any((s) => s.id == _selectedStructure?.id)
+        ? _selectedStructure?.id
+        : _structures.first.id;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -1040,7 +1119,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
-            value: _selectedStructure?.id,
+            value: validSelectedId,
             isExpanded: true,
             icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.odooAubergine),
             style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimaryLight),
@@ -1181,8 +1260,8 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     final struct = _selectedStructure!;
     final rules = struct.rules;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1204,7 +1283,11 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
 
           // Simulator section
           _buildSimulatorSection(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+
+          // Employee Payroll Structure & Package Assignment Board
+          _buildEmployeePayrollAssignmentSection(),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -1687,6 +1770,1004 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     );
   }
 
+  Widget _buildEmployeePayrollAssignmentSection() {
+    final allEmps = MockDataService.allEmployees;
+    final allDepts = ['All', ...allEmps.map((e) => e.department).where((d) => d.isNotEmpty).toSet()];
+    final allPositions = ['All', ...allEmps.map((e) => e.jobTitle).where((p) => p.isNotEmpty).toSet()];
+
+    // Filter employees
+    final filteredEmps = allEmps.where((emp) {
+      if (_empSearchQuery.isNotEmpty) {
+        final q = _empSearchQuery.toLowerCase();
+        final matchName = emp.name.toLowerCase().contains(q);
+        final matchBadge = (emp.badgeId ?? '').toLowerCase().contains(q);
+        if (!matchName && !matchBadge) return false;
+      }
+      if (_selectedDeptFilter != 'All' && !emp.department.toLowerCase().contains(_selectedDeptFilter.toLowerCase())) {
+        return false;
+      }
+      if (_selectedPosFilter != 'All' && !emp.jobTitle.toLowerCase().contains(_selectedPosFilter.toLowerCase())) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppTheme.odooAubergine.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.badge_outlined, color: AppTheme.odooAubergine, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Employee Payroll & Package Assignment',
+                      style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+                    ),
+                    Text(
+                      'Directly assign or edit salary structures and packages per employee, department, or job position',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondaryLight),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (_canEdit)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.odooAubergine,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    elevation: 0,
+                  ),
+                  onPressed: () => _openEmployeePayrollModal(),
+                  icon: const Icon(Icons.assignment_add, size: 16),
+                  label: Text('Batch Assign', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Filters Bar: Search + Department + Position
+          Column(
+            children: [
+              // Search Input
+              TextField(
+                onChanged: (val) => setState(() => _empSearchQuery = val.trim()),
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF131B2E)),
+                decoration: InputDecoration(
+                  hintText: 'Filter by employee name or ID...',
+                  hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondaryLight),
+                  prefixIcon: const Icon(Icons.search, size: 18, color: AppTheme.textSecondaryLight),
+                  suffixIcon: _empSearchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 16),
+                          onPressed: () => setState(() => _empSearchQuery = ''),
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: AppTheme.surfaceElevatedLight,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.borderLight)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.borderLight)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.odooAubergine)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Dropdown Filters Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildDropdownField(
+                      label: 'Department',
+                      value: allDepts.contains(_selectedDeptFilter) ? _selectedDeptFilter : 'All',
+                      items: allDepts,
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedDeptFilter = val);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildDropdownField(
+                      label: 'Job Position / Post',
+                      value: allPositions.contains(_selectedPosFilter) ? _selectedPosFilter : 'All',
+                      items: allPositions,
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedPosFilter = val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Count Badge Indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Showing ${filteredEmps.length} of ${allEmps.length} Employees',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondaryLight),
+              ),
+              if (_selectedDeptFilter != 'All' || _selectedPosFilter != 'All' || _empSearchQuery.isNotEmpty)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _empSearchQuery = '';
+                      _selectedDeptFilter = 'All';
+                      _selectedPosFilter = 'All';
+                    });
+                  },
+                  child: const Text('Reset Filters', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Employee Payroll Cards List
+          if (filteredEmps.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceElevatedLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.person_search_outlined, size: 36, color: AppTheme.textSecondaryLight),
+                  const SizedBox(height: 8),
+                  Text('No employees match the filters', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('Try adjusting your search query, department, or job position filter.', textAlign: TextAlign.center, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondaryLight)),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filteredEmps.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final emp = filteredEmps[index];
+                return _buildEmployeePayrollCard(emp);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+
+
+  Widget _buildEmployeePayrollCard(EmployeeModel emp) {
+    final contract = MockDataService.contracts.firstWhere(
+      (c) => c.employeeName.toLowerCase().contains(emp.name.toLowerCase().split(' ').first),
+      orElse: () => ContractModel(
+        id: 'new',
+        refCode: 'CON/NEW',
+        employeeName: emp.name,
+        department: emp.department,
+        startDate: '2026-01-01',
+        wageMonthly: 85000.0,
+        status: 'RUNNING',
+        structureName: _selectedStructure?.name ?? 'Regular Employee Base',
+      ),
+    );
+
+    final hourlyRate = contract.wageMonthly / 176.0;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceElevatedLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: AppTheme.odooAubergine,
+                child: Text(
+                  emp.name.isNotEmpty ? emp.name[0].toUpperCase() : 'E',
+                  style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      emp.name,
+                      style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+                    ),
+                    Text(
+                      '${emp.jobTitle} • ${emp.department} • ${emp.badgeId ?? "EMP"}',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondaryLight),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              _buildBadge(
+                contract.status,
+                contract.status == 'RUNNING' ? AppTheme.emeraldSuccess : const Color(0xFFE65100),
+                contract.status == 'RUNNING' ? AppTheme.emeraldSuccess.withValues(alpha: 0.1) : const Color(0xFFFFF3E0),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+
+          // Package & Structure Details (Responsive layout, no overflow)
+          Wrap(
+            spacing: 16,
+            runSpacing: 10,
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Monthly Base Package', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppTheme.textSecondaryLight)),
+                  Text(
+                    '₹ ${contract.wageMonthly.toStringAsFixed(2)} / Mo',
+                    style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+                  ),
+                  Text(
+                    '~ ₹ ${hourlyRate.toStringAsFixed(2)} / hr (176h standard)',
+                    style: GoogleFonts.jetBrainsMono(fontSize: 10, color: AppTheme.odooTeal),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Ref Code', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppTheme.textSecondaryLight)),
+                  Text(
+                    contract.refCode,
+                    style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+                  ),
+                  Text(
+                    'Since ${contract.startDate}',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 10, color: AppTheme.textSecondaryLight),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Card Action Buttons
+          if (_canEdit)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                SizedBox(
+                  width: 200,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.odooAubergine,
+                      side: const BorderSide(color: AppTheme.odooAubergine),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    onPressed: () => _openEmployeePayrollModal(targetEmp: emp),
+                    icon: const Icon(Icons.edit_note, size: 16),
+                    label: const Text('Edit Base Package', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          if (!_canEdit)
+            Text(
+              'Read-Only Payroll Access',
+              style: GoogleFonts.plusJakartaSans(fontSize: 11, fontStyle: FontStyle.italic, color: AppTheme.textSecondaryLight),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _openEmployeePayrollModal({EmployeeModel? targetEmp, bool isOverride = false}) {
+    if (!_canEdit) {
+      _showReadOnlyNotice();
+      return;
+    }
+
+    final availableEmps = MockDataService.allEmployees;
+    final availableDepts = availableEmps.map((e) => e.department).where((d) => d.isNotEmpty).toSet().toList();
+    final availablePositions = availableEmps.map((e) => e.jobTitle).where((p) => p.isNotEmpty).toSet().toList();
+
+    String scopeType = targetEmp != null ? 'EMPLOYEE' : 'DEPARTMENT';
+    String selectedEmpId = (targetEmp != null && availableEmps.any((e) => e.id == targetEmp.id))
+        ? targetEmp.id
+        : (availableEmps.isNotEmpty ? availableEmps.first.id : '');
+    String selectedDept = (targetEmp != null && availableDepts.contains(targetEmp.department))
+        ? targetEmp.department
+        : (availableDepts.isNotEmpty ? availableDepts.first : 'Engineering');
+    String selectedPosition = (targetEmp != null && availablePositions.contains(targetEmp.jobTitle))
+        ? targetEmp.jobTitle
+        : (availablePositions.isNotEmpty ? availablePositions.first : '');
+
+    final initialContract = targetEmp != null
+        ? MockDataService.contracts.firstWhere(
+            (c) => c.employeeName.toLowerCase().contains(targetEmp.name.toLowerCase().split(' ').first),
+            orElse: () => ContractModel(id: '', refCode: '', employeeName: targetEmp.name, department: targetEmp.department, startDate: '2026-01-01', wageMonthly: 90000.0, status: 'RUNNING'),
+          )
+        : null;
+
+    final wageCtrl = TextEditingController(text: (initialContract?.wageMonthly ?? 95000.0).toStringAsFixed(0));
+    final effectiveFromCtrl = TextEditingController(text: DateTime.now().toString().split(' ').first);
+    final reasonCtrl = TextEditingController(text: 'Compensation package update');
+
+    // 7 Salary Rule Override Controllers
+    final basicPctCtrl = TextEditingController(text: '50');
+    final hraPctCtrl = TextEditingController(text: '40');
+    final stdAmtCtrl = TextEditingController(text: '10000');
+    final pfPctCtrl = TextEditingController(text: '6');
+    final ptAmtCtrl = TextEditingController(text: '2000');
+
+    bool isSubmittingModal = false;
+    String selectedStructId = _selectedStructure?.id ?? (_structures.isNotEmpty ? _structures.first.id : '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final double currentWage = double.tryParse(wageCtrl.text.trim()) ?? 0.0;
+            final double basicPct = double.tryParse(basicPctCtrl.text.trim()) ?? 50.0;
+            final double hraPct = double.tryParse(hraPctCtrl.text.trim()) ?? 40.0;
+            final double stdAmt = double.tryParse(stdAmtCtrl.text.trim()) ?? 10000.0;
+            final double pfPct = double.tryParse(pfPctCtrl.text.trim()) ?? 6.0;
+            final double ptAmt = double.tryParse(ptAmtCtrl.text.trim()) ?? 2000.0;
+
+            final double basicVal = currentWage * (basicPct / 100.0);
+            final double hraVal = basicVal * (hraPct / 100.0);
+            final double stdVal = stdAmt;
+            final double grossVal = basicVal + hraVal + stdVal;
+            final double pfVal = basicVal * (pfPct / 100.0);
+            final double ptVal = ptAmt;
+            final double netVal = grossVal - pfVal - ptVal;
+
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.only(
+                top: 20,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40, height: 4,
+                        decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.account_balance_wallet_outlined, color: AppTheme.odooAubergine, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            isOverride ? 'Assign Custom Payroll Structure' : 'Edit Employee Payroll Config',
+                            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Assign salary structure and monthly package by individual employee, department, or job position',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.textSecondaryLight),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Scope Type Selection (Segmented)
+                    Text('Target Scope', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ChoiceChip(
+                            label: const Text('Individual Employee'),
+                            selected: scopeType == 'EMPLOYEE',
+                            onSelected: (val) => setSheetState(() => scopeType = 'EMPLOYEE'),
+                            selectedColor: AppTheme.odooAubergine.withValues(alpha: 0.15),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: ChoiceChip(
+                            label: const Text('Department'),
+                            selected: scopeType == 'DEPARTMENT',
+                            onSelected: (val) => setSheetState(() => scopeType = 'DEPARTMENT'),
+                            selectedColor: AppTheme.odooAubergine.withValues(alpha: 0.15),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: ChoiceChip(
+                            label: const Text('Job Position'),
+                            selected: scopeType == 'POSITION',
+                            onSelected: (val) => setSheetState(() => scopeType = 'POSITION'),
+                            selectedColor: AppTheme.odooAubergine.withValues(alpha: 0.15),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Target Selectors based on Scope
+                    if (scopeType == 'EMPLOYEE')
+                      _buildDropdownField(
+                        label: 'Select Employee',
+                        value: selectedEmpId,
+                        items: MockDataService.allEmployees.map((e) => e.id).toList(),
+                        itemLabels: Map.fromEntries(MockDataService.allEmployees.map((e) => MapEntry(e.id, '${e.name} (${e.department})'))),
+                        onChanged: (val) {
+                          if (val != null) setSheetState(() => selectedEmpId = val);
+                        },
+                      )
+                    else if (scopeType == 'DEPARTMENT')
+                      _buildDropdownField(
+                        label: 'Select Department',
+                        value: selectedDept,
+                        items: MockDataService.allEmployees.map((e) => e.department).where((d) => d.isNotEmpty).toSet().toList(),
+                        onChanged: (val) {
+                          if (val != null) setSheetState(() => selectedDept = val);
+                        },
+                      )
+                    else
+                      _buildDropdownField(
+                        label: 'Select Job Position / Post',
+                        value: selectedPosition,
+                        items: MockDataService.allEmployees.map((e) => e.jobTitle).where((p) => p.isNotEmpty).toSet().toList(),
+                        onChanged: (val) {
+                          if (val != null) setSheetState(() => selectedPosition = val);
+                        },
+                      ),
+                    const SizedBox(height: 12),
+
+                    // Salary Structure Dropdown
+                    _buildDropdownField(
+                      label: 'Assign Salary Structure',
+                      value: selectedStructId,
+                      items: _structures.map((s) => s.id).toList(),
+                      itemLabels: Map.fromEntries(_structures.map((s) => MapEntry(s.id, '${s.name} (${s.code})'))),
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => selectedStructId = val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Monthly Wage Field
+                    TextFormField(
+                      controller: wageCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) => setSheetState(() {}),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: AppTheme.textPrimaryLight),
+                      decoration: InputDecoration(
+                        labelText: 'Monthly Base Wage Package (₹)',
+                        prefixText: '₹ ',
+                        labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppTheme.textSecondaryLight),
+                        filled: true,
+                        fillColor: AppTheme.surfaceElevatedLight,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.borderLight)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 7 SALARY COMPUTATION RULES BREAKDOWN & CUSTOMIZATION CARD
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceElevatedLight,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.borderLight),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.calculate_outlined, color: AppTheme.odooAubergine, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '7 Salary Computation Rules Breakdown',
+                                  style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(color: AppTheme.odooAubergine.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                                child: Text('Live Engine', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.odooAubergine)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Edit individual rule percentages or fixed amounts below to customize salary heads for this employee:',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppTheme.textSecondaryLight),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Rule 1: BASIC
+                          _buildRuleEditableRow('BASIC', 'Basic Salary', 'BASIC', '50% of Wage', basicPctCtrl, '%', basicVal, () => setSheetState(() {})),
+                          const SizedBox(height: 8),
+
+                          // Rule 2: HRA
+                          _buildRuleEditableRow('HRA', 'House Rent Allowance', 'ALLOWANCE', '40% of BASIC', hraPctCtrl, '%', hraVal, () => setSheetState(() {})),
+                          const SizedBox(height: 8),
+
+                          // Rule 3: STD
+                          _buildRuleEditableRow('STD', 'Standard Allowance', 'ALLOWANCE', 'Fixed Allowance', stdAmtCtrl, '₹ ', stdVal, () => setSheetState(() {}), isPrefix: true),
+                          const SizedBox(height: 8),
+
+                          // Rule 4: GROSS (Calculated)
+                          _buildRuleSummaryRow('GROSS', 'Gross Salary', 'GROSS', 'BASIC + HRA + STD', grossVal, AppTheme.emeraldSuccess),
+                          const SizedBox(height: 8),
+
+                          // Rule 5: PF
+                          _buildRuleEditableRow('PF', 'Provident Fund (Employee)', 'DEDUCTION', '6% of BASIC', pfPctCtrl, '%', -pfVal, () => setSheetState(() {}), isDeduction: true),
+                          const SizedBox(height: 8),
+
+                          // Rule 6: PT
+                          _buildRuleEditableRow('PT', 'Professional Tax', 'DEDUCTION', 'Fixed State PT', ptAmtCtrl, '₹ ', -ptVal, () => setSheetState(() {}), isDeduction: true, isPrefix: true),
+                          const SizedBox(height: 8),
+
+                          // Rule 7: NET (Calculated)
+                          _buildRuleSummaryRow('NET', 'Net Payable Salary', 'NET', 'GROSS - Deductions', netVal, AppTheme.odooAubergine),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Effective From Date
+                    _buildTextField(
+                      controller: effectiveFromCtrl,
+                      label: 'Effective From Date *',
+                      hint: 'YYYY-MM-DD',
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Reason Field
+                    _buildTextField(
+                      controller: reasonCtrl,
+                      label: 'Reason for Compensation Revision',
+                      hint: 'Annual increment / Role change',
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Save Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.odooAubergine,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 0,
+                        ),
+                        onPressed: isSubmittingModal
+                            ? null
+                            : () async {
+                                final newWage = double.tryParse(wageCtrl.text.trim());
+                                if (newWage == null || newWage <= 0) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Please enter a valid monthly wage greater than 0')),
+                                  );
+                                  return;
+                                }
+                                final structObj = _structures.firstWhere(
+                                  (s) => s.id == selectedStructId,
+                                  orElse: () => _structures.first,
+                                );
+
+                                setSheetState(() => isSubmittingModal = true);
+                                final eff = effectiveFromCtrl.text.trim();
+                                final reason = reasonCtrl.text.trim();
+
+                                final nav = Navigator.of(sheetContext);
+                                final messenger = ScaffoldMessenger.of(context);
+
+                                if (scopeType == 'EMPLOYEE' && targetEmp != null) {
+                                  final contract = MockDataService.contracts.firstWhere(
+                                    (c) => c.employeeName.toLowerCase().contains(targetEmp.name.toLowerCase().split(' ').first),
+                                    orElse: () => ContractModel(id: 'c-${targetEmp.id}', refCode: 'CON/2026/001', employeeName: targetEmp.name, department: targetEmp.department, startDate: '2026-01-01', wageMonthly: 85000.0, status: 'RUNNING'),
+                                  );
+
+                                  final res = await ContractService.reviseCompensation(
+                                    contract.id,
+                                    {
+                                      'new_wage': newWage,
+                                      'new_salary_structure_id': structObj.id,
+                                      'new_structure_name': structObj.name,
+                                      'effective_from': eff.isEmpty ? DateTime.now().toString().split(' ').first : eff,
+                                      'reason': reason.isEmpty ? 'Compensation revision' : reason,
+                                    },
+                                  );
+
+                                  if (!mounted) return;
+                                  nav.pop();
+
+                                  if (res.isSuccess) {
+                                    setState(() {
+                                      _updateOrCreateContract(
+                                        targetEmp.name,
+                                        targetEmp.department,
+                                        newWage,
+                                        structObj.name,
+                                        basicVal: basicVal,
+                                        hraVal: hraVal,
+                                        stdVal: stdVal,
+                                        grossVal: grossVal,
+                                        pfVal: pfVal,
+                                        ptVal: ptVal,
+                                        netVal: netVal,
+                                        effectiveFrom: eff,
+                                      );
+                                    });
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: AppTheme.odooAubergine,
+                                        content: Text('Monthly base package revised for ${targetEmp.name} to ₹${newWage.toStringAsFixed(0)} with updated 7 rules effective ${eff.isEmpty ? DateTime.now().toString().split(" ").first : eff}.'),
+                                      ),
+                                    );
+                                  } else {
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: AppTheme.crimsonDanger,
+                                        content: Text(res.message ?? 'Compensation revision failed'),
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  setState(() {
+                                    if (scopeType == 'EMPLOYEE') {
+                                      final empObj = MockDataService.allEmployees.firstWhere((e) => e.id == selectedEmpId);
+                                      _updateOrCreateContract(
+                                        empObj.name,
+                                        empObj.department,
+                                        newWage,
+                                        structObj.name,
+                                        basicVal: basicVal,
+                                        hraVal: hraVal,
+                                        stdVal: stdVal,
+                                        grossVal: grossVal,
+                                        pfVal: pfVal,
+                                        ptVal: ptVal,
+                                        netVal: netVal,
+                                        effectiveFrom: eff,
+                                      );
+                                    } else if (scopeType == 'DEPARTMENT') {
+                                      final empsInDept = MockDataService.allEmployees.where((e) => e.department.toLowerCase().contains(selectedDept.toLowerCase()));
+                                      for (final e in empsInDept) {
+                                        _updateOrCreateContract(
+                                          e.name,
+                                          e.department,
+                                          newWage,
+                                          structObj.name,
+                                          basicVal: basicVal,
+                                          hraVal: hraVal,
+                                          stdVal: stdVal,
+                                          grossVal: grossVal,
+                                          pfVal: pfVal,
+                                          ptVal: ptVal,
+                                          netVal: netVal,
+                                          effectiveFrom: eff,
+                                        );
+                                      }
+                                    } else if (scopeType == 'POSITION') {
+                                      final empsInPos = MockDataService.allEmployees.where((e) => e.jobTitle.toLowerCase().contains(selectedPosition.toLowerCase()));
+                                      for (final e in empsInPos) {
+                                        _updateOrCreateContract(
+                                          e.name,
+                                          e.department,
+                                          newWage,
+                                          structObj.name,
+                                          basicVal: basicVal,
+                                          hraVal: hraVal,
+                                          stdVal: stdVal,
+                                          grossVal: grossVal,
+                                          pfVal: pfVal,
+                                          ptVal: ptVal,
+                                          netVal: netVal,
+                                          effectiveFrom: eff,
+                                        );
+                                      }
+                                    }
+                                  });
+
+                                  nav.pop();
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: AppTheme.odooAubergine,
+                                      content: Text('✓ Successfully updated payroll config & 7 computation rules (${structObj.name})'),
+                                    ),
+                                  );
+                                }
+                              },
+                        child: isSubmittingModal
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Text('Save & Apply Compensation Revision', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _updateOrCreateContract(
+    String empName,
+    String dept,
+    double wage,
+    String structName, {
+    double? basicVal,
+    double? hraVal,
+    double? stdVal,
+    double? grossVal,
+    double? pfVal,
+    double? ptVal,
+    double? netVal,
+    String? effectiveFrom,
+  }) {
+    // 1. Update contract in MockDataService
+    final idx = MockDataService.contracts.indexWhere(
+      (c) => c.employeeName.toLowerCase().contains(empName.toLowerCase().split(' ').first),
+    );
+    if (idx >= 0) {
+      final existing = MockDataService.contracts[idx];
+      MockDataService.contracts[idx] = ContractModel(
+        id: existing.id,
+        refCode: existing.refCode,
+        employeeName: existing.employeeName,
+        department: existing.department,
+        startDate: existing.startDate,
+        endDate: existing.endDate,
+        wageMonthly: wage,
+        status: existing.status,
+        structureName: structName,
+      );
+    } else {
+      MockDataService.contracts.add(ContractModel(
+        id: 'con-${DateTime.now().millisecondsSinceEpoch}',
+        refCode: 'CON/2026/${MockDataService.contracts.length + 10}',
+        employeeName: empName,
+        department: dept,
+        startDate: '2026-01-01',
+        wageMonthly: wage,
+        status: 'RUNNING',
+        structureName: structName,
+      ));
+    }
+
+    // 2. Update/create target month's payslip in MockDataService.payslips
+    final effDateStr = (effectiveFrom != null && effectiveFrom.trim().isNotEmpty)
+        ? effectiveFrom.trim()
+        : DateTime.now().toString().split(' ').first;
+    final yearMonth = effDateStr.length >= 7 ? effDateStr.substring(0, 7) : '2026-09';
+
+    final calculatedBasic = basicVal ?? (wage * 0.50);
+    final calculatedHra = hraVal ?? (calculatedBasic * 0.40);
+    final calculatedStd = stdVal ?? 10000.0;
+    final calculatedGross = grossVal ?? (calculatedBasic + calculatedHra + calculatedStd);
+    final calculatedPf = pfVal ?? (calculatedBasic * 0.06);
+    final calculatedPt = ptVal ?? 2000.0;
+    final calculatedNet = netVal ?? (calculatedGross - calculatedPf - calculatedPt);
+
+    final updatedLines = [
+      PayslipLineModel(ruleName: 'Basic Salary', ruleCode: 'BASIC', category: 'BASIC', amount: calculatedBasic),
+      PayslipLineModel(ruleName: 'House Rent Allowance', ruleCode: 'HRA', category: 'ALLOWANCE', amount: calculatedHra),
+      PayslipLineModel(ruleName: 'Standard Allowance', ruleCode: 'STD', category: 'ALLOWANCE', amount: calculatedStd),
+      PayslipLineModel(ruleName: 'Gross Salary', ruleCode: 'GROSS', category: 'GROSS', amount: calculatedGross),
+      PayslipLineModel(ruleName: 'Provident Fund', ruleCode: 'PF', category: 'DEDUCTION', amount: -calculatedPf),
+      PayslipLineModel(ruleName: 'Professional Tax', ruleCode: 'PT', category: 'DEDUCTION', amount: -calculatedPt),
+      PayslipLineModel(ruleName: 'Net Salary', ruleCode: 'NET', category: 'NET', amount: calculatedNet),
+    ];
+
+    final slipIdx = MockDataService.payslips.indexWhere(
+      (p) => p.employeeName.toLowerCase().contains(empName.toLowerCase().split(' ').first) && p.periodStart.startsWith(yearMonth),
+    );
+
+    if (slipIdx >= 0) {
+      final existingSlip = MockDataService.payslips[slipIdx];
+      MockDataService.payslips[slipIdx] = existingSlip.copyWith(
+        contractMonthlyWage: wage,
+        grossAmount: calculatedGross,
+        netAmount: calculatedNet,
+        lines: updatedLines,
+      );
+    } else {
+      MockDataService.payslips.insert(
+        0,
+        PayslipModel(
+          id: 'pay-${DateTime.now().millisecondsSinceEpoch}',
+          refCode: 'SLIP/${yearMonth.replaceAll('-', '/')}-001',
+          employeeName: empName,
+          periodStart: '$yearMonth-01',
+          periodEnd: '$yearMonth-30',
+          contractMonthlyWage: wage,
+          grossAmount: calculatedGross,
+          netAmount: calculatedNet,
+          status: 'DONE',
+          lines: updatedLines,
+        ),
+      );
+    }
+  }
+
+  Widget _buildRuleEditableRow(
+    String code,
+    String name,
+    String category,
+    String formula,
+    TextEditingController ctrl,
+    String unitSymbol,
+    double computedAmount,
+    VoidCallback onChanged, {
+    bool isDeduction = false,
+    bool isPrefix = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: isDeduction ? const Color(0xFFFFF0F0) : AppTheme.surfaceElevatedLight,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: isDeduction ? AppTheme.crimsonDanger.withValues(alpha: 0.3) : AppTheme.borderLight),
+            ),
+            child: Text(code, style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: isDeduction ? AppTheme.crimsonDanger : AppTheme.textPrimaryLight)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight)),
+                Text(formula, style: GoogleFonts.plusJakartaSans(fontSize: 10, color: AppTheme.textSecondaryLight)),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 75,
+            height: 34,
+            child: TextFormField(
+              controller: ctrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) => onChanged(),
+              style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                prefixText: isPrefix ? unitSymbol : null,
+                suffixText: !isPrefix ? unitSymbol : null,
+                prefixStyle: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF131B2E)),
+                suffixStyle: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF131B2E)),
+                filled: true,
+                fillColor: AppTheme.surfaceElevatedLight,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: AppTheme.borderLight)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 90,
+            child: Text(
+              '${computedAmount < 0 ? "- ₹" : "₹"}${computedAmount.abs().toStringAsFixed(2)}',
+              textAlign: TextAlign.right,
+              style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: isDeduction ? AppTheme.crimsonDanger : AppTheme.textPrimaryLight),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRuleSummaryRow(
+    String code,
+    String name,
+    String category,
+    String formula,
+    double computedAmount,
+    Color themeColor,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: themeColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: themeColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: themeColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(code, style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight)),
+                Text(formula, style: GoogleFonts.plusJakartaSans(fontSize: 10, color: AppTheme.textSecondaryLight)),
+              ],
+            ),
+          ),
+          Text(
+            '₹${computedAmount.toStringAsFixed(2)}',
+            style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.bold, color: themeColor),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ===========================================================================
   // SHARED UI COMPONENTS
   // ===========================================================================
@@ -1740,8 +2821,14 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     Map<String, String>? itemLabels,
     required ValueChanged<String?> onChanged,
   }) {
+    final uniqueItems = items.toSet().toList();
+    final String? safeValue = uniqueItems.contains(value)
+        ? value
+        : (uniqueItems.isNotEmpty ? uniqueItems.first : null);
+
     return DropdownButtonFormField<String>(
-      initialValue: value,
+      isExpanded: true,
+      initialValue: safeValue,
       dropdownColor: Colors.white,
       style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimaryLight),
       decoration: InputDecoration(
@@ -1754,10 +2841,10 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.odooAubergine, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
-      items: items.map((item) {
+      items: uniqueItems.map((item) {
         return DropdownMenuItem<String>(
           value: item,
-          child: Text(itemLabels?[item] ?? item),
+          child: Text(itemLabels?[item] ?? item, overflow: TextOverflow.ellipsis),
         );
       }).toList(),
       onChanged: onChanged,

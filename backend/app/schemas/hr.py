@@ -170,12 +170,27 @@ class EmployeeBase(BaseModel):
     working_schedule_id: Optional[uuid.UUID] = None
     work_location: Optional[str] = Field(default="Mumbai", max_length=100)
     status: EmployeeStatus = EmployeeStatus.ACTIVE
-    employee_type: str = Field(
-        default="PERMANENT",
-        pattern="^(PERMANENT|PROBATION|CONTRACT|INTERN|CONSULTANT)$",
-    )
+    employee_type: str = Field(default="PERMANENT")
     company_name: Optional[str] = Field(default=None, max_length=100)
     date_of_joining: Optional[date] = None
+
+    @field_validator("employee_type", mode="before")
+    @classmethod
+    def _normalize_employee_type(cls, v: str | None) -> str:
+        if not v:
+            return "PERMANENT"
+        s = str(v).upper().strip().replace(" ", "_").replace("-", "_")
+        if s in ("FULL_TIME", "FULLTIME", "PERMANENT", "REGULAR"):
+            return "PERMANENT"
+        if s in ("PART_TIME", "PARTTIME", "CONTRACTOR", "CONTRACT"):
+            return "CONTRACT"
+        if s in ("PROBATION", "TRIAL"):
+            return "PROBATION"
+        if s in ("INTERN", "TRAINEE"):
+            return "INTERN"
+        if s in ("CONSULTANT", "FREELANCER"):
+            return "CONSULTANT"
+        return "PERMANENT"
 
 
 class EmployeePrivateFields(BaseModel):
@@ -189,6 +204,11 @@ class EmployeePrivateFields(BaseModel):
 
 class EmployeeCreate(EmployeeBase, EmployeePrivateFields):
     badge_id: Optional[str] = Field(default=None, max_length=20)
+    department_name: Optional[str] = None
+    job_position_name: Optional[str] = None
+    manager_name: Optional[str] = None
+    working_schedule_name: Optional[str] = None
+    wage_monthly: Optional[Decimal] = None
     # Optionally provision a login in the same call
     create_login: bool = False
     login_password: Optional[str] = Field(default=None, min_length=8, max_length=256)
@@ -210,18 +230,25 @@ class EmployeeUpdate(BaseModel):
     job_position_id: Optional[uuid.UUID] = None
     job_position_name: Optional[str] = None
     manager_id: Optional[uuid.UUID] = None
+    manager_name: Optional[str] = None
     working_schedule_id: Optional[uuid.UUID] = None
+    working_schedule_name: Optional[str] = None
     work_location: Optional[str] = Field(default=None, max_length=100)
     status: Optional[EmployeeStatus] = None
-    employee_type: Optional[str] = Field(
-        default=None, pattern="^(PERMANENT|PROBATION|CONTRACT|INTERN|CONSULTANT)$"
-    )
+    employee_type: Optional[str] = Field(default=None)
     company_name: Optional[str] = Field(default=None, max_length=100)
     date_of_joining: Optional[date] = None
     bank_account_number: Optional[str] = Field(default=None, max_length=50)
     bank_name: Optional[str] = Field(default=None, max_length=100)
     bank_ifsc_or_routing: Optional[str] = Field(default=None, max_length=30)
     pan_or_ssn: Optional[str] = Field(default=None, max_length=30)
+
+    @field_validator("employee_type", mode="before")
+    @classmethod
+    def _normalize_employee_type_opt(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        return EmployeeBase._normalize_employee_type(v)
 
 
 class EmployeeOut(ORMModel):
@@ -318,6 +345,23 @@ class ContractWageRevision(BaseModel):
     new_wage: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
     effective_from: date
     reason: Optional[str] = Field(default=None, max_length=500)
+
+
+class ContractCompensationRevision(BaseModel):
+    """Supersede a contract from a date to update wage and/or salary structure."""
+
+    new_wage: Optional[Decimal] = Field(default=None, ge=0, max_digits=12, decimal_places=2)
+    new_salary_structure_id: Optional[uuid.UUID] = None
+    effective_from: date
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def _check_payload(self) -> "ContractCompensationRevision":
+        if self.new_wage is None and self.new_salary_structure_id is None:
+            raise ValueError("At least one of new_wage or new_salary_structure_id must be provided.")
+        if self.new_wage is not None and self.new_wage <= 0:
+            raise ValueError("new_wage must be greater than 0.")
+        return self
 
 
 class ContractRevisionResult(BaseModel):

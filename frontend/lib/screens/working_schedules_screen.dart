@@ -184,6 +184,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
   void _pickBreakDuration(_ShiftDay shift) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Container(
@@ -311,6 +312,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
   void _openSchedulePickerSheet() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Container(
@@ -374,6 +376,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Padding(
@@ -395,7 +398,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
               const SizedBox(height: 14),
               TextFormField(
                 controller: nameCtrl,
-                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600),
+                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                 decoration: InputDecoration(
                   labelText: 'Schedule Name *',
                   hintText: 'e.g. Flexi Shift 38 Hours',
@@ -411,6 +414,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: daysCtrl,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Days/Wk *',
@@ -425,6 +429,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: hoursCtrl,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Hours/Wk *',
@@ -481,6 +486,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => StatefulBuilder(
@@ -510,8 +516,8 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
                       return CheckboxListTile(
                         value: isAssigned,
                         activeColor: const Color(0xFF57344F),
-                        title: Text(emp.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: Text('${emp.jobTitle} • ${emp.department}', style: GoogleFonts.plusJakartaSans(fontSize: 12)),
+                        title: Text(emp.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14, color: const Color(0xFF131B2E))),
+                        subtitle: Text('${emp.jobTitle} • ${emp.department}', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A))),
                         onChanged: (val) {
                           setModalState(() {
                             if (val == true) {
@@ -554,6 +560,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
   void _openAuditHistorySheet() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Container(
@@ -575,13 +582,13 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
             const SizedBox(height: 14),
             ListTile(
               leading: const Icon(Icons.check_circle, color: Color(0xFF006443)),
-              title: Text('Version 2026.1 (Active)', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-              subtitle: Text('Adjusted Friday core shift & break time • Updated by Sara Khan on Aug 15, 2026'),
+              title: Text('Version 2026.1 (Active)', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+              subtitle: Text('Adjusted Friday core shift & break time • Updated by Sara Khan on Aug 15, 2026', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A))),
             ),
             ListTile(
               leading: const Icon(Icons.history_toggle_off, color: Colors.grey),
-              title: Text('Version 2025.4', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
-              subtitle: Text('Initial shift calendar creation • Created by Admin User on Jan 01, 2025'),
+              title: Text('Version 2025.4', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: const Color(0xFF131B2E))),
+              subtitle: Text('Initial shift calendar creation • Created by Admin User on Jan 01, 2025', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A))),
             ),
           ],
         ),
@@ -592,6 +599,7 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
   void _openActionMenuSheet() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Container(
@@ -600,12 +608,12 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Schedule Options & Actions', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Schedule Options & Actions', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
             const SizedBox(height: 12),
             ListTile(
               leading: const Icon(Icons.copy_all, color: Color(0xFF57344F)),
-              title: const Text('Duplicate Working Schedule'),
-              subtitle: const Text('Clone this shift configuration into a new schedule'),
+              title: Text('Duplicate Working Schedule', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+              subtitle: Text('Clone this shift configuration into a new schedule', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A))),
               onTap: () async {
                 Navigator.pop(context);
                 final res = await WorkingScheduleService.createSchedule({
@@ -622,8 +630,8 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.group_add_outlined, color: Color(0xFF00696E)),
-              title: const Text('Batch Assign to Department'),
-              subtitle: const Text('Assign all staff in Engineering / HR to this schedule'),
+              title: Text('Batch Assign to Department', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+              subtitle: Text('Assign all staff in Engineering / HR to this schedule', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A))),
               onTap: () {
                 Navigator.pop(context);
                 _openAssignEmployeeSheet();
@@ -631,8 +639,8 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.picture_as_pdf_outlined, color: Color(0xFFB45309)),
-              title: const Text('Export Schedule PDF Report'),
-              subtitle: const Text('Generate printable weekly shift calendar'),
+              title: Text('Export Schedule PDF Report', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E))),
+              subtitle: Text('Generate printable weekly shift calendar', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF4E444A))),
               onTap: () {
                 Navigator.pop(context);
                 _triggerToast('📄 Exporting ${_activeSchedule.name} PDF report...');
@@ -773,72 +781,85 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    final route = ModalRoute.of(context);
-                    if (route != null && !route.isFirst) {
-                      Navigator.pop(context);
-                    } else if (widget.onNavigateTab != null) {
-                      widget.onNavigateTab!(-1);
-                    } else if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE2E7FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-              ],
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Working Schedule',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF131B2E),
+          Expanded(
+            child: Row(
+              children: [
+                if (widget.onNavigateTab == null && Navigator.canPop(context)) ...[
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      final route = ModalRoute.of(context);
+                      if (route != null && !route.isFirst) {
+                        Navigator.pop(context);
+                      } else if (widget.onNavigateTab != null) {
+                        widget.onNavigateTab!(-1);
+                      } else if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE2E7FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.arrow_back, size: 18, color: Color(0xFF131B2E)),
+                      ),
                     ),
                   ),
-                  Row(
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF00696E),
-                          shape: BoxShape.circle,
+                      Text(
+                        'Working Schedule',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF131B2E),
                         ),
                       ),
-                      const SizedBox(width: 5),
-                      Text(
-                        'SCHED/2026/01 • ${_activeSchedule.name}',
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF4E444A),
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF00696E),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              'SCHED/2026/01 • ${_activeSchedule.name}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF4E444A),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               InkWell(
                 onTap: _openAuditHistorySheet,
@@ -1124,34 +1145,42 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.people_outline, size: 18, color: Color(0xFF57344F)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Mapped Workforce & Contracts',
-                    style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F3FF),
-                      borderRadius: BorderRadius.circular(10),
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.people_outline, size: 18, color: Color(0xFF57344F)),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Mapped Workforce & Contracts',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      ),
                     ),
-                    child: Text(
-                      '${assignedStaff.length}',
-                      style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF57344F)),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2F3FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${assignedStaff.length}',
+                        style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF57344F)),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: _openAssignEmployeeSheet,
                 borderRadius: BorderRadius.circular(14),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.person_add_alt_outlined, size: 14, color: Color(0xFF00696E)),
                       const SizedBox(width: 4),
@@ -1217,37 +1246,44 @@ class _WorkingSchedulesScreenState extends State<WorkingSchedulesScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                'Shift Schedule',
-                style: GoogleFonts.outfit(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF131B2E),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                width: 20,
-                height: 20,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE2E7FF),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
                   child: Text(
-                    '${_shifts.length}',
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 11,
+                    'Shift Schedule',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF131B2E),
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE2E7FF),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${_shifts.length}',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF131B2E),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           InkWell(
             onTap: _copyMonToAll,
             borderRadius: BorderRadius.circular(12),

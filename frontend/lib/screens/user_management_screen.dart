@@ -17,11 +17,11 @@ class _UserManagementItem {
   final String id;
   final String name;
   final String email;
-  final String role;
-  final String roleCategory;
+  String role;
+  String roleCategory;
   final String linkedEmployee;
   final String department;
-  final String status;
+  String status;
   final String extraBadge;
   final String initials;
   final bool isYou;
@@ -362,6 +362,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             'is_active': isActive,
           });
         } else {
+          if (mounted) {
+            setState(() {
+              existing.role = role;
+              existing.status = isActive ? 'Active' : 'Disabled';
+              existing.roleCategory = role.contains('Admin')
+                  ? 'Admin'
+                  : (role.contains('HR')
+                      ? 'HR Manager'
+                      : (role.contains('Payroll') ? 'Payroll User' : 'Employee'));
+              if (existing.email.toLowerCase() == ApiClient.currentEmail?.toLowerCase()) {
+                final mappedRole = role.contains('Admin')
+                    ? 'ADMIN'
+                    : (role.contains('HR Payroll Mgr')
+                        ? 'HR_PAYROLL_MANAGER'
+                        : (role.contains('Payroll User')
+                            ? 'HR_PAYROLL_USER'
+                            : (role.contains('HR Manager') ? 'HR_MANAGER' : 'EMPLOYEE')));
+                ApiClient.currentUserRole = mappedRole;
+              }
+            });
+          }
           await UserManagementService.updateUser(existing.id, {
             'role': role,
             'is_active': isActive,
@@ -376,6 +397,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
@@ -472,7 +494,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Linked Employee', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF4E444A), fontSize: 13)),
-                        Text('${item.linkedEmployee} (${item.department})', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            '${item.linkedEmployee} (${item.department})',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                        ),
                       ],
                     ),
                     const Divider(height: 20),
@@ -480,7 +510,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Multi-Company Isolation', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF4E444A), fontSize: 13)),
-                        Text('Acme US-East (Enforced)', style: GoogleFonts.jetBrainsMono(fontSize: 12, color: const Color(0xFF00696E), fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Acme US-East (Enforced)',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.jetBrainsMono(fontSize: 12, color: const Color(0xFF00696E), fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -521,7 +559,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       label: const Text('Edit Permissions'),
                       onPressed: () {
                         Navigator.pop(context);
-                        _openNewUserSheet();
+                        _openNewUserSheet(item);
                       },
                     ),
                   ),
@@ -540,6 +578,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: const BoxDecoration(
@@ -600,6 +639,18 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     elevation: 0,
                   ),
                   onPressed: () {
+                    final inviteEmail = inviteEmailCtrl.text.trim();
+                    final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+                    if (inviteEmail.isEmpty || !emailRegex.hasMatch(inviteEmail)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: Color(0xFFBA1A1A),
+                          behavior: SnackBarBehavior.floating,
+                          content: Text('⚠️ Please enter a valid email address (e.g. user@company.com)'),
+                        ),
+                      );
+                      return;
+                    }
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -623,6 +674,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: const BoxDecoration(
@@ -1047,56 +1099,66 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDAE2FD),
-                  borderRadius: BorderRadius.circular(10),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDAE2FD),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.group, color: Color(0xFF57344F), size: 18),
+                  ),
                 ),
-                child: const Center(
-                  child: Icon(Icons.group, color: Color(0xFF57344F), size: 18),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '${_users.length} Directory Users',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF131B2E),
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${_users.length} Directory Users',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF131B2E),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF006443),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF006443),
-                          shape: BoxShape.circle,
+                      const SizedBox(height: 2),
+                      Text(
+                        '$activeCount Active • $suspendedCount Suspended • 1 Pending 2FA',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF4E444A),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$activeCount Active • $suspendedCount Suspended • 1 Pending 2FA',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF4E444A),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
           Row(
             children: [

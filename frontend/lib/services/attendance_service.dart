@@ -64,11 +64,11 @@ class AttendanceService {
   static final ValueNotifier<PunchState> stateNotifier =
       ValueNotifier<PunchState>(const PunchState.unknown());
 
-  // Offline mock punch state tracker (starts punched in from NOW for live UI testing).
-  static PunchState _mockPunchState = PunchState(
-    status: PunchStatus.punchedIn,
-    attendanceId: 'att-mock-now',
-    since: DateTime.now(),
+  // Offline mock punch state tracker (defaults to NOT PUNCHED IN for clean user login experience).
+  static PunchState _mockPunchState = const PunchState(
+    status: PunchStatus.notPunchedIn,
+    attendanceId: null,
+    since: null,
     elapsedHours: 0.0,
   );
 

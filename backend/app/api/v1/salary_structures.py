@@ -130,27 +130,35 @@ def create_structure(
         name=payload.name, code=payload.code, notes=payload.notes
     )
     db.add(structure)
-    db.flush()
+    try:
+        db.flush()
 
-    for rule in payload.rules:
-        db.add(
-            SalaryRule(
-                salary_structure_id=structure.id,
-                name=rule.name,
-                code=rule.code,
-                sequence=rule.sequence,
-                category=rule.category.value,
-                computation_type=rule.computation_type.value,
-                fixed_amount=rule.fixed_amount,
-                percentage_base=rule.percentage_base,
-                percentage_rate=rule.percentage_rate,
-                python_code=rule.python_code,
-                quantity=rule.quantity,
-                is_active=rule.is_active,
+        for rule in payload.rules:
+            db.add(
+                SalaryRule(
+                    salary_structure_id=structure.id,
+                    name=rule.name,
+                    code=rule.code,
+                    sequence=rule.sequence,
+                    category=rule.category.value,
+                    computation_type=rule.computation_type.value,
+                    fixed_amount=rule.fixed_amount,
+                    percentage_base=rule.percentage_base,
+                    percentage_rate=rule.percentage_rate,
+                    python_code=rule.python_code,
+                    quantity=rule.quantity,
+                    is_active=rule.is_active,
+                )
             )
-        )
 
-    db.commit()
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        from sqlalchemy.exc import IntegrityError
+        if isinstance(exc, IntegrityError):
+            raise ConflictError("A salary structure with this name or code already exists.")
+        raise
+
     return SalaryStructureOut.model_validate(_load(db, structure.id))
 
 
@@ -197,8 +205,16 @@ def update_structure(
     for field, value in updates.items():
         setattr(structure, field, value)
 
-    db.commit()
-    return SalaryStructureOut.model_validate(_load(db, structure_id))
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        from sqlalchemy.exc import IntegrityError
+        if isinstance(exc, IntegrityError):
+            raise ConflictError("A salary structure with this name or code already exists.")
+        raise
+
+    return SalaryStructureOut.model_validate(_load(db, structure.id))
 
 
 @router.delete(
@@ -213,15 +229,27 @@ def delete_structure(
 ) -> MessageResponse:
     structure = _load(db, structure_id)
 
+    from app.models.contract import HrContract
+    from app.models.payrun import Payslip
+
     runs = db.execute(
         select(func.count(Payrun.id)).where(Payrun.salary_structure_id == structure.id)
     ).scalar_one()
-    if runs:
+    contracts = db.execute(
+        select(func.count(HrContract.id)).where(HrContract.salary_structure_id == structure.id)
+    ).scalar_one()
+    slips = db.execute(
+        select(func.count(Payslip.id)).where(Payslip.salary_structure_id == structure.id)
+    ).scalar_one()
+
+    total_refs = runs + contracts + slips
+    if total_refs > 0:
         structure.is_active = False
         db.commit()
         return MessageResponse(
             detail=(
-                f"'{structure.name}' is referenced by {runs} payrun(s), so it was "
+                f"'{structure.name}' is referenced by payroll records ({runs} payruns, "
+                f"{contracts} contracts, {slips} payslips), so it was "
                 "deactivated instead of deleted. Payroll history stays intact."
             )
         )

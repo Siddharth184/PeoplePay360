@@ -21,6 +21,7 @@ class AttendancePunchSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       barrierColor: const Color(0xFF283044).withValues(alpha: 0.65),
       builder: (context) => AttendancePunchSheet(onPunchComplete: onPunchComplete),
@@ -160,7 +161,12 @@ class _AttendancePunchSheetState extends State<AttendancePunchSheet> {
         final progressRatio = _progressRatio(elapsed);
         final progressPercent = (progressRatio * 100).round();
 
+        final mediaQuery = MediaQuery.of(context);
+        final maxSheetHeight = mediaQuery.size.height * 0.85;
+
         return Container(
+          constraints: BoxConstraints(maxHeight: maxSheetHeight),
+          margin: const EdgeInsets.only(top: 16),
           decoration: const BoxDecoration(
             color: Color(0xFF283044),
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),

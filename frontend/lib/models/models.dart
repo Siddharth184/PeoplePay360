@@ -942,3 +942,62 @@ class EscalationTicketModel {
     );
   }
 }
+
+class PayrollAssignmentModel {
+  final String employeeId;
+  final String badgeId;
+  final String employeeName;
+  final String? departmentId;
+  final String? departmentName;
+  final String? jobPositionId;
+  final String? jobPositionName;
+  final String? contractId;
+  final String? contractReference;
+  final String? contractStatus;
+  final double? wageMonthly;
+  final String? salaryStructureId;
+  final String? salaryStructureName;
+  final String? dateStart;
+  final String? dateEnd;
+
+  PayrollAssignmentModel({
+    required this.employeeId,
+    required this.badgeId,
+    required this.employeeName,
+    this.departmentId,
+    this.departmentName,
+    this.jobPositionId,
+    this.jobPositionName,
+    this.contractId,
+    this.contractReference,
+    this.contractStatus,
+    this.wageMonthly,
+    this.salaryStructureId,
+    this.salaryStructureName,
+    this.dateStart,
+    this.dateEnd,
+  });
+
+  factory PayrollAssignmentModel.fromJson(Map<String, dynamic> json) {
+    return PayrollAssignmentModel(
+      employeeId: json['employee_id']?.toString() ?? json['employeeId']?.toString() ?? '',
+      badgeId: json['badge_id']?.toString() ?? json['badgeId']?.toString() ?? '',
+      employeeName: json['employee_name']?.toString() ?? json['employeeName']?.toString() ?? '',
+      departmentId: json['department_id']?.toString() ?? json['departmentId']?.toString(),
+      departmentName: json['department_name']?.toString() ?? json['departmentName']?.toString(),
+      jobPositionId: json['job_position_id']?.toString() ?? json['jobPositionId']?.toString(),
+      jobPositionName: json['job_position_name']?.toString() ?? json['jobPositionName']?.toString(),
+      contractId: json['contract_id']?.toString() ?? json['contractId']?.toString(),
+      contractReference: json['contract_reference']?.toString() ?? json['contractReference']?.toString(),
+      contractStatus: json['contract_status']?.toString() ?? json['contractStatus']?.toString(),
+      wageMonthly: (json['wage_monthly'] is num)
+          ? (json['wage_monthly'] as num).toDouble()
+          : (json['wageMonthly'] is num ? (json['wageMonthly'] as num).toDouble() : null),
+      salaryStructureId: json['salary_structure_id']?.toString() ?? json['salaryStructureId']?.toString(),
+      salaryStructureName: json['salary_structure_name']?.toString() ?? json['salaryStructureName']?.toString(),
+      dateStart: json['date_start']?.toString() ?? json['dateStart']?.toString(),
+      dateEnd: json['date_end']?.toString() ?? json['dateEnd']?.toString(),
+    );
+  }
+}
+

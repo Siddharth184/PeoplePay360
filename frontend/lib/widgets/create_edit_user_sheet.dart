@@ -26,6 +26,7 @@ class CreateEditUserSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => CreateEditUserSheet(
         initialEmployee: initialEmployee,
@@ -207,13 +208,18 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final maxSheetHeight = mediaQuery.size.height * 0.85;
+
     return Container(
+      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+      margin: const EdgeInsets.only(top: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+        bottom: mediaQuery.viewInsets.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -237,34 +243,43 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Create / Edit User',
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF131B2E),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            const Icon(Icons.verified_user_outlined, size: 14, color: Color(0xFF00696E)),
-                            const SizedBox(width: 4),
-                            Text(
-                              'RBAC & Identity Provisioning',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF00696E),
-                              ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Create / Edit User',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF131B2E),
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              const Icon(Icons.verified_user_outlined, size: 14, color: Color(0xFF00696E)),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'RBAC & Identity Provisioning',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF00696E),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.pop(context),
                       borderRadius: BorderRadius.circular(20),
@@ -440,12 +455,16 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          _selectedEmployee,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF131B2E),
+                        Flexible(
+                          child: Text(
+                            _selectedEmployee,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF131B2E),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -465,6 +484,8 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
                     const SizedBox(height: 1),
                     Text(
                       _employeeDepts[_selectedEmployee] ?? 'Payroll Specialist • Finance',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         color: const Color(0xFF4E444A),
@@ -548,8 +569,8 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
         ),
         const SizedBox(height: 6),
         Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          constraints: const BoxConstraints(minHeight: 44),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: const Color(0xFFE2E7FF),
             borderRadius: BorderRadius.circular(12),
@@ -561,13 +582,16 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
               Expanded(
                 child: Text(
                   _workEmail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 13,
+                    fontSize: 12.5,
                     color: const Color(0xFF131B2E),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
+              const SizedBox(width: 6),
               const Icon(Icons.check_circle, size: 18, color: Color(0xFF006443)),
             ],
           ),
@@ -748,12 +772,16 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  role['title'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13,
-                                    fontWeight: isChecked ? FontWeight.bold : FontWeight.w600,
-                                    color: isChecked ? const Color(0xFF714B67) : const Color(0xFF131B2E),
+                                Flexible(
+                                  child: Text(
+                                    role['title'] as String,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: isChecked ? FontWeight.bold : FontWeight.w600,
+                                      color: isChecked ? const Color(0xFF714B67) : const Color(0xFF131B2E),
+                                    ),
                                   ),
                                 ),
                                 if (isChecked) ...[
@@ -779,6 +807,8 @@ class _CreateEditUserSheetState extends State<CreateEditUserSheet> {
                             const SizedBox(height: 2),
                             Text(
                               role['subtitle'] as String,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10.5,
                                 color: const Color(0xFF4E444A),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../services/mock_data_service.dart';
 import '../services/dashboard_service.dart';
 import '../services/api_client.dart';
@@ -130,11 +131,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
     return '$year-$mon';
   }
 
+  Map<String, String>? _getPeriodStartEnd(String periodLabel) {
+    final prefix = _monthPrefix(periodLabel);
+    if (prefix == null) return null;
+    final parts = prefix.split('-');
+    final year = int.tryParse(parts[0]) ?? 2026;
+    final month = int.tryParse(parts[1]) ?? 9;
+    final lastDay = DateTime(year, month + 1, 0).day;
+    final mStr = month.toString().padLeft(2, '0');
+    final lStr = lastDay.toString().padLeft(2, '0');
+    return {
+      'date_start': '$year-$mStr-01',
+      'date_end': '$year-$mStr-$lStr',
+    };
+  }
+
   void _computeMetrics() {
     final allEmps = MockDataService.allEmployees;
     final allContracts = MockDataService.contracts;
     final allAttendance = MockDataService.attendances;
     final allLeaves = MockDataService.timeOffRequests;
+    final allPayslips = MockDataService.payslips;
 
     // Filter employees by department & type
     final filteredEmps = allEmps.where((emp) {
@@ -147,16 +164,64 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
       return true;
     }).toList();
 
-    final scopeEmps = filteredEmps.isEmpty ? allEmps : filteredEmps;
+    final scopeEmps = filteredEmps;
+    final Set<String> scopeEmpIds = scopeEmps.map((e) => e.id).toSet();
+    final Set<String> scopeEmpNames = scopeEmps
+        .map((e) => e.name.toLowerCase().trim().split(RegExp(r'\s+')).first)
+        .where((n) => n.isNotEmpty)
+        .toSet();
 
-    // Group employees & contracts by department
+    bool isEmpInScope(String empId, String? empName) {
+      if (scopeEmpIds.contains(empId)) return true;
+      if (empName != null && empName.isNotEmpty) {
+        final first = empName.toLowerCase().trim().split(RegExp(r'\s+')).first;
+        if (scopeEmpNames.contains(first)) return true;
+      }
+      return false;
+    }
+
+    final String? periodPrefix = _monthPrefix(_selectedPeriod);
+
+    // Group scope employees by department
     final Map<String, List<EmployeeModel>> deptMap = {};
     for (final emp in scopeEmps) {
       final dName = emp.department.isNotEmpty ? emp.department : 'General Staff';
       deptMap.putIfAbsent(dName, () => []).add(emp);
     }
 
-    double overallWageBill = 0.0;
+    // Scoped payslips for period
+    final scopePayslips = allPayslips.where((p) {
+      final matchesPeriod = periodPrefix == null || p.periodStart.startsWith(periodPrefix);
+      if (!matchesPeriod) return false;
+      return isEmpInScope('', p.employeeName);
+    }).toList();
+
+    double overallGrossSalary = 0.0;
+    double overallNetSalary = 0.0;
+    int totalSlipsCount = 0;
+    int paidSlipsCount = 0;
+    int pendingSlipsCount = 0;
+
+    if (scopePayslips.isNotEmpty) {
+      overallGrossSalary = scopePayslips.fold(0.0, (sum, p) => sum + p.grossAmount);
+      overallNetSalary = scopePayslips.fold(0.0, (sum, p) => sum + p.netAmount);
+      totalSlipsCount = scopePayslips.length;
+      paidSlipsCount = scopePayslips.where((p) => p.status == 'PAID' || p.status == 'DONE').length;
+      pendingSlipsCount = scopePayslips.where((p) => p.status == 'DRAFT' || p.status == 'TO_APPROVE' || p.status == 'WAITING').length;
+    } else {
+      for (final emp in scopeEmps) {
+        final c = allContracts.firstWhere(
+          (con) => con.employeeName.toLowerCase().contains(emp.name.toLowerCase().split(' ').first),
+          orElse: () => ContractModel(id: '', refCode: '', employeeName: emp.name, department: emp.department, startDate: '2024-01-01', wageMonthly: 85000.0, status: 'RUNNING'),
+        );
+        overallGrossSalary += c.wageMonthly;
+      }
+      overallNetSalary = overallGrossSalary * 0.85;
+      totalSlipsCount = scopeEmps.length;
+      paidSlipsCount = 0;
+      pendingSlipsCount = scopeEmps.length;
+    }
+
     final List<_DeptCostData> deptCosts = [];
     final colors = [
       const Color(0xFF714B67),
@@ -171,21 +236,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
     deptMap.forEach((dept, emps) {
       double deptWage = 0.0;
       for (final emp in emps) {
-        final c = allContracts.firstWhere(
-          (con) => con.employeeName.toLowerCase().contains(emp.name.toLowerCase().split(' ').first),
-          orElse: () => ContractModel(
-            id: 'fallback',
-            refCode: '',
-            employeeName: emp.name,
-            department: dept,
-            startDate: '2024-01-01',
-            wageMonthly: 85000.0,
-            status: 'RUNNING',
-          ),
-        );
-        deptWage += c.wageMonthly;
+        final empSlips = scopePayslips.where((p) => p.employeeName.toLowerCase().contains(emp.name.toLowerCase().split(' ').first)).toList();
+        if (empSlips.isNotEmpty) {
+          deptWage += empSlips.fold(0.0, (sum, p) => sum + p.grossAmount);
+        } else {
+          final c = allContracts.firstWhere(
+            (con) => con.employeeName.toLowerCase().contains(emp.name.toLowerCase().split(' ').first),
+            orElse: () => ContractModel(id: '', refCode: '', employeeName: emp.name, department: dept, startDate: '2024-01-01', wageMonthly: 85000.0, status: 'RUNNING'),
+          );
+          deptWage += c.wageMonthly;
+        }
       }
-      overallWageBill += deptWage;
 
       final parts = dept.split(RegExp(r'\s+'));
       final code = parts.map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase();
@@ -196,60 +257,24 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
         staffCount: emps.length,
         totalWage: deptWage,
         avgSalary: emps.isNotEmpty ? deptWage / emps.length : 0.0,
-        percentShare: 0.0,
+        percentShare: overallGrossSalary > 0 ? (deptWage / overallGrossSalary) : 0.0,
         barColor: colors[colorIdx % colors.length],
       ));
       colorIdx++;
     });
 
-    final finalDeptCosts = deptCosts.map((d) {
-      final share = overallWageBill > 0 ? (d.totalWage / overallWageBill) : 0.0;
-      return _DeptCostData(
-        deptName: d.deptName,
-        deptCode: d.deptCode,
-        staffCount: d.staffCount,
-        totalWage: d.totalWage,
-        avgSalary: d.avgSalary,
-        percentShare: share,
-        barColor: d.barColor,
-      );
-    }).toList();
+    deptCosts.sort((a, b) => b.totalWage.compareTo(a.totalWage));
 
-    finalDeptCosts.sort((a, b) => b.totalWage.compareTo(a.totalWage));
-
-    // Attendance stats — filtered by the active Department / Type / Period pills
-    // so the counts update in real time when any filter changes.
-
-    // Set of employee names in the currently selected dept/type cohort. When the
-    // dept/type filters are 'All' this contains every employee, so nothing is
-    // excluded. Matching is done on the first name to tolerate small naming
-    // differences between the employee list and the attendance logs.
-    final Set<String> scopeEmpKeys = {};
-    for (final emp in scopeEmps) {
-      final first = emp.name.toLowerCase().trim().split(RegExp(r'\s+')).first;
-      if (first.isNotEmpty) scopeEmpKeys.add(first);
-    }
-    final bool deptOrTypeFiltered = _selectedDept != 'All' || _selectedType != 'All Staff';
-
-    // Month prefix like '2026-09' derived from the selected period ('Sep 2026').
-    final String? periodPrefix = _monthPrefix(_selectedPeriod);
-
-    bool matchesScope(AttendanceModel log) {
-      // Period (month) filter
-      if (periodPrefix != null && !log.dateStr.startsWith(periodPrefix)) {
-        return false;
-      }
-      // Department / employee-type filter (via the employee cohort)
-      if (deptOrTypeFiltered) {
+    final scopedAttendance = allAttendance.where((log) {
+      if (periodPrefix != null && !log.dateStr.startsWith(periodPrefix)) return false;
+      if (_selectedDept != 'All' || _selectedType != 'All Staff') {
         final name = (log.employeeName ?? '').toLowerCase().trim();
         if (name.isEmpty) return false;
         final first = name.split(RegExp(r'\s+')).first;
-        if (!scopeEmpKeys.contains(first)) return false;
+        if (!scopeEmpNames.contains(first)) return false;
       }
       return true;
-    }
-
-    final scopedAttendance = allAttendance.where(matchesScope).toList();
+    }).toList();
 
     int pres = 0;
     int late = 0;
@@ -266,71 +291,79 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
       if (st.contains('MISSED') || log.checkOutTime == null || log.checkOutTime == '—') missed++;
     }
 
-    // Whether the current filter selection actually produced any attendance rows.
-    // Used below to decide between showing real filtered zeros vs. seed defaults.
-    final bool hasScopedAttendance = scopedAttendance.isNotEmpty;
-
     final totalAtt = pres + late + abs;
-    final attHealth = totalAtt > 0 ? ((pres + late) / totalAtt * 100.0) : 94.2;
+    final attHealth = totalAtt > 0 ? ((pres + late) / totalAtt * 100.0) : 100.0;
 
-    // Anomalies
-    final noBank = allEmps.where((e) => e.bankAccountNumber == null || e.bankAccountNumber!.isEmpty).length;
-    final drafts = allContracts.where((c) => c.status == 'DRAFT').length;
+    final scopeLeaves = allLeaves.where((l) {
+      return isEmpInScope(l.employeeId ?? '', l.employeeName);
+    }).toList();
+    final approvedLeaveDays = scopeLeaves
+        .where((l) => l.status == 'APPROVED')
+        .fold(0, (sum, l) => sum + (l.daysCount > 0 ? l.daysCount.round() : 1));
 
-    // Rolling 6 months trend
-    final months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
-    final factors = [0.80, 0.83, 0.78, 0.82, 0.93, 1.0];
+    final noBank = scopeEmps.where((e) => e.bankAccountNumber == null || e.bankAccountNumber!.isEmpty).length;
+    final draftContracts = allContracts.where((c) => c.status == 'DRAFT').length;
+    final draftSlips = scopePayslips.where((p) => p.status == 'DRAFT').length;
+
+    final monthsList = ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'];
     final List<_TrendPointData> trendPoints = [];
-
     double maxNetVal = 0.0;
-    for (int i = 0; i < months.length; i++) {
-      final mVal = overallWageBill * 0.88 * factors[i];
-      if (mVal > maxNetVal) maxNetVal = mVal;
-    }
 
-    for (int i = 0; i < months.length; i++) {
-      final mVal = overallWageBill * 0.88 * factors[i];
+    for (final ym in monthsList) {
+      final monthSlips = allPayslips.where((p) => p.periodStart.startsWith(ym) && isEmpInScope('', p.employeeName)).toList();
+      double mVal = 0.0;
+      if (monthSlips.isNotEmpty) {
+        mVal = monthSlips.fold(0.0, (sum, p) => sum + p.netAmount);
+      } else {
+        mVal = overallNetSalary;
+      }
+      if (mVal > maxNetVal) maxNetVal = mVal;
+
+      final pDate = DateTime.tryParse('$ym-01') ?? DateTime.now();
+      final mLabel = DateFormat('MMM').format(pDate);
+
       trendPoints.add(_TrendPointData(
-        monthLabel: months[i],
+        monthLabel: mLabel,
         totalNetPaid: mVal,
         displayVal: '₹${_formatCurrencyCompact(mVal)}',
-        isPeak: mVal == maxNetVal,
+        isPeak: false,
       ));
     }
 
+    for (int i = 0; i < trendPoints.length; i++) {
+      if (maxNetVal > 0 && trendPoints[i].totalNetPaid == maxNetVal) {
+        trendPoints[i] = _TrendPointData(
+          monthLabel: trendPoints[i].monthLabel,
+          totalNetPaid: trendPoints[i].totalNetPaid,
+          displayVal: trendPoints[i].displayVal,
+          isPeak: true,
+        );
+        break;
+      }
+    }
+
     setState(() {
-      _totalGrossSalary = overallWageBill;
-      _totalNetSalary = overallWageBill * 0.88;
-      _totalPayslipsCount = scopeEmps.length * 12;
-      _pendingPayslipsCount = drafts > 0 ? drafts + 2 : 6;
-      _paidPayslipsCount = _totalPayslipsCount - _pendingPayslipsCount;
-      _avgCompensation = scopeEmps.isNotEmpty ? (overallWageBill / scopeEmps.length) : 12432.0;
-      _approvedLeavesDays = (allLeaves.where((l) => l.status == 'APPROVED').length * 4) + 10;
+      _totalGrossSalary = overallGrossSalary;
+      _totalNetSalary = overallNetSalary;
+      _totalPayslipsCount = totalSlipsCount;
+      _pendingPayslipsCount = pendingSlipsCount;
+      _paidPayslipsCount = paidSlipsCount;
+      _avgCompensation = scopeEmps.isNotEmpty ? (overallGrossSalary / scopeEmps.length) : 0.0;
+      _approvedLeavesDays = approvedLeaveDays;
       _attendanceHealthPercent = attHealth;
 
-      // When the scoped query returned real rows we show the exact counts —
-      // including legitimate zeros — so the filters reflect reality. Only when
-      // there is genuinely no data at all do we fall back to seed placeholders.
-      if (hasScopedAttendance) {
-        _presentCount = pres;
-        _lateCount = late;
-        _absentCount = abs;
-        _overtimeCount = ot;
-        _missingPunchesCount = missed;
-      } else {
-        _presentCount = 0;
-        _lateCount = 0;
-        _absentCount = 0;
-        _overtimeCount = 0;
-        _missingPunchesCount = 0;
-      }
+      _presentCount = pres;
+      _lateCount = late;
+      _absentCount = abs;
+      _overtimeCount = ot;
+      _missingPunchesCount = missed;
 
-      _missingBankDetailsCount = noBank > 0 ? noBank : 2;
-      _unvalidatedDraftsCount = drafts > 0 ? drafts : 4;
-      _duplicateEntriesCount = 1;
+      _missingBankDetailsCount = noBank;
+      _unvalidatedDraftsCount = draftContracts + draftSlips;
+      _duplicateEntriesCount = 0;
 
-      _departmentSpendList = finalDeptCosts;
-      _departmentMatrixList = finalDeptCosts;
+      _departmentSpendList = deptCosts;
+      _departmentMatrixList = deptCosts;
       _trendDataList = trendPoints;
     });
   }
@@ -347,7 +380,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
     }
 
     try {
-      final metricsRes = await DashboardService.getMetrics();
+      final dates = _getPeriodStartEnd(_selectedPeriod);
+      final metricsRes = await DashboardService.getMetrics(
+        dateStart: dates?['date_start'],
+        dateEnd: dates?['date_end'],
+        departmentId: _selectedDept != 'All' ? _selectedDept : null,
+        employeeType: _selectedType != 'All Staff' ? _selectedType : null,
+      );
       if (metricsRes.isSuccess && metricsRes.data != null) {
         final data = metricsRes.data!;
         final kpis = data['kpi'] as Map<String, dynamic>? ?? {};
@@ -511,6 +550,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Container(
@@ -1341,31 +1381,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                     Expanded(child: _buildAttendanceMiniBox('Overtime', '$_overtimeCount', const Color(0xFF00696E))),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE2E7FF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.warning_amber_rounded, size: 15, color: Color(0xFFBA1A1A)),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          '$_missingPunchesCount missing punches require approval',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF131B2E),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           );
@@ -1421,37 +1436,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                 _buildAnomalyBullet(const Color(0xFF79526F), '$_duplicateEntriesCount duplicate entry'),
                 const SizedBox(height: 6),
                 _buildAnomalyBullet(const Color(0xFF00696E), '$_unvalidatedDraftsCount unvalidated drafts'),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('🔍 Inspecting payrun anomaly batch...')),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E7FF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Inspect Batch',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF57344F),
-                          ),
-                        ),
-                        const Icon(Icons.arrow_forward_rounded, size: 16, color: Color(0xFF57344F)),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           );

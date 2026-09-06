@@ -11,11 +11,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
 from app.api.deps import DbSession, PageParams, User
-from app.core.security import CurrentUser, require_hr, require_payroll_manager
+from app.core.security import CurrentUser, require_hr, require_payroll, require_payroll_manager
 from app.models.contract import HrContract
 from app.models.employee import Employee
 from app.schemas.common import MessageResponse
 from app.schemas.hr import (
+    ContractCompensationRevision,
     ContractCreate,
     ContractOut,
     ContractRevisionResult,
@@ -24,6 +25,7 @@ from app.schemas.hr import (
     ContractUpdateResult,
     ContractWageRevision,
 )
+from app.schemas.payroll import PayrollAssignmentOut
 from app.services import contract_service
 
 router = APIRouter(prefix="/contracts", tags=["Contracts"])
@@ -86,6 +88,84 @@ def list_contracts(
 
     rows = db.execute(stmt.limit(page.limit).offset(page.offset)).all()
     return [_serialise(c, name) for c, name in rows]
+
+
+@router.get(
+    "/assignments",
+    response_model=List[PayrollAssignmentOut],
+    summary="List employee payroll and structure assignments",
+)
+def list_assignments(
+    db: DbSession,
+    _: CurrentUser = Depends(require_payroll),
+    department_id: Optional[uuid.UUID] = Query(default=None),
+    job_position_id: Optional[uuid.UUID] = Query(default=None),
+    salary_structure_id: Optional[uuid.UUID] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+    status: Optional[str] = Query(default=None),
+) -> List[PayrollAssignmentOut]:
+    from app.models.master import Department, JobPosition
+    from app.models.salary import SalaryStructure
+
+    dept = aliased(Department)
+    pos = aliased(JobPosition)
+    struct = aliased(SalaryStructure)
+
+    target_status = status or "RUNNING"
+    stmt = (
+        select(
+            Employee,
+            dept.name.label("department_name"),
+            pos.name.label("position_name"),
+            HrContract,
+            struct.name.label("salary_structure_name"),
+        )
+        .outerjoin(dept, dept.id == Employee.department_id)
+        .outerjoin(pos, pos.id == Employee.job_position_id)
+        .outerjoin(
+            HrContract,
+            (HrContract.employee_id == Employee.id)
+            & (HrContract.status == target_status),
+        )
+        .outerjoin(struct, struct.id == HrContract.salary_structure_id)
+        .order_by(Employee.name)
+    )
+
+    if department_id:
+        stmt = stmt.where(Employee.department_id == department_id)
+    if job_position_id:
+        stmt = stmt.where(Employee.job_position_id == job_position_id)
+    if salary_structure_id:
+        stmt = stmt.where(HrContract.salary_structure_id == salary_structure_id)
+    if search:
+        s = f"%{search}%"
+        stmt = stmt.where(
+            (Employee.name.ilike(s)) | (Employee.badge_id.ilike(s))
+        )
+
+    rows = db.execute(stmt).all()
+    results: List[PayrollAssignmentOut] = []
+    for emp, dept_name, pos_name, contract, struct_name in rows:
+        results.append(
+            PayrollAssignmentOut(
+                employee_id=emp.id,
+                badge_id=emp.badge_id,
+                employee_name=emp.name,
+                department_id=emp.department_id,
+                department_name=dept_name,
+                job_position_id=emp.job_position_id,
+                job_position_name=pos_name,
+                contract_id=contract.id if contract else None,
+                contract_reference=contract.reference_code if contract else None,
+                contract_status=contract.status if contract else None,
+                wage_monthly=contract.wage_monthly if contract else None,
+                salary_structure_id=contract.salary_structure_id if contract else None,
+                salary_structure_name=struct_name,
+                date_start=contract.start_date if contract else None,
+                date_end=contract.end_date if contract else None,
+            )
+        )
+    return results
 
 
 @router.get(
@@ -191,6 +271,40 @@ def revise_wage(
         db,
         contract_id,
         new_wage=payload.new_wage,
+        effective_from=payload.effective_from,
+        reason=payload.reason,
+    )
+    employee = db.get(Employee, result["previous_contract"].employee_id)
+    name = employee.name if employee else None
+    return ContractRevisionResult(
+        previous_contract=_serialise(result["previous_contract"], name),
+        new_contract=_serialise(result["new_contract"], name),
+        previous_wage=result["previous_wage"],
+        new_wage=result["new_wage"],
+        effective_from=result["effective_from"],
+        note=result["note"],
+    )
+
+
+@router.post(
+    "/{contract_id}/revise-compensation",
+    response_model=ContractRevisionResult,
+    summary=(
+        "Compensation revision: close this contract the day before effective_from "
+        "and open a new RUNNING one at the new wage and/or salary structure."
+    ),
+)
+def revise_compensation(
+    contract_id: uuid.UUID,
+    payload: ContractCompensationRevision,
+    db: DbSession,
+    _: CurrentUser = Depends(require_payroll_manager),
+) -> ContractRevisionResult:
+    result = contract_service.revise_compensation(
+        db,
+        contract_id,
+        new_wage=payload.new_wage,
+        new_salary_structure_id=payload.new_salary_structure_id,
         effective_from=payload.effective_from,
         reason=payload.reason,
     )

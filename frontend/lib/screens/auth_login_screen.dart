@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
 import '../services/api_client.dart';
+import '../widgets/app_logo.dart';
 import 'home_navigation_screen.dart';
+import 'role_selection_screen.dart';
 
 class AuthLoginScreen extends StatefulWidget {
-  const AuthLoginScreen({super.key});
+  final int initialRoleIndex;
+  const AuthLoginScreen({super.key, this.initialRoleIndex = 0});
 
   @override
   State<AuthLoginScreen> createState() => _AuthLoginScreenState();
@@ -80,10 +83,13 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController(text: _demoRoles[0]['email']);
+    _selectedRoleIndex = widget.initialRoleIndex.clamp(0, _demoRoles.length - 1);
+    final selectedRole = _demoRoles[_selectedRoleIndex];
+    _emailController = TextEditingController(text: selectedRole['email']);
     _passwordController = TextEditingController(
-      text: AuthService.getKnownPassword(_demoRoles[0]['email']!),
+      text: AuthService.getKnownPassword(selectedRole['email']!),
     );
+    _currentRoleBadge = 'Role: ${selectedRole['role']}';
   }
 
   @override
@@ -202,6 +208,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return StatefulBuilder(
@@ -585,12 +592,6 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                 child: _buildSignInCard(),
               ),
             ),
-
-            // QUICK ROLE DEMO SWITCHER
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              child: _buildQuickDemoRolesSection(),
-            ),
           ],
         ),
       ),
@@ -625,6 +626,42 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Back to Role Selection Button
+              GestureDetector(
+                onTap: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.arrow_back, color: Colors.white, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Change Role',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
               // Top Bar with Brand & Cluster status
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -646,11 +683,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
                                 ),
                               ),
                               child: const Center(
-                                child: Icon(
-                                  Icons.badge_outlined,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
+                                child: AppLogoIcon(size: 26),
                               ),
                             ),
                             Positioned(

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
-import '../services/api_client.dart';
-import '../services/employee_service.dart';
 import '../services/payrun_service.dart';
 import '../services/salary_structure_service.dart';
 import '../theme/app_theme.dart';
@@ -16,6 +14,7 @@ class PayrunWizardSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => PayrunWizardSheet(onBatchCreated: onBatchCreated),
     );
@@ -44,8 +43,6 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
   String _searchQuery = '';
   String _departmentFilter = 'All';
   String _statusFilter = 'All'; // All, Errors & Warnings, Validated Only, New Joinees, Exits, High Variance
-
-  Map<String, dynamic>? _selectedCandidateForDrawer;
 
   // Candidate Data (from backend step1Validate or mock fallback)
   List<Map<String, dynamic>> _candidates = [];
@@ -452,50 +449,59 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
   // ===========================================================================
   Widget _buildWizardHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppTheme.odooAubergine.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppTheme.odooAubergine.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.verified_user_outlined, color: AppTheme.odooAubergine, size: 20),
                 ),
-                child: const Icon(Icons.verified_user_outlined, color: AppTheme.odooAubergine, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Payrun Creation & Review Wizard',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Payrun Creation & Review Wizard',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      ),
+                      Text(
+                        _activeStep == 0 ? 'Step 1: Define Scope' : 'Step 2: Payroll Review & Validation',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                    ],
                   ),
-                  Text(
-                    _activeStep == 0 ? 'Step 1 of 2: Define Payroll Scope' : 'Step 2 of 2: Payroll Review & Validation',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 6),
 
           // Step Switcher Buttons
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(3),
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(10)),
                 child: Row(
                   children: [
                     InkWell(
                       onTap: () => setState(() => _activeStep = 0),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: _activeStep == 0 ? Colors.white : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
@@ -503,7 +509,7 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
                         child: Text(
                           '1. Scope',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
+                            fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: _activeStep == 0 ? AppTheme.odooAubergine : Colors.grey.shade700,
                           ),
@@ -513,15 +519,15 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
                     InkWell(
                       onTap: () => setState(() => _activeStep = 1),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: _activeStep == 1 ? Colors.white : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          '2. Review & Validate',
+                          '2. Review',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
+                            fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: _activeStep == 1 ? AppTheme.odooTeal : Colors.grey.shade700,
                           ),
@@ -531,8 +537,10 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 icon: const Icon(Icons.close, size: 20),
                 onPressed: () => Navigator.pop(context),
               ),
@@ -562,6 +570,7 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
 
           TextFormField(
             initialValue: _payrunName,
+            style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
             decoration: const InputDecoration(labelText: 'Payrun Name *', border: OutlineInputBorder()),
             onChanged: (val) => _payrunName = val,
           ),
@@ -585,6 +594,7 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
               Expanded(
                 child: TextFormField(
                   initialValue: _dateStart,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                   decoration: const InputDecoration(labelText: 'Start Date *', border: OutlineInputBorder()),
                   onChanged: (val) => _dateStart = val,
                 ),
@@ -593,6 +603,7 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
               Expanded(
                 child: TextFormField(
                   initialValue: _dateEnd,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
                   decoration: const InputDecoration(labelText: 'End Date *', border: OutlineInputBorder()),
                   onChanged: (val) => _dateEnd = val,
                 ),
@@ -713,13 +724,17 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Text(_payrunName, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 10),
+                  Text(_payrunName, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold)),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
@@ -727,6 +742,7 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           _hasCriticalBlockers ? Icons.error_outline : Icons.check_circle_outline,
@@ -749,13 +765,14 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Row(
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _buildMetaTag(Icons.calendar_today_outlined, 'Period: $_dateStart → $_dateEnd'),
-              const SizedBox(width: 12),
               _buildMetaTag(Icons.business_outlined, 'Branch: India HQ'),
-              const SizedBox(width: 12),
               _buildMetaTag(Icons.apartment_outlined, 'Dept: $_selectedDepartment'),
             ],
           ),
@@ -844,10 +861,13 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     _blockedCount > 0 ? Icons.error : Icons.verified,
@@ -855,13 +875,20 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  Text('Pre-Flight Validation & Exceptions', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Flexible(
+                    child: Text(
+                      'Pre-Flight Validation & Exceptions',
+                      style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Bypass Blocked Candidates', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
-                  const SizedBox(width: 6),
+                  Text('Bypass Blocked', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+                  const SizedBox(width: 4),
                   Switch(
                     value: _skipBlocked,
                     activeThumbColor: AppTheme.odooAubergine,
@@ -953,30 +980,36 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
   // ---------------------------------------------------------------------------
   Widget _buildMomComparisonRibbon() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.show_chart, size: 18, color: AppTheme.odooTeal),
               const SizedBox(width: 8),
-              Text(
-                'MoM Payroll Variance (vs August 2026):',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+              Flexible(
+                child: Text(
+                  'MoM Payroll Variance (vs Aug 2026):',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-          Row(
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
             children: [
               _buildVarianceChip('Gross: +5.3%', AppTheme.emeraldSuccess),
-              const SizedBox(width: 8),
               _buildVarianceChip('Net: +5.1%', AppTheme.emeraldSuccess),
-              const SizedBox(width: 8),
               _buildVarianceChip('+2 New Joinees', AppTheme.odooAubergine),
             ],
           ),
@@ -1000,65 +1033,79 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
   // 6. PRACTICAL PAYROLL FILTERS & SEARCH
   // ---------------------------------------------------------------------------
   Widget _buildFiltersAndSearchBar() {
-    return Row(
-      children: [
-        // Search
-        Expanded(
-          flex: 2,
-          child: TextFormField(
-            style: const TextStyle(fontSize: 13),
-            decoration: InputDecoration(
-              hintText: 'Search employee name, ID or role...',
-              prefixIcon: const Icon(Icons.search, size: 18),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onChanged: (val) => setState(() => _searchQuery = val),
-          ),
-        ),
-        const SizedBox(width: 12),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 600;
 
-        // Department Filter
-        Expanded(
-          flex: 1,
-          child: DropdownButtonFormField<String>(
-            initialValue: _departmentFilter,
-            dropdownColor: Colors.white,
-            decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder()),
-            items: const [
-              DropdownMenuItem(value: 'All', child: Text('All Depts')),
-              DropdownMenuItem(value: 'Tech & Product', child: Text('Tech & Product')),
-              DropdownMenuItem(value: 'Finance & Compliance', child: Text('Finance')),
-              DropdownMenuItem(value: 'Human Resources', child: Text('HR')),
-              DropdownMenuItem(value: 'Operations', child: Text('Operations')),
-            ],
-            onChanged: (val) {
-              if (val != null) setState(() => _departmentFilter = val);
-            },
+        final searchWidget = TextFormField(
+          style: const TextStyle(fontSize: 13),
+          decoration: InputDecoration(
+            hintText: 'Search employee name, ID or role...',
+            prefixIcon: const Icon(Icons.search, size: 18),
+            contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           ),
-        ),
-        const SizedBox(width: 12),
+          onChanged: (val) => setState(() => _searchQuery = val),
+        );
 
-        // Status Filter
-        Expanded(
-          flex: 1,
-          child: DropdownButtonFormField<String>(
-            initialValue: _statusFilter,
-            dropdownColor: Colors.white,
-            decoration: const InputDecoration(labelText: 'Issue / Status', border: OutlineInputBorder()),
-            items: const [
-              DropdownMenuItem(value: 'All', child: Text('All Statuses')),
-              DropdownMenuItem(value: 'Errors & Warnings', child: Text('Errors / Warnings')),
-              DropdownMenuItem(value: 'Validated Only', child: Text('Validated Only')),
-              DropdownMenuItem(value: 'New Joinees', child: Text('New Joinees')),
-              DropdownMenuItem(value: 'High Variance', child: Text('High Variance')),
+        final deptWidget = DropdownButtonFormField<String>(
+          initialValue: _departmentFilter,
+          dropdownColor: Colors.white,
+          decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+          items: const [
+            DropdownMenuItem(value: 'All', child: Text('All Depts')),
+            DropdownMenuItem(value: 'Tech & Product', child: Text('Tech & Product')),
+            DropdownMenuItem(value: 'Finance & Compliance', child: Text('Finance')),
+            DropdownMenuItem(value: 'Human Resources', child: Text('HR')),
+            DropdownMenuItem(value: 'Operations', child: Text('Operations')),
+          ],
+          onChanged: (val) {
+            if (val != null) setState(() => _departmentFilter = val);
+          },
+        );
+
+        final statusWidget = DropdownButtonFormField<String>(
+          initialValue: _statusFilter,
+          dropdownColor: Colors.white,
+          decoration: const InputDecoration(labelText: 'Issue / Status', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+          items: const [
+            DropdownMenuItem(value: 'All', child: Text('All Statuses')),
+            DropdownMenuItem(value: 'Errors & Warnings', child: Text('Errors / Warnings')),
+            DropdownMenuItem(value: 'Validated Only', child: Text('Validated Only')),
+            DropdownMenuItem(value: 'New Joinees', child: Text('New Joinees')),
+            DropdownMenuItem(value: 'High Variance', child: Text('High Variance')),
+          ],
+          onChanged: (val) {
+            if (val != null) setState(() => _statusFilter = val);
+          },
+        );
+
+        if (isCompact) {
+          return Column(
+            children: [
+              searchWidget,
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: deptWidget),
+                  const SizedBox(width: 8),
+                  Expanded(child: statusWidget),
+                ],
+              ),
             ],
-            onChanged: (val) {
-              if (val != null) setState(() => _statusFilter = val);
-            },
-          ),
-        ),
-      ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(flex: 2, child: searchWidget),
+            const SizedBox(width: 12),
+            Expanded(flex: 1, child: deptWidget),
+            const SizedBox(width: 12),
+            Expanded(flex: 1, child: statusWidget),
+          ],
+        );
+      },
     );
   }
 
@@ -1207,8 +1254,10 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     Text('Payable: ${c['payableDays']}d', style: const TextStyle(fontSize: 12)),
                     Text('Gross: ₹${(c['gross'] as double).toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontSize: 12)),
@@ -1239,6 +1288,7 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
@@ -1255,18 +1305,32 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(radius: 20, backgroundImage: NetworkImage(candidate['avatar'])),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(candidate['name'], style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
-                            Text('${candidate['empCode']} • ${candidate['role']} (${candidate['department']})', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                          ],
-                        ),
-                      ],
+                    Expanded(
+                      child: Row(
+                        children: [
+                          CircleAvatar(radius: 20, backgroundImage: NetworkImage(candidate['avatar'])),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  candidate['name'],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  '${candidate['empCode']} • ${candidate['role']} (${candidate['department']})',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
                   ],
@@ -1322,8 +1386,10 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
                 // Section 3: Attendance & Time Off
                 Text('3. Attendance & Time Off Impact', style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 12,
+                  runSpacing: 6,
                   children: [
                     Text('Payable Worked Days: ${attendance['Worked Days']}d / ${attendance['Expected Days']}d'),
                     Text('Overtime Hours: ${attendance['Overtime Hours']}h'),
@@ -1342,7 +1408,7 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
   // ---------------------------------------------------------------------------
   Widget _buildStickyFooterBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -1375,36 +1441,39 @@ class _PayrunWizardSheetState extends State<PayrunWizardSheet> {
               ),
             ),
           ],
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: () => setState(() => _activeStep = 0),
-                icon: const Icon(Icons.arrow_back, size: 16),
-                label: const Text('Back to Scope'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () => _fetchScopeCandidates(),
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Recalculate'),
-              ),
-              const Spacer(),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _hasCriticalBlockers ? Colors.grey.shade400 : AppTheme.odooAubergine,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => setState(() => _activeStep = 0),
+                  icon: const Icon(Icons.arrow_back, size: 16),
+                  label: const Text('Back'),
                 ),
-                onPressed: _hasCriticalBlockers || _isCreatingBatch ? null : _createPayrunBatch,
-                icon: _isCreatingBatch
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.check_circle_outline, size: 18),
-                label: Text(
-                  _isCreatingBatch ? 'Creating Batch...' : 'Preview Payroll / Create Batch →',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => _fetchScopeCandidates(),
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Recalculate'),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _hasCriticalBlockers ? Colors.grey.shade400 : AppTheme.odooAubergine,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  onPressed: _hasCriticalBlockers || _isCreatingBatch ? null : _createPayrunBatch,
+                  icon: _isCreatingBatch
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.check_circle_outline, size: 18),
+                  label: Text(
+                    _isCreatingBatch ? 'Creating Batch...' : 'Preview Payroll / Create Batch →',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

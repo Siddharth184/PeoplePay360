@@ -101,6 +101,16 @@ class AppTheme {
       ),
       iconColor: odooAubergine,
     ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      labelStyle: GoogleFonts.plusJakartaSans(color: textSecondaryLight, fontSize: 13),
+      hintStyle: GoogleFonts.plusJakartaSans(color: textSecondaryLight, fontSize: 13),
+      prefixStyle: GoogleFonts.plusJakartaSans(color: textPrimaryLight, fontSize: 13),
+      suffixStyle: GoogleFonts.plusJakartaSans(color: textPrimaryLight, fontSize: 13),
+    ),
   );
 
   static ThemeData darkTheme = ThemeData(

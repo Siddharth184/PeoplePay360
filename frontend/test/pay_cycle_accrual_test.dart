@@ -71,5 +71,40 @@ void main() {
       expect(percentage, greaterThan(0));
       expect(percentage, lessThanOrEqualTo(100));
     });
+
+    test('Dynamic month selection matches periodStart and updates breakdown & accrual metrics', () {
+      final payslips = MockDataService.payslips;
+
+      // Select Sept 2026 month
+      final septMonth = '2026-09-01 → 2026-09-30';
+      final septStart = septMonth.split('→').first.trim();
+      final septSlip = payslips.firstWhere((p) => p.periodStart == septStart);
+
+      expect(septSlip.refCode, equals('SLIP/2026/09-001'));
+      expect(septSlip.status, equals('PAID'));
+      expect(septSlip.netAmount, equals(126747.73));
+
+      // Select Aug 2026 month
+      final augMonth = '2026-08-01 → 2026-08-31';
+      final augStart = augMonth.split('→').first.trim();
+      final augSlip = payslips.firstWhere((p) => p.periodStart == augStart);
+
+      expect(augSlip.refCode, equals('SLIP/2026/08-001'));
+      expect(augSlip.status, equals('DONE'));
+      expect(augSlip.netAmount, equals(89971.59));
+
+      // Select Jul 2026 month
+      final julMonth = '2026-07-01 → 2026-07-31';
+      final julStart = julMonth.split('→').first.trim();
+      final julSlip = payslips.firstWhere((p) => p.periodStart == julStart);
+
+      expect(julSlip.refCode, equals('SLIP/2026/07-001'));
+      expect(julSlip.status, equals('PAID'));
+      expect(julSlip.netAmount, equals(84659.09));
+
+      // Verify that net amounts & ref codes dynamically change between months
+      expect(augSlip.netAmount, isNot(equals(septSlip.netAmount)));
+      expect(augSlip.refCode, isNot(equals(septSlip.refCode)));
+    });
   });
 }

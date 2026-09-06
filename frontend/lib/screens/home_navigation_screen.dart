@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../widgets/notifications_drawer.dart';
 import '../services/notification_service.dart';
 import '../widgets/staff_search_dialog.dart';
+import '../widgets/app_logo.dart';
 import '../services/api_client.dart';
 import '../services/employee_service.dart';
 import '../models/models.dart';
@@ -15,7 +16,7 @@ import 'contracts_screen.dart';
 import 'payrun_screen.dart';
 import 'analytics_screen.dart';
 import 'ai_copilot_screen.dart';
-import 'auth_login_screen.dart';
+import 'role_selection_screen.dart';
 import 'user_management_screen.dart';
 import 'employee_directory_screen.dart';
 import 'working_schedules_screen.dart';
@@ -150,7 +151,7 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
             onPressed: () {
               Navigator.pop(context);
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const AuthLoginScreen()),
+                MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
                 (route) => false,
               );
               ScaffoldMessenger.of(context).showSnackBar(
@@ -171,6 +172,8 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
     final bool hasHr = ApiClient.hasHrAccess;
     final bool isAdmin = ApiClient.isAdmin;
     final bool isHrManager = ApiClient.isRoleHrManager;
+    final bool isHrPayrollManager = ApiClient.isRoleHrPayrollManager;
+    final bool isHrPayrollUser = ApiClient.isRoleHrPayrollUser;
 
     // Access Guard Screen for restricted modules
     Widget accessDeniedScreen(String moduleName, String requiredRole) {
@@ -260,13 +263,20 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
         _NavItem(icon: Icons.flight_takeoff, activeIcon: Icons.flight_takeoff, label: 'Time Off', targetIndex: 2),
         _NavItem(icon: Icons.smart_toy_outlined, activeIcon: Icons.smart_toy, label: 'Copilot', targetIndex: 6),
       ];
+    } else if (isHrPayrollManager || isHrPayrollUser) {
+      enrichedNavItems = const [
+        _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile', targetIndex: 0),
+        _NavItem(icon: Icons.fingerprint, activeIcon: Icons.fingerprint, label: 'Attendance', targetIndex: 1),
+        _NavItem(icon: Icons.payments_outlined, activeIcon: Icons.payments, label: 'Payrun', targetIndex: 4),
+        _NavItem(icon: Icons.settings_suggest_outlined, activeIcon: Icons.settings_suggest, label: 'Payroll Config', targetIndex: 10),
+        _NavItem(icon: Icons.smart_toy_outlined, activeIcon: Icons.smart_toy, label: 'Copilot', targetIndex: 6),
+      ];
     } else {
       enrichedNavItems = const [
         _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile', targetIndex: 0),
         _NavItem(icon: Icons.fingerprint, activeIcon: Icons.fingerprint, label: 'Attendance', targetIndex: 1),
-        _NavItem(icon: Icons.flight_takeoff, activeIcon: Icons.flight_takeoff, label: 'Time Off', targetIndex: 2),
-        _NavItem(icon: Icons.description_outlined, activeIcon: Icons.description, label: 'Contracts', targetIndex: 3),
         _NavItem(icon: Icons.payments_outlined, activeIcon: Icons.payments, label: 'Payrun', targetIndex: 4),
+        _NavItem(icon: Icons.settings_suggest_outlined, activeIcon: Icons.settings_suggest, label: 'Payroll Config', targetIndex: 10),
         _NavItem(icon: Icons.smart_toy_outlined, activeIcon: Icons.smart_toy, label: 'Copilot', targetIndex: 6),
       ];
     }
@@ -388,21 +398,6 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                             onTap: () {
                               Navigator.pop(context);
                               _onTabSelected(2);
-                            },
-                          ),
-                        );
-                      }
-                      if (!isPinned(3) && hasHr) {
-                        modules.add(
-                          _buildDrawerTile(
-                            context: context,
-                            icon: Icons.description_outlined,
-                            title: 'Contracts & AST Rules',
-                            accentColor: const Color(0xFF818CF8),
-                            isSelected: _currentIndex == 3,
-                            onTap: () {
-                              Navigator.pop(context);
-                              _onTabSelected(3);
                             },
                           ),
                         );
@@ -735,6 +730,15 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const AppLogo(iconSize: 26, fontSize: 16, textColor: Colors.white),
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Container(

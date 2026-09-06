@@ -442,3 +442,22 @@ class DashboardMetricsOut(BaseModel):
     attendance_overview: AttendanceOverviewOut
     timeoff_overview: List[TimeOffOverviewOut]
     department_overview: List[DepartmentOverviewOut]
+
+
+class PayrollAssignmentOut(BaseModel):
+    employee_id: uuid.UUID
+    badge_id: str
+    employee_name: str
+    department_id: Optional[uuid.UUID] = None
+    department_name: Optional[str] = None
+    job_position_id: Optional[uuid.UUID] = None
+    job_position_name: Optional[str] = None
+    contract_id: Optional[uuid.UUID] = None
+    contract_reference: Optional[str] = None
+    contract_status: Optional[str] = None
+    wage_monthly: Optional[Decimal] = None
+    salary_structure_id: Optional[uuid.UUID] = None
+    salary_structure_name: Optional[str] = None
+    date_start: Optional[date] = None
+    date_end: Optional[date] = None
+

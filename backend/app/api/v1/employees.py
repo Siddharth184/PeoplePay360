@@ -386,15 +386,39 @@ def create_employee(
     ).scalars().first():
         raise ConflictError(f"Work email {payload.work_email} is already in use.")
 
-    if payload.department_id and not db.get(Department, payload.department_id):
+    department_id = payload.department_id
+    if not department_id and payload.department_name:
+        dept_obj = db.execute(
+            select(Department).where(func.lower(Department.name) == payload.department_name.lower().trim())
+        ).scalars().first()
+        if dept_obj:
+            department_id = dept_obj.id
+
+    job_position_id = payload.job_position_id
+    if not job_position_id and payload.job_position_name:
+        jp_obj = db.execute(
+            select(JobPosition).where(func.lower(JobPosition.name) == payload.job_position_name.lower().trim())
+        ).scalars().first()
+        if jp_obj:
+            job_position_id = jp_obj.id
+
+    manager_id = payload.manager_id
+    if not manager_id and payload.manager_name:
+        mgr_obj = db.execute(
+            select(Employee).where(func.lower(Employee.name).like(f"%{payload.manager_name.lower().trim()}%"))
+        ).scalars().first()
+        if mgr_obj:
+            manager_id = mgr_obj.id
+
+    if department_id and not db.get(Department, department_id):
         raise NotFoundError("Department not found.")
-    if payload.job_position_id and not db.get(JobPosition, payload.job_position_id):
+    if job_position_id and not db.get(JobPosition, job_position_id):
         raise NotFoundError("Job position not found.")
     if payload.working_schedule_id and not db.get(
         WorkingSchedule, payload.working_schedule_id
     ):
         raise NotFoundError("Working schedule not found.")
-    if payload.manager_id and not db.get(Employee, payload.manager_id):
+    if manager_id and not db.get(Employee, manager_id):
         raise NotFoundError("Manager employee not found.")
 
     if payload.create_login and not user.is_admin:
@@ -408,9 +432,9 @@ def create_employee(
         name=payload.name,
         work_email=payload.work_email,
         phone=payload.phone,
-        department_id=payload.department_id,
-        job_position_id=payload.job_position_id,
-        manager_id=payload.manager_id,
+        department_id=department_id,
+        job_position_id=job_position_id,
+        manager_id=manager_id,
         working_schedule_id=payload.working_schedule_id,
         work_location=payload.work_location,
         status=payload.status.value,
