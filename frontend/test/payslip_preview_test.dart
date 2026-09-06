@@ -28,24 +28,52 @@ void main() {
       expect(payslip.workedDays, equals(22.0));
     });
 
-    test('PayslipPdfDialog generates fallback effective lines when lines array is empty', () {
+    test('PayslipModel derives contract hourly rate (176h), 1.5x overtime rate, and extra days payout', () {
+      final mockMap = {
+        'id': 'pay-ot-test',
+        'refCode': 'SLIP/2026/OT-001',
+        'employeeName': 'Priya Patel',
+        'contractMonthlyWage': 85000.0,
+        'scheduled_hours': 176.0,
+        'overtime_hours': 10.0,
+        'extra_days': 2.0,
+        'basic': 50000.0,
+        'gross': 94971.59,
+        'netPayout': 89971.59,
+        'status': 'DONE',
+      };
+
+      final payslip = PayslipModel.fromJson(mockMap);
+
+      expect(payslip.contractMonthlyWage, equals(85000.0));
+      expect(payslip.hourlyRate, closeTo(482.95, 0.01));
+      expect(payslip.overtimeRate, closeTo(724.43, 0.01));
+      expect(payslip.overtimeHours, equals(10.0));
+      expect(payslip.overtimePay, closeTo(7244.32, 0.5));
+      expect(payslip.extraDays, equals(2.0));
+      expect(payslip.extraDaysPay, closeTo(7727.27, 0.5));
+    });
+
+    test('PayslipPdfDialog generates fallback effective lines including OT and EXT_DAYS', () {
       final payslip = PayslipModel(
         id: 'test-1',
         refCode: 'SLIP-001',
         employeeName: 'John Doe',
         periodStart: '2026-09-01',
         periodEnd: '2026-09-30',
-        grossAmount: 100000.0,
-        netAmount: 90000.0,
+        contractMonthlyWage: 85000.0,
+        overtimeHours: 10.0,
+        extraDays: 2.0,
+        grossAmount: 94971.59,
+        netAmount: 89971.59,
         status: 'PAID',
         lines: [],
       );
 
       final dialog = PayslipPdfDialog(payslip: payslip);
 
-      // Access widget properties
       expect(dialog.payslip.refCode, equals('SLIP-001'));
-      expect(dialog.payslip.grossAmount, equals(100000.0));
+      expect(dialog.payslip.grossAmount, equals(94971.59));
       expect(dialog.payslip.lines, isEmpty);
     });
   });

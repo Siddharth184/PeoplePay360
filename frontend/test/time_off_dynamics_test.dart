@@ -138,5 +138,35 @@ void main() {
       final balAfterCancel = MockDataService.getLeaveBalances().firstWhere((b) => b.timeoffTypeId == ptoType.id);
       expect(balAfterCancel.takenDays, equals(initialTaken));
     });
+
+    test('7. Refused requests are excluded from pending list and visible in All section with status REFUSED', () async {
+      final types = MockDataService.timeOffTypes;
+      final ptoType = types.first;
+
+      // Create new request and refuse it
+      final createRes = await TimeOffService.createLeaveRequestSelf(
+        timeOffTypeId: ptoType.id,
+        startDate: '2026-09-20',
+        endDate: '2026-09-21',
+        reason: 'Unplanned absence',
+      );
+      final reqId = createRes.data!.id;
+
+      final refuseRes = await TimeOffService.refuseLeaveRequest(reqId, 'Schedule conflict');
+      expect(refuseRes.isSuccess, isTrue);
+      expect(refuseRes.data!.status, equals('REFUSED'));
+
+      final allRes = await TimeOffService.getLeaveRequests();
+      expect(allRes.isSuccess, isTrue);
+      final allList = allRes.data!;
+
+      // Pending requests do NOT include this refused request
+      final pendingOnly = allList.where((r) => r.status == 'TO_APPROVE').toList();
+      expect(pendingOnly.any((r) => r.id == reqId), isFalse);
+
+      // All list DOES include this refused request
+      final refusedReq = allList.firstWhere((r) => r.id == reqId);
+      expect(refusedReq.status, equals('REFUSED'));
+    });
   });
 }

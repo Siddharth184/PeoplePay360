@@ -496,9 +496,140 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
   }
 
   Widget _buildComputationTreeView(String netPay) {
+    final slip = widget.payslip;
+    final baseWageVal = (slip['contract_wage'] is num)
+        ? (slip['contract_wage'] as num).toDouble()
+        : (slip['contractMonthlyWage'] is num
+            ? (slip['contractMonthlyWage'] as num).toDouble()
+            : 85000.0);
+    final hourlyRate = baseWageVal / 176.0;
+    final otRate = hourlyRate * 1.5;
+    final otHours = (slip['overtime_hours'] is num)
+        ? (slip['overtime_hours'] as num).toDouble()
+        : 10.0;
+    final otPay = (slip['overtime_pay'] is num)
+        ? (slip['overtime_pay'] as num).toDouble()
+        : double.parse((otHours * otRate).toStringAsFixed(2));
+
+    final extraDays = (slip['extra_days'] is num)
+        ? (slip['extra_days'] as num).toDouble()
+        : 2.0;
+    final dailyRate = baseWageVal / 22.0;
+    final extraDaysPay = (slip['extra_days_pay'] is num)
+        ? (slip['extra_days_pay'] as num).toDouble()
+        : double.parse((extraDays * dailyRate).toStringAsFixed(2));
+
+    final totalEarnings = 50000.0 + 20000.0 + 10000.0 + otPay + extraDaysPay;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Overtime & Extra Days Contract Basis Sidebar Card
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F3FF),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF92EFF5), width: 1.5),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF006E73).withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.analytics, size: 18, color: Color(0xFF006E73)),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Overtime Earning & Package Rate Basis',
+                        style: GoogleFonts.outfit(fontSize: 14.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: const Color(0xFF92EFF5), borderRadius: BorderRadius.circular(12)),
+                    child: Text('1.5x Overtime Rate', style: GoogleFonts.jetBrainsMono(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFF004F53))),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Rate Specs Grid
+              Row(
+                children: [
+                  _buildProfileStat('Contract Wage', '₹ ${baseWageVal.toStringAsFixed(0)}', const Color(0xFF131B2E)),
+                  const SizedBox(width: 6),
+                  _buildProfileStat('Hourly Rate', '₹ ${hourlyRate.toStringAsFixed(2)}/h', const Color(0xFF00696E)),
+                  const SizedBox(width: 6),
+                  _buildProfileStat('OT Rate (1.5x)', '₹ ${otRate.toStringAsFixed(2)}/h', const Color(0xFF006443)),
+                  const SizedBox(width: 6),
+                  _buildProfileStat('Daily Rate', '₹ ${dailyRate.toStringAsFixed(2)}/d', const Color(0xFF57344F)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFDAE2FD)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.access_time_filled, size: 15, color: Color(0xFF006E73)),
+                            const SizedBox(width: 6),
+                            Text('Overtime Earning (${otHours.toStringAsFixed(1)} hrs):', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        Text(
+                          '+ ₹ ${otPay.toStringAsFixed(2)}',
+                          style: GoogleFonts.jetBrainsMono(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF006443)),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 12, color: Color(0xFFF0F0F0)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.event_available, size: 15, color: Color(0xFF57344F)),
+                            const SizedBox(width: 6),
+                            Text('Extra Days Payout (${extraDays.toStringAsFixed(1)} days):', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        Text(
+                          '+ ₹ ${extraDaysPay.toStringAsFixed(2)}',
+                          style: GoogleFonts.jetBrainsMono(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF006443)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
         // Allowances & Earnings Section
         Container(
           padding: const EdgeInsets.all(14),
@@ -525,7 +656,7 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: const Color(0xFF6FFBBE), borderRadius: BorderRadius.circular(12)),
-                    child: Text('3 Rules', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF004A31))),
+                    child: Text('5 Rules', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF004A31))),
                   ),
                 ],
               ),
@@ -535,31 +666,28 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
               _buildTreeNode('House Rent Allowance', 'HRA', 'Allowance • 40% of BASIC', '+ ₹ 20,000.00', 'Computed', Icons.domain, const Color(0xFF6FFBBE), const Color(0xFF004A31)),
               const SizedBox(height: 8),
               _buildTreeNode('Standard Allowance', 'STD', 'Allowance • Fixed Rate', '+ ₹ 10,000.00', 'Fixed', Icons.payments, const Color(0xFF6FFBBE), const Color(0xFF004A31)),
-              if (widget.payslip['overtimePay'] != null && (widget.payslip['overtimePay'] as num) > 0) ...[
-                const SizedBox(height: 8),
-                _buildTreeNode(
-                  'Overtime Pay',
-                  'OT',
-                  'Allowance • 1.5x Hourly Rate',
-                  '+ ₹ ${(widget.payslip['overtimePay'] as num).toStringAsFixed(2)}',
-                  'Overtime',
-                  Icons.access_time_filled,
-                  const Color(0xFF92EFF5),
-                  const Color(0xFF006E73),
-                ),
-              ] else if (widget.payslip['overtime_pay'] != null && (widget.payslip['overtime_pay'] as num) > 0) ...[
-                const SizedBox(height: 8),
-                _buildTreeNode(
-                  'Overtime Pay',
-                  'OT',
-                  'Allowance • 1.5x Hourly Rate',
-                  '+ ₹ ${(widget.payslip['overtime_pay'] as num).toStringAsFixed(2)}',
-                  'Overtime',
-                  Icons.access_time_filled,
-                  const Color(0xFF92EFF5),
-                  const Color(0xFF006E73),
-                ),
-              ],
+              const SizedBox(height: 8),
+              _buildTreeNode(
+                'Overtime Earning',
+                'OT',
+                '${otHours.toStringAsFixed(1)}h worked • 1.5x Hourly Rate (₹ ${otRate.toStringAsFixed(2)}/h)',
+                '+ ₹ ${otPay.toStringAsFixed(2)}',
+                'Overtime',
+                Icons.access_time_filled,
+                const Color(0xFF92EFF5),
+                const Color(0xFF006E73),
+              ),
+              const SizedBox(height: 8),
+              _buildTreeNode(
+                'Extra Days Payout',
+                'EXT_DAYS',
+                '${extraDays.toStringAsFixed(1)} extra days worked • Daily Rate (₹ ${dailyRate.toStringAsFixed(2)}/d)',
+                '+ ₹ ${extraDaysPay.toStringAsFixed(2)}',
+                'Extra Days',
+                Icons.event_available,
+                const Color(0xFF6FFBBE),
+                const Color(0xFF004A31),
+              ),
             ],
           ),
         ),
@@ -599,13 +727,13 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
                           ),
                         ],
                       ),
-                      Text('Sum of all active earnings', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF004F53))),
+                      Text('Sum of all active earnings & overtime', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF004F53))),
                     ],
                   ),
                 ],
               ),
               Text(
-                '= ₹ 80,000.00',
+                '= ₹ ${totalEarnings.toStringAsFixed(2)}',
                 style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF002022)),
               ),
             ],
@@ -897,7 +1025,7 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Earnings Head', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
+                    Text('Earnings Head & Overtime', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
                     Text('Amount (INR)', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -905,6 +1033,8 @@ class _PayslipComputationTreeSheetState extends State<PayslipComputationTreeShee
               _buildTableRow('Basic Salary', '50,000.00'),
               _buildTableRow('House Rent Allowance', '20,000.00'),
               _buildTableRow('Special Allowance', '10,000.00'),
+              _buildTableRow('Overtime Earning (10.0h @ 1.5x)', '7,244.30'),
+              _buildTableRow('Extra Days Payout (2.0 days)', '7,727.30'),
 
               const SizedBox(height: 6),
 

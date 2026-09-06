@@ -720,11 +720,19 @@ class PayslipModel {
   final double overtimeHours;
   final double scheduledHours;
   final double overtimePay;
+  final double extraDays;
+  final double extraDaysPay;
+  final double contractMonthlyWage;
   final double basicAmount;
   final double grossAmount;
   final double netAmount;
   final String status; // 'DONE', 'DRAFT', 'CANCELLED'
   final List<PayslipLineModel> lines;
+  final double? _hourlyRate;
+  final double? _overtimeRate;
+
+  double get hourlyRate => _hourlyRate ?? ((contractMonthlyWage > 0 ? contractMonthlyWage : 85000.0) / (scheduledHours > 0 ? scheduledHours : 176.0));
+  double get overtimeRate => _overtimeRate ?? (hourlyRate * 1.5);
 
   PayslipModel({
     required this.id,
@@ -737,12 +745,18 @@ class PayslipModel {
     this.overtimeHours = 0.0,
     this.scheduledHours = 176.0,
     this.overtimePay = 0.0,
+    this.extraDays = 0.0,
+    this.extraDaysPay = 0.0,
+    this.contractMonthlyWage = 85000.0,
+    double? hourlyRate,
+    double? overtimeRate,
     this.basicAmount = 0.0,
     required this.grossAmount,
     required this.netAmount,
     required this.status,
     required this.lines,
-  });
+  })  : _hourlyRate = hourlyRate,
+        _overtimeRate = overtimeRate;
 
   static double? parseCurrency(dynamic val) {
     if (val == null) return null;
@@ -754,16 +768,56 @@ class PayslipModel {
   factory PayslipModel.fromJson(Map<String, dynamic> json) {
     final rawLines = json['lines'] as List? ?? [];
     final parsedLines = rawLines.map((l) => PayslipLineModel.fromJson(l as Map<String, dynamic>)).toList();
-    
+
     double otPay = 0.0;
+    double extDaysPay = 0.0;
     for (final l in parsedLines) {
-      if (l.ruleCode == 'OT') {
+      if (l.ruleCode == 'OT' || l.ruleCode == 'OVERTIME') {
         otPay = l.amount;
-        break;
+      } else if (l.ruleCode == 'EXT_DAYS' || l.ruleCode == 'EXTRA_DAYS') {
+        extDaysPay = l.amount;
       }
     }
-    if (otPay == 0.0 && json['overtime_pay'] is num) {
-      otPay = (json['overtime_pay'] as num).toDouble();
+
+    final contractWage = (json['contract_wage'] is num)
+        ? (json['contract_wage'] as num).toDouble()
+        : (json['contractMonthlyWage'] is num
+            ? (json['contractMonthlyWage'] as num).toDouble()
+            : (parseCurrency(json['baseWage'] ?? json['wageMonthly']) ?? 85000.0));
+
+    final schedHours = (json['scheduled_hours'] is num) ? (json['scheduled_hours'] as num).toDouble() : 176.0;
+    final hRate = (json['hourly_rate'] is num)
+        ? (json['hourly_rate'] as num).toDouble()
+        : (contractWage / (schedHours > 0 ? schedHours : 176.0));
+    final otRate = (json['overtime_rate'] is num) ? (json['overtime_rate'] as num).toDouble() : (hRate * 1.5);
+
+    final otHours = (json['overtime_hours'] is num)
+        ? (json['overtime_hours'] as num).toDouble()
+        : (double.tryParse(json['overtimeHours']?.toString() ?? '') ?? 0.0);
+
+    if (otPay == 0.0) {
+      if (json['overtime_pay'] is num) {
+        otPay = (json['overtime_pay'] as num).toDouble();
+      } else if (json['overtimePay'] is num) {
+        otPay = (json['overtimePay'] as num).toDouble();
+      } else if (otHours > 0) {
+        otPay = double.parse((otHours * otRate).toStringAsFixed(2));
+      }
+    }
+
+    final extraD = (json['extra_days'] is num)
+        ? (json['extra_days'] as num).toDouble()
+        : (double.tryParse(json['extraDays']?.toString() ?? '') ?? 0.0);
+
+    if (extDaysPay == 0.0) {
+      if (json['extra_days_pay'] is num) {
+        extDaysPay = (json['extra_days_pay'] as num).toDouble();
+      } else if (json['extraDaysPay'] is num) {
+        extDaysPay = (json['extraDaysPay'] as num).toDouble();
+      } else if (extraD > 0) {
+        final dailyRate = contractWage / 22.0;
+        extDaysPay = double.parse((extraD * dailyRate).toStringAsFixed(2));
+      }
     }
 
     return PayslipModel(
@@ -774,9 +828,14 @@ class PayslipModel {
       periodEnd: json['date_end']?.toString() ?? json['date_to']?.toString() ?? json['periodEnd']?.toString() ?? '',
       workedDays: (json['worked_days'] is num) ? (json['worked_days'] as num).toDouble() : (double.tryParse(json['workedDays']?.toString() ?? '') ?? 22.0),
       workedHours: (json['worked_hours'] is num) ? (json['worked_hours'] as num).toDouble() : 176.0,
-      overtimeHours: (json['overtime_hours'] is num) ? (json['overtime_hours'] as num).toDouble() : 0.0,
-      scheduledHours: (json['scheduled_hours'] is num) ? (json['scheduled_hours'] as num).toDouble() : 176.0,
+      overtimeHours: otHours,
+      scheduledHours: schedHours,
       overtimePay: otPay,
+      extraDays: extraD,
+      extraDaysPay: extDaysPay,
+      contractMonthlyWage: contractWage,
+      hourlyRate: hRate,
+      overtimeRate: otRate,
       basicAmount: (json['basic_amount'] is num)
           ? (json['basic_amount'] as num).toDouble()
           : (parseCurrency(json['basic_amount'] ?? json['basic']) ?? 50000.0),

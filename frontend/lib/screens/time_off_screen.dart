@@ -737,8 +737,8 @@ class _TimeOffScreenState extends State<TimeOffScreen> with SingleTickerProvider
         ? _requests.where((r) => (r['name'] as String?)?.toLowerCase() == currentEmpName.toLowerCase()).toList()
         : _requests;
 
-    final pendingList = roleFilteredRequests.where((r) => !r['isApproved']).toList();
-    final approvedList = roleFilteredRequests.where((r) => r['isApproved']).toList();
+    final pendingList = roleFilteredRequests.where((r) => r['isPending'] == true || r['rawStatus'] == 'TO_APPROVE').toList();
+    final approvedList = roleFilteredRequests.where((r) => r['isApproved'] == true || r['rawStatus'] == 'APPROVED').toList();
 
     List<Map<String, dynamic>> displayedRequests;
     if (_selectedTab == 'To Approve' || _selectedTab == 'My Pending') {
