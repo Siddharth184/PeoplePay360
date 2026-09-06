@@ -23,6 +23,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   late EmployeeModel emp;
 
   String _selectedPayMonth = 'September 2026';
+  String _selectedAttendanceMonth = '2026-09-01 → 2026-09-30';
   List<PayslipModel> _employeePayslips = [];
   bool _isLoadingPayslips = false;
 
@@ -95,28 +96,54 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   PayslipModel _getActivePayslip() {
-    String monthPrefix = '2026-09';
-    if (_selectedPayMonth.contains('August')) monthPrefix = '2026-08';
-    if (_selectedPayMonth.contains('July')) monthPrefix = '2026-07';
-    if (_selectedPayMonth.contains('June')) monthPrefix = '2026-06';
-    if (_selectedPayMonth.contains('May')) monthPrefix = '2026-05';
-    if (_selectedPayMonth.contains('February')) monthPrefix = '2026-02';
-
-    PayslipModel base;
-    if (_employeePayslips.isNotEmpty) {
-      base = _employeePayslips.firstWhere(
-        (p) => p.periodStart.startsWith(monthPrefix),
-        orElse: () => _employeePayslips.first,
-      );
-    } else {
-      final mockList = MockDataService.payslips;
-      base = mockList.firstWhere(
-        (p) => p.periodStart.startsWith(monthPrefix),
-        orElse: () => mockList.first,
+    final payslipList = _employeePayslips.isNotEmpty ? _employeePayslips : MockDataService.payslips;
+    if (payslipList.isEmpty) {
+      return PayslipModel(
+        id: 'slip-draft',
+        refCode: 'SLIP/DRAFT',
+        employeeName: emp.name,
+        periodStart: '2026-09-01',
+        periodEnd: '2026-09-30',
+        netAmount: 0.0,
+        grossAmount: 0.0,
+        status: 'DRAFT',
+        lines: const [],
       );
     }
 
-    return base.copyWith(employeeName: emp.name);
+    final selStart = _selectedPayMonth.contains('→') ? _selectedPayMonth.split('→').first.trim() : _selectedPayMonth;
+
+    PayslipModel? match;
+    for (final p in payslipList) {
+      if (p.periodStart == selStart || '${p.periodStart} → ${p.periodEnd}' == _selectedPayMonth) {
+        match = p;
+        break;
+      }
+      if (selStart.length >= 7 && p.periodStart.startsWith(selStart.substring(0, 7))) {
+        match = p;
+        break;
+      }
+    }
+
+    if (match == null) {
+      final lower = _selectedPayMonth.toLowerCase();
+      if (lower.contains('aug') || lower.contains('2026-08')) {
+        match = payslipList.firstWhere((p) => p.periodStart.startsWith('2026-08'), orElse: () => payslipList.first);
+      } else if (lower.contains('jul') || lower.contains('2026-07')) {
+        match = payslipList.firstWhere((p) => p.periodStart.startsWith('2026-07'), orElse: () => payslipList.first);
+      } else if (lower.contains('jun') || lower.contains('2026-06')) {
+        match = payslipList.firstWhere((p) => p.periodStart.startsWith('2026-06'), orElse: () => payslipList.first);
+      } else if (lower.contains('may') || lower.contains('2026-05')) {
+        match = payslipList.firstWhere((p) => p.periodStart.startsWith('2026-05'), orElse: () => payslipList.first);
+      } else if (lower.contains('feb') || lower.contains('2026-02')) {
+        match = payslipList.firstWhere((p) => p.periodStart.startsWith('2026-02'), orElse: () => payslipList.first);
+      } else if (lower.contains('sep') || lower.contains('2026-09')) {
+        match = payslipList.firstWhere((p) => p.periodStart.startsWith('2026-09'), orElse: () => payslipList.first);
+      }
+    }
+
+    final selected = match ?? payslipList.first;
+    return selected.copyWith(employeeName: emp.name);
   }
 
   PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color iconColor = const Color(0xFF714B67)}) {
@@ -585,6 +612,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                           _buildWorkInfoTab()
                         else if (_selectedTabIndex == 1)
                           _buildPrivateInfoTab()
+                        else if (_selectedTabIndex == 2)
+                          _buildAttendanceTab()
                         else
                           _buildPayrollTab(),
 
@@ -1131,45 +1160,48 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          _buildTabItem('Work Info', 0),
-          _buildTabItem('Private Info', 1),
-          _buildTabItem('Payroll', 2),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            _buildTabItem('Work Info', 0),
+            _buildTabItem('Private Info', 1),
+            _buildTabItem('Attendance', 2),
+            _buildTabItem('Payroll', 3),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTabItem(String label, int index) {
     final isSelected = _selectedTabIndex == index;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _selectedTabIndex = index),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected
-                ? const [
-                    BoxShadow(
-                      color: Color(0x14000000),
-                      blurRadius: 4,
-                      offset: Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? const Color(0xFF131B2E) : const Color(0xFF4E444A),
-              ),
+    return InkWell(
+      onTap: () => setState(() => _selectedTabIndex = index),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? const [
+                  BoxShadow(
+                    color: Color(0x14000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? const Color(0xFF131B2E) : const Color(0xFF4E444A),
             ),
           ),
         ),
@@ -1515,6 +1547,473 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     );
   }
 
+  Widget _buildAttendanceTab() {
+    final availableAttendanceMonths = [
+      '2026-09-01 → 2026-09-30',
+      '2026-08-01 → 2026-08-31',
+      '2026-07-01 → 2026-07-31',
+      '2026-06-01 → 2026-06-30',
+    ];
+
+    if (!availableAttendanceMonths.contains(_selectedAttendanceMonth)) {
+      _selectedAttendanceMonth = availableAttendanceMonths.first;
+    }
+
+    final selStart = _selectedAttendanceMonth.split('→').first.trim();
+    final periodDate = DateTime.tryParse(selStart) ?? DateTime(2026, 9, 1);
+    final yearMonthStr = DateFormat('yyyy-MM').format(periodDate);
+    final monthTitle = DateFormat('MMMM yyyy').format(periodDate);
+
+    // Fetch all attendance records for this employee
+    final allUserAttendances = MockDataService.attendances.where((a) {
+      if (a.employeeId == emp.id) return true;
+      if (a.employeeName != null && a.employeeName!.isNotEmpty) {
+        final firstName = emp.name.toLowerCase().split(' ').first;
+        return a.employeeName!.toLowerCase().contains(firstName);
+      }
+      return false;
+    }).toList();
+
+    final monthAttendances = allUserAttendances.where((a) {
+      if (a.checkIn != null) {
+        return DateFormat('yyyy-MM').format(a.checkIn!) == yearMonthStr;
+      }
+      if (a.dateStr != null && a.dateStr!.length >= 7) {
+        return a.dateStr!.startsWith(yearMonthStr);
+      }
+      return false;
+    }).toList();
+
+    // Calculate Summary Metrics
+    int presentCount = 0;
+    int lateCount = 0;
+    int leaveCount = 0;
+    int absentCount = 0;
+    double totalWorkedHours = 0.0;
+
+    for (final att in monthAttendances) {
+      final st = att.status.toUpperCase();
+      totalWorkedHours += (att.workedHours ?? 0.0);
+      if (st == 'PRESENT') {
+        presentCount++;
+      } else if (st == 'LATE' || st == 'HALF_DAY') {
+        lateCount++;
+      } else if (st == 'LEAVE' || st == 'PTO' || st == 'SICK') {
+        leaveCount++;
+      } else if (st == 'ABSENT') {
+        absentCount++;
+      } else {
+        presentCount++;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Month Selector Card
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF714B67)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Select Attendance Month',
+                        style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E7FF),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      '${monthAttendances.length} Logs',
+                      style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F3FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFD6DAFE)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedAttendanceMonth,
+                    isExpanded: true,
+                    dropdownColor: Colors.white,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF714B67)),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF131B2E),
+                    ),
+                    items: availableAttendanceMonths.map((String m) {
+                      return DropdownMenuItem<String>(
+                        value: m,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.schedule_outlined, size: 16, color: Color(0xFF714B67)),
+                            const SizedBox(width: 8),
+                            Text(
+                              m,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF131B2E),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedAttendanceMonth = val;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // Color-coded Month Summary Stats Row
+        Row(
+          children: [
+            // Present Badge (Green)
+            Expanded(
+              child: _buildAttendanceStatCard(
+                label: 'Present',
+                value: '$presentCount Days',
+                subtext: '${totalWorkedHours.toStringAsFixed(1)} Hrs',
+                bgColor: const Color(0xFFE8F5E9),
+                borderColor: const Color(0xFFA5D6A7),
+                textColor: const Color(0xFF006443),
+                icon: Icons.check_circle_outline,
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Late / Half Day Badge (Orange/Amber)
+            Expanded(
+              child: _buildAttendanceStatCard(
+                label: 'Late / Half',
+                value: '$lateCount Days',
+                subtext: 'Shift Deviations',
+                bgColor: const Color(0xFFFFF3E0),
+                borderColor: const Color(0xFFFFCC80),
+                textColor: const Color(0xFFE65100),
+                icon: Icons.access_time_filled_outlined,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        Row(
+          children: [
+            // Leave / Time Off Badge (Purple)
+            Expanded(
+              child: _buildAttendanceStatCard(
+                label: 'On Leave',
+                value: '$leaveCount Days',
+                subtext: 'Approved Time Off',
+                bgColor: const Color(0xFFF2F3FF),
+                borderColor: const Color(0xFFD6DAFE),
+                textColor: const Color(0xFF714B67),
+                icon: Icons.event_available_outlined,
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Absent Badge (Red)
+            Expanded(
+              child: _buildAttendanceStatCard(
+                label: 'Absent',
+                value: '$absentCount Days',
+                subtext: 'Unexcused',
+                bgColor: const Color(0xFFFFDAD6),
+                borderColor: const Color(0xFFFFB4AB),
+                textColor: const Color(0xFFBA1A1A),
+                icon: Icons.cancel_outlined,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Color-Coded Day-by-Day Ledger List Card
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Attendance Ledger ($monthTitle)',
+                      style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${monthAttendances.length} Entries',
+                    style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF80747A)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (monthAttendances.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.event_note_outlined, size: 36, color: Color(0xFF80747A)),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No Attendance Logs for $monthTitle',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14, color: const Color(0xFF131B2E)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Punch-in records and manual edits for this month will dynamically appear here.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF80747A)),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: monthAttendances.length,
+                  separatorBuilder: (context, index) => const Divider(height: 16),
+                  itemBuilder: (context, index) {
+                    final item = monthAttendances[index];
+                    return _buildAttendanceRowItem(item);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttendanceStatCard({
+    required String label,
+    required String value,
+    required String subtext,
+    required Color bgColor,
+    required Color borderColor,
+    required Color textColor,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 18, color: textColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: textColor.withValues(alpha: 0.8)),
+                ),
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: textColor),
+                ),
+                Text(
+                  subtext,
+                  style: GoogleFonts.jetBrainsMono(fontSize: 9.5, color: textColor.withValues(alpha: 0.85)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttendanceRowItem(AttendanceModel item) {
+    Color badgeBg;
+    Color badgeText;
+    String statusLabel = item.status.toUpperCase();
+
+    switch (statusLabel) {
+      case 'PRESENT':
+        badgeBg = const Color(0xFFE8F5E9);
+        badgeText = const Color(0xFF006443);
+        break;
+      case 'LATE':
+        badgeBg = const Color(0xFFFFF3E0);
+        badgeText = const Color(0xFFE65100);
+        break;
+      case 'HALF_DAY':
+        badgeBg = const Color(0xFFFFE0B2);
+        badgeText = const Color(0xFFE65100);
+        break;
+      case 'LEAVE':
+      case 'PTO':
+      case 'SICK':
+        badgeBg = const Color(0xFFF2F3FF);
+        badgeText = const Color(0xFF714B67);
+        break;
+      case 'ABSENT':
+        badgeBg = const Color(0xFFFFDAD6);
+        badgeText = const Color(0xFFBA1A1A);
+        break;
+      default:
+        badgeBg = const Color(0xFFF1F5F9);
+        badgeText = const Color(0xFF475569);
+        break;
+    }
+
+    final checkInStr = item.checkIn != null ? DateFormat('hh:mm a').format(item.checkIn!) : '--:--';
+    final checkOutStr = item.checkOut != null ? DateFormat('hh:mm a').format(item.checkOut!) : '--:--';
+    final dateDisplay = item.checkIn != null
+        ? DateFormat('EEE, MMM dd').format(item.checkIn!)
+        : (item.dateStr ?? 'Date Log');
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Icon(Icons.schedule, color: badgeText, size: 18),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dateDisplay,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '$checkInStr → $checkOutStr',
+                      style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF4E444A)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (item.isManualEdit || (item.auditNotes != null && item.auditNotes!.isNotEmpty))
+                      Text(
+                        item.auditNotes != null && item.auditNotes!.isNotEmpty ? 'Audit: ${item.auditNotes}' : 'Manual Edit',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 10, color: const Color(0xFF00696E), fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: badgeBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                statusLabel,
+                style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold, color: badgeText),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${(item.workedHours ?? 0.0).toStringAsFixed(1)} Hrs${(item.overtimeHours ?? 0.0) > 0 ? ' (+${item.overtimeHours!.toStringAsFixed(1)}h OT)' : ''}',
+              style: GoogleFonts.jetBrainsMono(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFF131B2E)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildPayrollTab() {
     if (_employeePayslips.isEmpty) {
       return Container(
@@ -1833,18 +2332,21 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildWeeklyActivityMiniPanel() {
-    final now = DateTime.now();
-    final monthStr = DateFormat('MMM').format(now);
+    final activeSlip = _getActivePayslip();
+    final periodDate = DateTime.tryParse(activeSlip.periodStart);
+    final monthStr = periodDate != null ? DateFormat('MMM').format(periodDate) : DateFormat('MMM').format(DateTime.now());
+    final yearMonthStr = periodDate != null ? DateFormat('yyyy-MM').format(periodDate) : DateFormat('yyyy-MM').format(DateTime.now());
 
     final userAttendances = MockDataService.attendances.where(
-      (a) => a.employeeId == emp.id || (a.employeeName != null && a.employeeName!.isNotEmpty && emp.name.toLowerCase().contains(a.employeeName!.toLowerCase().split(' ').first)),
+      (a) => (a.employeeId == emp.id || (a.employeeName != null && a.employeeName!.isNotEmpty && emp.name.toLowerCase().contains(a.employeeName!.toLowerCase().split(' ').first)))
+          && (a.checkIn != null && DateFormat('yyyy-MM').format(a.checkIn!) == yearMonthStr),
     ).toList();
 
     final double totalWorked = userAttendances.isNotEmpty
         ? userAttendances.fold(0.0, (sum, a) => sum + (a.workedHours ?? 0.0))
-        : (emp.attendancesCount > 0 ? (emp.attendancesCount * 7.55).clamp(0.0, 168.0) : 0.0);
+        : (activeSlip.workedHours > 0 ? activeSlip.workedHours : (emp.attendancesCount > 0 ? (emp.attendancesCount * 7.55).clamp(0.0, 168.0) : 0.0));
 
-    const double targetHours = 168.0;
+    final double targetHours = activeSlip.scheduledHours > 0 ? activeSlip.scheduledHours : 168.0;
     final double progress = (targetHours > 0) ? (totalWorked / targetHours).clamp(0.0, 1.0) : 0.0;
     final int percentage = (progress * 100).round();
 
