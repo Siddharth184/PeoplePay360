@@ -106,7 +106,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
         (p) => p.periodStart.startsWith(monthPrefix),
         orElse: () => _employeePayslips.first,
       );
-      return slip.employeeName.isNotEmpty ? slip : slip.copyWith(employeeName: _employee.name);
+      return slip.employeeName.isNotEmpty ? slip : slip.copyWith(employeeName: emp.name);
     }
 
     final mockList = MockDataService.payslips;
@@ -115,7 +115,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
       orElse: () => mockList.first,
     );
 
-    return baseSlip.copyWith(employeeName: _employee.name);
+    return baseSlip.copyWith(employeeName: emp.name);
   }
 
   PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color iconColor = const Color(0xFF714B67)}) {
