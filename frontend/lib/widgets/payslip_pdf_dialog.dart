@@ -74,6 +74,7 @@ class PayslipPdfDialog extends StatelessWidget {
 
     final extraDays = payslip.extraDays > 0 ? payslip.extraDays : 2.0;
     final extraDaysPayout = payslip.extraDaysPay > 0 ? payslip.extraDaysPay : double.parse((extraDays * (contractWage / 22.0)).toStringAsFixed(2));
+    final workedDays = payslip.workedDays > 0 ? payslip.workedDays : 22.0;
 
     // Compute exact totals from lines
     double earningsSum = 0.0;
@@ -157,7 +158,7 @@ class PayslipPdfDialog extends StatelessWidget {
                           _pwMetaRow('Emp ID / Role:', 'EMP-4092 • Tech Ops'),
                           _pwMetaRow('Pay Period:', '$pStart to $pEnd'),
                           _pwMetaRow('Bank A/C:', 'HDFC Bank ending ••••4921'),
-                          _pwMetaRow('Worked Days:', '${payslip.workedDays.toStringAsFixed(0)} Days (Full Attendance)'),
+                          _pwMetaRow('Worked Days:', '${workedDays.toStringAsFixed(0)} Days (Full Attendance)'),
                         ],
                       ),
                     ),
