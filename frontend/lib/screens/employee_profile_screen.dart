@@ -1385,7 +1385,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 icon: Icons.corporate_fare_outlined,
                 iconColor: const Color(0xFFBA1A1A),
                 title: 'Work Location',
-                value: 'Mumbai Head Office',
+                value: (emp.workLocation != null && emp.workLocation!.isNotEmpty) ? emp.workLocation! : 'Bengaluru HQ',
                 subtitle: 'Building B, Floor 4 • Desk B-412',
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

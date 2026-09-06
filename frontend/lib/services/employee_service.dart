@@ -91,7 +91,7 @@ class EmployeeService {
       return response;
     }
 
-    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
+    if (!ApiClient.isBackendOnline || response.statusCode == 0 || response.statusCode == 400 || response.statusCode == 404) {
       final String empName = data['name']?.toString() ?? 'New Employee';
       final String dept = data['department_name']?.toString() ?? data['department']?.toString() ?? 'General';
       final String job = data['job_position_name']?.toString() ?? data['job_position']?.toString() ?? 'Staff';
@@ -118,7 +118,7 @@ class EmployeeService {
         dateOfJoining: data['date_of_joining']?.toString() ?? '2026-09-01',
         bankName: data['bank_name']?.toString() ?? 'HDFC Bank',
         bankAccountNumber: data['bank_account_number']?.toString() ?? '5010-9941-${1000 + MockDataService.allEmployees.length}',
-        workLocation: data['work_location']?.toString() ?? 'Bengaluru HQ',
+        workLocation: data['work_location']?.toString() ?? data['workLocation']?.toString() ?? 'Bengaluru HQ',
       );
       MockDataService.allEmployees.insert(0, newEmp);
 
