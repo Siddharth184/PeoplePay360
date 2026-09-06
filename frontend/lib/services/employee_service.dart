@@ -66,12 +66,12 @@ class EmployeeService {
       return response;
     }
 
-    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
+    if (!ApiClient.isBackendOnline || response.statusCode == 0 || response.statusCode == 400 || response.statusCode == 404) {
       final found = MockDataService.allEmployees.firstWhere(
         (e) => e.id == employeeId,
         orElse: () => MockDataService.currentEmployee,
       );
-      if (employeeId == ApiClient.currentEmployeeId || employeeId == MockDataService.currentEmployee.id) {
+      if (employeeId == ApiClient.currentEmployeeId || employeeId == MockDataService.currentEmployee.id || employeeId == found.id) {
         currentEmployeeNotifier.value = found;
       }
       return ApiResponse.success(found);
@@ -157,17 +157,20 @@ class EmployeeService {
 
     if (response.isSuccess && response.data != null) {
       final updated = response.data!;
-      if (id == ApiClient.currentEmployeeId || id == MockDataService.currentEmployee.id) {
-        currentEmployeeNotifier.value = updated;
+      final idx = MockDataService.allEmployees.indexWhere((e) => e.id == id || e.name.toLowerCase() == updated.name.toLowerCase());
+      if (idx != -1) {
+        MockDataService.allEmployees[idx] = updated;
       }
+      if (id == ApiClient.currentEmployeeId || id == MockDataService.currentEmployee.id || updated.id == MockDataService.currentEmployee.id) {
+        MockDataService.currentEmployee = updated;
+      }
+      currentEmployeeNotifier.value = updated;
       return response;
     }
 
-    if (!ApiClient.isBackendOnline || response.statusCode == 0) {
-      final existing = MockDataService.allEmployees.firstWhere(
-        (e) => e.id == id,
-        orElse: () => MockDataService.currentEmployee,
-      );
+    if (!ApiClient.isBackendOnline || response.statusCode == 0 || response.statusCode == 400 || response.statusCode == 404) {
+      final idx = MockDataService.allEmployees.indexWhere((e) => e.id == id || (data['name'] != null && e.name.toLowerCase() == data['name'].toString().toLowerCase()));
+      final existing = idx != -1 ? MockDataService.allEmployees[idx] : MockDataService.currentEmployee;
       final updated = existing.copyWith(
         name: data['name']?.toString() ?? existing.name,
         jobTitle: data['job_position_name']?.toString() ?? data['job_position']?.toString() ?? data['jobTitle']?.toString() ?? existing.jobTitle,
@@ -176,16 +179,15 @@ class EmployeeService {
         workPhone: data['phone']?.toString() ?? data['workPhone']?.toString() ?? existing.workPhone,
       );
 
-      if (id == ApiClient.currentEmployeeId || id == MockDataService.currentEmployee.id) {
-        MockDataService.currentEmployee = updated;
-        currentEmployeeNotifier.value = updated;
-      }
-      final idx = MockDataService.allEmployees.indexWhere((e) => e.id == id);
       if (idx != -1) {
         MockDataService.allEmployees[idx] = updated;
       } else {
         MockDataService.allEmployees.add(updated);
       }
+      if (id == ApiClient.currentEmployeeId || id == MockDataService.currentEmployee.id || existing.id == MockDataService.currentEmployee.id) {
+        MockDataService.currentEmployee = updated;
+      }
+      currentEmployeeNotifier.value = updated;
 
       return ApiResponse.success(updated);
     }

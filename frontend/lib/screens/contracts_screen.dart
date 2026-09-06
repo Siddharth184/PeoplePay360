@@ -272,7 +272,25 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
   void _openEditContractSheet() {
     final wageCtrl = TextEditingController(text: _monthlyWage.toStringAsFixed(2));
-    final positionCtrl = TextEditingController(text: _jobPosition);
+    final positionsList = [
+      'Senior HR Operations Manager',
+      'HR Specialist',
+      'HR Manager & People Director',
+      'Tech Ops Lead',
+      'Senior Software Engineer',
+      'Payroll Specialist • Finance Ops',
+      'Operations Manager',
+      'Staff Accountant',
+      'QA Lead',
+      'Engineering Manager',
+      'Product Manager',
+      'DevOps Specialist',
+      'Executive Management',
+    ];
+    String editJobPosition = _jobPosition;
+    if (!positionsList.contains(editJobPosition) && editJobPosition.isNotEmpty) {
+      positionsList.insert(0, editJobPosition);
+    }
 
     DateTime editStartDate = _startDate;
     DateTime? editEndDate = _endDate;
@@ -593,22 +611,33 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Job Position TextField
+                    // Job Position Dropdown
                     Text(
                       'Job Position / Title *',
                       style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
                     ),
                     const SizedBox(height: 6),
                     Container(
-                      height: 46,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(color: const Color(0xFFF2F3FF), borderRadius: BorderRadius.circular(12)),
-                      child: TextField(
-                        controller: positionCtrl,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.work_outline, color: Color(0xFF714B67), size: 18),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: positionsList.contains(editJobPosition) ? editJobPosition : positionsList.first,
+                          isExpanded: true,
+                          dropdownColor: Colors.white,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                          items: positionsList.map((p) {
+                            return DropdownMenuItem(
+                              value: p,
+                              child: Text(
+                                p,
+                                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF131B2E)),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) setSheetState(() => editJobPosition = val);
+                          },
                         ),
                       ),
                     ),
@@ -805,18 +834,28 @@ class _ContractsScreenState extends State<ContractsScreen> {
                                       ? 'EXPIRED'
                                       : (editStage == 'Cancelled' ? 'CANCELLED' : 'DRAFT'));
 
+                              final selectedJobPosition = editJobPosition;
+
                               if (_contractId != null) {
                                 final payload = {
                                   'start_date': _formatYMD(editStartDate),
                                   'end_date': editEndDate != null ? _formatYMD(editEndDate!) : null,
                                   'wage_monthly': newWage,
                                   'department': editDept,
-                                  'job_position': positionCtrl.text.trim(),
+                                  'job_position': selectedJobPosition,
                                   'structure_name': editStruct,
                                   'status': apiStatus,
                                 };
                                 ContractService.updateContract(_contractId!, payload);
                               }
+
+                              // Update employee profile via EmployeeService and MockDataService
+                              await EmployeeService.updateEmployee(_emp.id, {
+                                'job_position': selectedJobPosition,
+                                'job_position_name': selectedJobPosition,
+                                'department': editDept,
+                                'department_name': editDept,
+                              });
 
                               // Update in _allContracts & MockDataService.contracts
                               final idxInAll = _allContracts.indexWhere((c) => c.id == _contractId || c.refCode == _contractRef);
@@ -854,12 +893,13 @@ class _ContractsScreenState extends State<ContractsScreen> {
                                 _startDate = editStartDate;
                                 _endDate = editEndDate;
                                 _department = editDept;
-                                _jobPosition = positionCtrl.text.trim().isNotEmpty ? positionCtrl.text.trim() : _jobPosition;
+                                _jobPosition = selectedJobPosition;
                                 _monthlyWage = newWage;
                                 _salaryStructure = editStruct;
                                 _selectedStage = editStage;
                                 _schedule = editSchedule;
                                 _contractType = editType;
+                                _emp = _emp.copyWith(jobTitle: selectedJobPosition, department: editDept);
                               });
 
                               Navigator.pop(context);
