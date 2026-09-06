@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/employee_service.dart';
@@ -1832,6 +1833,21 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildWeeklyActivityMiniPanel() {
+    final now = DateTime.now();
+    final monthStr = DateFormat('MMM').format(now);
+
+    final userAttendances = MockDataService.attendances.where(
+      (a) => a.employeeId == emp.id || (a.employeeName != null && a.employeeName!.isNotEmpty && emp.name.toLowerCase().contains(a.employeeName!.toLowerCase().split(' ').first)),
+    ).toList();
+
+    final double totalWorked = userAttendances.isNotEmpty
+        ? userAttendances.fold(0.0, (sum, a) => sum + (a.workedHours ?? 0.0))
+        : (emp.attendancesCount > 0 ? (emp.attendancesCount * 7.55).clamp(0.0, 168.0) : 0.0);
+
+    const double targetHours = 168.0;
+    final double progress = (targetHours > 0) ? (totalWorked / targetHours).clamp(0.0, 1.0) : 0.0;
+    final int percentage = (progress * 100).round();
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFEAEDFF),
@@ -1859,14 +1875,14 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pay Cycle Accrual (Nov)',
+                    'Pay Cycle Accrual ($monthStr)',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5,
                       color: const Color(0xFF4E444A),
                     ),
                   ),
                   Text(
-                    '158.5 / 168.0 Hrs',
+                    '${totalWorked.toStringAsFixed(1)} / ${targetHours.toStringAsFixed(1)} Hrs',
                     style: GoogleFonts.outfit(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1877,22 +1893,22 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               ),
             ],
           ),
-          // Circular progress indicator (94%)
+          // Circular progress indicator
           SizedBox(
             width: 44,
             height: 44,
             child: Stack(
               fit: StackFit.expand,
               children: [
-                const CircularProgressIndicator(
-                  value: 0.94,
+                CircularProgressIndicator(
+                  value: progress,
                   strokeWidth: 4,
-                  backgroundColor: Color(0xFFDAE2FD),
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00696E)),
+                  backgroundColor: const Color(0xFFDAE2FD),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00696E)),
                 ),
                 Center(
                   child: Text(
-                    '94%',
+                    '$percentage%',
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
